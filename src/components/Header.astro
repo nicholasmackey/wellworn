@@ -1,5 +1,6 @@
 ---
-import { BRAND, NAV, SITE } from '../config/site';
+import { NAV } from '../config/site';
+import Wordmark from './Wordmark.astro';
 
 interface Props {
 	/** Extra classes for the outer <header>. */
@@ -22,13 +23,7 @@ const isCurrent = (href: string): boolean => !href.includes('#') && href === cur
 >
 	<div class="wrapper flex h-20 items-center justify-between gap-8">
 		<a href="/" class="shrink-0 transition-opacity duration-200 hover:opacity-70">
-			<img
-				src={BRAND.wordmarkDark}
-				alt={SITE.name}
-				width={116}
-				height={28}
-				class="h-6 w-auto sm:h-7"
-			/>
+			<Wordmark animate class="h-9 w-auto text-charcoal sm:h-10" />
 		</a>
 
 		<nav aria-label="Primary" class="hidden items-center gap-10 md:flex">
@@ -51,23 +46,37 @@ const isCurrent = (href: string): boolean => !href.includes('#') && href === cur
 			data-nav-toggle
 			aria-expanded="false"
 			aria-controls="mobile-nav"
-			class="-mr-3 inline-flex h-11 w-11 items-center justify-center md:hidden"
+			class="group -mr-3 inline-flex h-11 w-11 items-center justify-center md:hidden"
 		>
 			<span class="sr-only">Menu</span>
-			<span aria-hidden="true" class="flex w-6 flex-col gap-[6px]">
-				<span class="h-px w-full bg-charcoal"></span>
-				<span class="h-px w-full bg-charcoal"></span>
+			{/* Two bars that meet in the middle and cross into an X when open. */}
+			<span aria-hidden="true" class="relative block h-[7px] w-6">
+				<span
+					class="absolute inset-x-0 top-0 h-px bg-charcoal transition-transform duration-200 group-aria-expanded:translate-y-[3px] group-aria-expanded:rotate-45"
+				></span>
+				<span
+					class="absolute inset-x-0 bottom-0 h-px bg-charcoal transition-transform duration-200 group-aria-expanded:-translate-y-[3px] group-aria-expanded:-rotate-45"
+				></span>
 			</span>
 		</button>
 	</div>
 
+	{/*
+	  Collapsed with grid-template-rows 0fr -> 1fr so the panel animates to its
+	  natural height without hard-coding one. `hidden` can't be used here — it
+	  would skip the transition — so the closed panel is made `inert` instead,
+	  which takes it out of the tab order and the accessibility tree.
+	*/}
 	<div
 		id="mobile-nav"
 		data-nav-panel
-		hidden
-		class="border-t border-charcoal/10 bg-cream md:hidden"
+		inert
+		class="grid grid-rows-[0fr] overflow-hidden bg-cream opacity-0 transition-[grid-template-rows,opacity] duration-200 md:hidden data-[open]:grid-rows-[1fr] data-[open]:opacity-100"
 	>
-		<nav aria-label="Primary (mobile)" class="wrapper flex flex-col py-4">
+		<nav
+			aria-label="Primary (mobile)"
+			class="wrapper flex min-h-0 flex-col border-t border-charcoal/10 py-4"
+		>
 			{
 				NAV.map((item) => (
 					<a
@@ -91,7 +100,8 @@ const isCurrent = (href: string): boolean => !href.includes('#') && href === cur
 	if (toggle && panel) {
 		const setOpen = (open: boolean): void => {
 			toggle.setAttribute('aria-expanded', String(open));
-			panel.hidden = !open;
+			panel.toggleAttribute('data-open', open);
+			panel.inert = !open;
 		};
 
 		toggle.addEventListener('click', () => {
