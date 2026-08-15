@@ -80,10 +80,9 @@ const year = new Date().getFullYear();
 		<div
 			class="mt-16 flex flex-col gap-2 border-t border-cream/15 pt-8 sm:flex-row sm:items-center sm:justify-between"
 		>
-			<p class="eyebrow text-stone">
-				&copy; {year}
-				{SITE.name}
-			</p>
+			{/* Kept on one line: a newline between two expressions is stripped as
+			    JSX-style whitespace, which would run the year into the name. */}
+			<p class="eyebrow text-stone">&copy; {year} {SITE.name}</p>
 			<p class="eyebrow text-stone">All rights reserved</p>
 		</div>
 	</div>
