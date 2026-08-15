@@ -86,6 +86,35 @@ const bbox = (d) => {
 
 const round = (v) => Number(v.toFixed(3))
 
+/* -------------------------------------------------------------------------
+   Box geometry
+   ------------------------------------------------------------------------- */
+
+/** Mask stroke for the box wipe, a shade wider than the 58.71 band. */
+const MASK_STROKE = 62
+
+/**
+ * Corners of the band's centreline. The band runs from the outer edge (55.5)
+ * to the inner edge (114.204), so it is 58.71 thick and its centreline sits
+ * 29.355 inside the outer rect: 55.5 + 29.355 = 84.855, 62.5 + 29.355 =
+ * 91.855, and the far corner likewise 29.355 inside 2419.93 / 533.5.
+ */
+const C = { x: 84.855, y: 91.855, right: 2390.575, bottom: 504.145 }
+
+/**
+ * The wipe overshoots its own start corner by one stroke width rather than
+ * closing with Z. Closing puts the dash's start and end both on the top-left
+ * corner, and a corner is only mitred where the stroke runs continuously
+ * through it — at a dash seam it does not, so the join is dropped and the
+ * outer corner renders notched. WebKit shows this; librsvg and Blink paper
+ * over it, which is why it surfaced only on device. Running one stroke width
+ * along the top edge instead makes that corner an ordinary interior vertex
+ * and overdraws both butt caps.
+ */
+const FRAME_OVERLAP = MASK_STROKE
+const FRAME_CENTRELINE = `M${C.x} ${C.y}H${C.right}V${C.bottom}H${C.x}V${C.y}H${round(C.x + FRAME_OVERLAP)}`
+const FRAME_LENGTH = round(2 * (C.right - C.x + (C.bottom - C.y)) + FRAME_OVERLAP)
+
 /* Source order runs right-to-left (N first, W last); the stagger has to run
    left-to-right, so rank the glyphs by their leading edge. */
 const parsed = ds.slice(0, 8).map((d) => ({ d, box: bbox(d) }))
@@ -180,12 +209,11 @@ const FRAME =
 
 /**
  * Centreline of the box band, used only as the mask stroke that wipes the box
- * into view. The band runs from the outer edge (55.5) to the inner edge
- * (114.204), so it is 58.71 thick and its centreline sits 29.355 inside the
- * outer rect: 55.5 + 29.355 = 84.855, 62.5 + 29.355 = 91.855, and the far
- * corner likewise 29.355 inside 2419.93 / 533.5.
+ * into view. It traces the band clockwise from the top-left and then overshoots
+ * that corner by one stroke width, so the dash seam lands mid-edge instead of
+ * on a corner that would lose its mitre. See scripts/gen-wordmark.mjs.
  */
-const FRAME_CENTRELINE = 'M84.855 91.855H2390.575V504.145H84.855Z'
+const FRAME_CENTRELINE = '${FRAME_CENTRELINE}'
 ---
 
 <svg
@@ -207,7 +235,7 @@ const FRAME_CENTRELINE = 'M84.855 91.855H2390.575V504.145H84.855Z'
 	  the left. At rest both sit fully open, so the mark is simply complete.
 	*/}
 	<mask id={\`\${uid}-frame\`} maskUnits="userSpaceOnUse" x="0" y="0" width="2476" height="597">
-		<path d={FRAME_CENTRELINE} class="frame-wipe" fill="none" stroke="#fff" stroke-width="62" />
+		<path d={FRAME_CENTRELINE} class="frame-wipe" fill="none" stroke="#fff" stroke-width="${MASK_STROKE}" />
 	</mask>
 
 	{
@@ -232,11 +260,11 @@ const FRAME_CENTRELINE = 'M84.855 91.855H2390.575V504.145H84.855Z'
 </svg>
 
 <style>
-	/* One dash the full length of the centreline rect: 2 x (2305.72 + 412.29).
+	/* One dash the full length of the centreline path, overshoot included.
 	   \`pathLength\` would avoid the arithmetic but is not honoured by every SVG
-	   renderer, so the real perimeter is used. */
+	   renderer, so the measured length is used. */
 	.frame-wipe {
-		--frame-length: 5436.02;
+		--frame-length: ${FRAME_LENGTH};
 		stroke-dasharray: var(--frame-length);
 		stroke-dashoffset: 0;
 	}

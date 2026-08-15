@@ -122,12 +122,11 @@ const FRAME =
 
 /**
  * Centreline of the box band, used only as the mask stroke that wipes the box
- * into view. The band runs from the outer edge (55.5) to the inner edge
- * (114.204), so it is 58.71 thick and its centreline sits 29.355 inside the
- * outer rect: 55.5 + 29.355 = 84.855, 62.5 + 29.355 = 91.855, and the far
- * corner likewise 29.355 inside 2419.93 / 533.5.
+ * into view. It traces the band clockwise from the top-left and then overshoots
+ * that corner by one stroke width, so the dash seam lands mid-edge instead of
+ * on a corner that would lose its mitre. See scripts/gen-wordmark.mjs.
  */
-const FRAME_CENTRELINE = 'M84.855 91.855H2390.575V504.145H84.855Z'
+const FRAME_CENTRELINE = 'M84.855 91.855H2390.575V504.145H84.855V91.855H146.855'
 ---
 
 <svg
@@ -174,11 +173,11 @@ const FRAME_CENTRELINE = 'M84.855 91.855H2390.575V504.145H84.855Z'
 </svg>
 
 <style>
-	/* One dash the full length of the centreline rect: 2 x (2305.72 + 412.29).
+	/* One dash the full length of the centreline path, overshoot included.
 	   `pathLength` would avoid the arithmetic but is not honoured by every SVG
-	   renderer, so the real perimeter is used. */
+	   renderer, so the measured length is used. */
 	.frame-wipe {
-		--frame-length: 5436.02;
+		--frame-length: 5498.02;
 		stroke-dasharray: var(--frame-length);
 		stroke-dashoffset: 0;
 	}
