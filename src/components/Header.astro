@@ -66,6 +66,12 @@ const isCurrent = (href: string): boolean => !href.includes('#') && href === cur
 	  natural height without hard-coding one. `hidden` can't be used here — it
 	  would skip the transition — so the closed panel is made `inert` instead,
 	  which takes it out of the tab order and the accessibility tree.
+
+	  The middle div only exists to collapse. `min-h-0` clears the automatic
+	  minimum an fr row would otherwise floor at, but padding and borders are
+	  not part of what it lets shrink, so all spacing has to sit on the <nav>
+	  inside it — otherwise the closed panel keeps padding a stripe of height
+	  onto the header.
 	*/}
 	<div
 		id="mobile-nav"
@@ -73,23 +79,25 @@ const isCurrent = (href: string): boolean => !href.includes('#') && href === cur
 		inert
 		class="grid grid-rows-[0fr] overflow-hidden bg-cream opacity-0 transition-[grid-template-rows,opacity] duration-200 md:hidden data-[open]:grid-rows-[1fr] data-[open]:opacity-100"
 	>
-		<nav
-			aria-label="Primary (mobile)"
-			class="wrapper flex min-h-0 flex-col border-t border-charcoal/10 py-4"
-		>
-			{
-				NAV.map((item) => (
-					<a
-						href={item.href}
-						aria-current={isCurrent(item.href) ? 'page' : undefined}
-						class="eyebrow border-b border-charcoal/10 py-4 text-charcoal"
-					>
-						{item.label}
-					</a>
-				))
-			}
-			<a href="/#contact" class="btn btn-primary mt-6">Get in touch</a>
-		</nav>
+		<div class="min-h-0">
+			<nav
+				aria-label="Primary (mobile)"
+				class="wrapper flex flex-col border-t border-charcoal/10 py-4"
+			>
+				{
+					NAV.map((item) => (
+						<a
+							href={item.href}
+							aria-current={isCurrent(item.href) ? 'page' : undefined}
+							class="eyebrow border-b border-charcoal/10 py-4 text-charcoal"
+						>
+							{item.label}
+						</a>
+					))
+				}
+				<a href="/#contact" class="btn btn-primary mt-6">Get in touch</a>
+			</nav>
+		</div>
 	</div>
 </header>
 
