@@ -60,14 +60,19 @@ export interface NavItem {
 }
 
 /**
- * Primary navigation. Currently points at homepage sections; swap the
- * hrefs for real routes (/work, /services…) when those pages are added.
+ * Primary navigation. Only entries with a target that actually exists belong
+ * here — Work and About are held back until those sections are built, rather
+ * than shipped as links to nothing. Swap the hrefs for real routes
+ * (/work, /services…) when those pages are added.
  */
-export const NAV: readonly NavItem[] = [
-  { label: 'Work', href: '/#work' },
-  { label: 'Services', href: '/#services' },
-  { label: 'About', href: '/#about' },
-] as const
+export const NAV: readonly NavItem[] = [{ label: 'Services', href: '/#services' }] as const
+
+/**
+ * Where every "Get in touch" call to action points. Currently the contact
+ * block at the foot of the page; change this one value to repoint them all
+ * at a dedicated /contact page later.
+ */
+export const CONTACT_HREF = '/#contact'
 
 export interface Service {
   readonly index: string

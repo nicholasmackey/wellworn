@@ -1,5 +1,5 @@
 ---
-import { BRAND, NAV, SERVICES, SITE } from '../config/site';
+import { BRAND, SERVICES, SITE } from '../config/site';
 
 interface Props {
 	class?: string;
@@ -48,25 +48,19 @@ const year = new Date().getFullYear();
 				</ul>
 			</div>
 
-			<div>
-				<h2 class="eyebrow text-stone">Navigate</h2>
-				<ul class="mt-6 space-y-3">
-					{
-						NAV.map((item) => (
-							<li>
-								<a
-									href={item.href}
-									class="text-cream/90 transition-colors duration-200 hover:text-cream"
-								>
-									{item.label}
-								</a>
-							</li>
-						))
-					}
-				</ul>
-
-				<h2 class="eyebrow mt-10 text-stone">Contact</h2>
-				<p class="mt-6">
+			{/*
+			  The target every "Get in touch" CTA scrolls to. Anchor offset comes
+			  from `scroll-padding-top` in global.css, so the sticky header never
+			  covers the heading. A "Navigate" list used to sit above this; with
+			  Services as the only nav item it just repeated the column alongside,
+			  so it was dropped rather than shipped as a one-entry duplicate.
+			*/}
+			<section id="contact" aria-labelledby="contact-heading">
+				<h2 id="contact-heading" class="eyebrow text-stone">Contact</h2>
+				<p class="mt-6 text-stone">
+					For new work, quotes, and everything else, email us and we'll get back to you.
+				</p>
+				<p class="mt-4">
 					<a
 						href={`mailto:${SITE.email}`}
 						class="text-cream underline decoration-stone/60 underline-offset-4 transition-colors duration-200 hover:decoration-cream"
@@ -74,7 +68,7 @@ const year = new Date().getFullYear();
 						{SITE.email}
 					</a>
 				</p>
-			</div>
+			</section>
 		</div>
 
 		<div

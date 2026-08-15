@@ -1,5 +1,5 @@
 ---
-import { NAV } from '../config/site';
+import { CONTACT_HREF, NAV } from '../config/site';
 import Wordmark from './Wordmark.astro';
 
 interface Props {
@@ -38,7 +38,7 @@ const isCurrent = (href: string): boolean => !href.includes('#') && href === cur
 					</a>
 				))
 			}
-			<a href="/#contact" class="btn btn-outline">Get in touch</a>
+			<a href={CONTACT_HREF} class="btn btn-outline">Get in touch</a>
 		</nav>
 
 		<button
@@ -95,7 +95,7 @@ const isCurrent = (href: string): boolean => !href.includes('#') && href === cur
 						</a>
 					))
 				}
-				<a href="/#contact" class="btn btn-primary mt-6">Get in touch</a>
+				<a href={CONTACT_HREF} class="btn btn-primary mt-6">Get in touch</a>
 			</nav>
 		</div>
 	</div>
