@@ -1,0 +1,23 @@
+---
+/*
+  Astro emits this page as dist/404.html (special-cased — not /404/index.html).
+  Cloudflare Pages serves a root-level 404.html for any request that matches no
+  asset, with a real 404 status. Without this file Pages falls back to serving
+  index.html at 200, which is the soft-404 this page exists to prevent.
+*/
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Page not found" description="That page isn't here." noindex>
+	<section class="wrapper py-28 lg:py-40">
+		<p class="eyebrow text-charcoal/60">Error 404</p>
+
+		<h1 class="mt-6 text-4xl leading-[1.1] sm:text-5xl">Page not found</h1>
+
+		<p class="mt-6 max-w-md text-charcoal/70">
+			The page you were looking for has moved, or never existed.
+		</p>
+
+		<a href="/" class="btn btn-primary mt-10">Back home</a>
+	</section>
+</BaseLayout>
