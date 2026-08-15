@@ -24,12 +24,19 @@ export const SITE = {
   email: 'work@wellworncreative.com',
 
   /**
-   * Default social share image, relative to /public.
-   * Leave empty until the asset exists — BaseLayout omits the og:image
-   * tags entirely rather than publishing a broken reference.
-   * Recommended: 1200×630, place at public/images/brand/og-default.jpg
+   * Default social share image, relative to /public. Resolved against `url`
+   * into an absolute href — scrapers reject relative og:image values.
+   * Set to '' to omit the image tags entirely rather than publish a broken
+   * reference; BaseLayout downgrades the X card to `summary` in that case.
+   *
+   * 1200×630 is the Open Graph / X large-card standard. The dimensions below
+   * are advertised to scrapers so they can reserve layout before the file
+   * downloads, so any per-page `image` override must match them.
    */
-  ogImage: '',
+  ogImage: '/og-image.jpg',
+  ogImageWidth: 1200,
+  ogImageHeight: 630,
+  ogImageAlt: 'WELLWORN — design, development, photography.',
 } as const
 
 /**
