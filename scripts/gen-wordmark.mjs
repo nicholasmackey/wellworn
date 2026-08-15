@@ -260,12 +260,15 @@ const FRAME_CENTRELINE = '${FRAME_CENTRELINE}'
 </svg>
 
 <style>
-	/* One dash the full length of the centreline path, overshoot included.
-	   \`pathLength\` would avoid the arithmetic but is not honoured by every SVG
-	   renderer, so the measured length is used. */
+	/* The dash lives only inside the keyframes, never at rest. A dashed stroke
+	   loses the mitre at whichever corner its seam falls on, which notched the
+	   box's top-left; leaving the stroke undashed once the draw is over makes
+	   the resting corner exact. The seam only exists while the box is drawing,
+	   where it cannot be seen. One dash the full length of the centreline path,
+	   overshoot included — \`pathLength\` would avoid the arithmetic but is not
+	   honoured by every SVG renderer, so the measured length is used. */
 	.frame-wipe {
 		--frame-length: ${FRAME_LENGTH};
-		stroke-dasharray: var(--frame-length);
 		stroke-dashoffset: 0;
 	}
 
@@ -280,9 +283,15 @@ const FRAME_CENTRELINE = '${FRAME_CENTRELINE}'
 		animation: wordmark-wipe var(--dur) cubic-bezier(0.33, 1, 0.68, 1) var(--delay) backwards;
 	}
 
+	/* Both stops carry the dash so it never interpolates towards \`none\`. */
 	@keyframes wordmark-draw {
 		from {
+			stroke-dasharray: var(--frame-length);
 			stroke-dashoffset: var(--frame-length);
+		}
+		to {
+			stroke-dasharray: var(--frame-length);
+			stroke-dashoffset: 0;
 		}
 	}
 
