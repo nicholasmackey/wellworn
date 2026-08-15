@@ -1,0 +1,141 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   WELLWORN — design tokens
+   ========================================================================== */
+
+@theme {
+	/* Brand palette */
+	--color-charcoal: #1f211f;
+	--color-cream: #f3f0e8;
+	--color-forest: #2e4033;
+	--color-stone: #a9a398;
+	--color-rust: #b95f45;
+
+	/* Typefaces. Both are variable fonts self-hosted from Fontsource; the
+	   @font-face rules are imported in BaseLayout.astro. The "Variable"
+	   suffix is part of the family name Fontsource registers — it must match
+	   exactly or the fallback silently wins. */
+	--font-montserrat: 'Montserrat Variable', ui-sans-serif, system-ui, sans-serif;
+	--font-source-sans: 'Source Sans 3 Variable', ui-sans-serif, system-ui, sans-serif;
+
+	--font-display: var(--font-montserrat);
+	--font-sans: var(--font-source-sans);
+
+	/* Brand letter-spacing. Wide tracking on small uppercase type is the
+	   backbone of the architectural/heritage feel — use it deliberately.
+	   Headings get a lighter touch than labels: at display sizes the same
+	   0.14em would read as gappy rather than considered. */
+	--tracking-heading: 0.04em;
+	--tracking-label: 0.14em;
+	--tracking-brand: 0.22em;
+}
+
+/* --------------------------------------------------------------------------
+   Contrast rules — measured against cream (#F3F0E8), keep these honest:
+
+   charcoal on cream .......... 14.4:1   body copy, headings
+   forest  on cream ...........  9.8:1   headings, links, filled panels
+   cream   on charcoal ........ 14.4:1   inverted sections
+   cream   on forest ..........  9.8:1   inverted sections
+   stone   on charcoal ........  6.1:1   secondary text, inverted only
+   rust    on cream ...........  3.9:1   LARGE text (18.66px+ bold / 24px+),
+                                         rules, focus rings, icons — never
+                                         small body copy
+   stone   on cream ...........  2.1:1   FAILS text. Borders and rules only.
+
+   For muted body copy on cream use charcoal at reduced opacity
+   (e.g. text-charcoal/70 ≈ 9:1), not stone.
+   -------------------------------------------------------------------------- */
+
+@layer base {
+	:root {
+		color-scheme: light;
+	}
+
+	html {
+		-webkit-text-size-adjust: 100%;
+		scroll-behavior: smooth;
+		/* Offset anchor jumps so the sticky header never covers a heading. */
+		scroll-padding-top: 6rem;
+	}
+
+	body {
+		@apply bg-cream font-sans text-charcoal antialiased;
+	}
+
+	/* Uppercase is applied in CSS rather than in the markup so the underlying
+	   text stays sentence-case for search engines and screen readers. */
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		@apply font-display font-semibold uppercase tracking-heading;
+		text-wrap: balance;
+	}
+
+	p {
+		text-wrap: pretty;
+	}
+
+	a {
+		color: inherit;
+	}
+
+	:focus-visible {
+		@apply outline-2 outline-offset-2 outline-rust;
+	}
+
+	::selection {
+		@apply bg-forest text-cream;
+	}
+
+	img,
+	picture,
+	video {
+		@apply block max-w-full;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		html {
+			scroll-behavior: auto;
+		}
+
+		*,
+		*::before,
+		*::after {
+			animation-duration: 0.01ms !important;
+			animation-iteration-count: 1 !important;
+			transition-duration: 0.01ms !important;
+			scroll-behavior: auto !important;
+		}
+	}
+}
+
+@layer components {
+	/* Horizontal page shell. One place to change page gutters site-wide. */
+	.wrapper {
+		@apply mx-auto w-full max-w-[80rem] px-6 sm:px-8 lg:px-12;
+	}
+
+	/* Small uppercase label used for eyebrows, nav, and metadata. */
+	.eyebrow {
+		@apply font-display text-xs font-semibold uppercase tracking-label;
+	}
+
+	.btn {
+		@apply inline-flex items-center justify-center gap-2 border px-6 py-3
+			font-display text-xs font-semibold uppercase tracking-label
+			transition-colors duration-200;
+	}
+
+	.btn-primary {
+		@apply border-forest bg-forest text-cream hover:border-charcoal hover:bg-charcoal;
+	}
+
+	.btn-outline {
+		@apply border-charcoal/25 text-charcoal hover:border-charcoal hover:bg-charcoal hover:text-cream;
+	}
+}

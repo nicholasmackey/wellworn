@@ -1,0 +1,91 @@
+---
+type Aspect = '4/5' | '3/2' | '1/1' | '16/9';
+
+interface Props {
+	title: string;
+	/** e.g. "Brand Identity" or "Real Estate Photography". */
+	category?: string;
+	year?: string | number;
+	/** Path under /public, e.g. "/images/projects/example/cover.jpg". */
+	image?: string;
+	/**
+	 * Leave empty when the visible title already describes the image —
+	 * that avoids duplicate announcements for screen reader users.
+	 */
+	imageAlt?: string;
+	href?: string;
+	aspect?: Aspect;
+	/** Set on above-the-fold cards to skip lazy loading. */
+	eager?: boolean;
+	as?: 'h2' | 'h3' | 'h4';
+	class?: string;
+}
+
+const {
+	title,
+	category,
+	year,
+	image,
+	imageAlt = '',
+	href,
+	aspect = '4/5',
+	eager = false,
+	as: Heading = 'h3',
+	class: className = '',
+}: Props = Astro.props;
+
+/* Class strings written out in full so Tailwind can find them in source. */
+const ASPECT_CLASS: Record<Aspect, string> = {
+	'4/5': 'aspect-[4/5]',
+	'3/2': 'aspect-[3/2]',
+	'1/1': 'aspect-square',
+	'16/9': 'aspect-video',
+};
+---
+
+<article class:list={['group relative flex flex-col', className]}>
+	<div class:list={['relative overflow-hidden bg-stone/25', ASPECT_CLASS[aspect]]}>
+		{
+			image ? (
+				<img
+					src={image}
+					alt={imageAlt}
+					loading={eager ? 'eager' : 'lazy'}
+					decoding={eager ? 'sync' : 'async'}
+					fetchpriority={eager ? 'high' : 'auto'}
+					class="h-full w-full object-cover transition-transform duration-700 ease-out motion-safe:group-hover:scale-[1.03]"
+				/>
+			) : (
+				/* Placeholder until artwork is added — no fake imagery. */
+				<div class="h-full w-full border border-charcoal/10" aria-hidden="true" />
+			)
+		}
+	</div>
+
+	<div class="mt-5">
+		{
+			(category || year) && (
+				<p class="eyebrow text-charcoal/60">
+					{category}
+					{category && year && <span aria-hidden="true"> · </span>}
+					{year}
+				</p>
+			)
+		}
+
+		<Heading class="mt-2 text-lg leading-snug text-charcoal sm:text-xl">
+			{
+				href ? (
+					<a
+						href={href}
+						class="after:absolute after:inset-0 after:content-[''] group-hover:text-forest"
+					>
+						{title}
+					</a>
+				) : (
+					title
+				)
+			}
+		</Heading>
+	</div>
+</article>

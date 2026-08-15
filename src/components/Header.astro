@@ -1,0 +1,119 @@
+---
+import { BRAND, NAV, SITE } from '../config/site';
+
+interface Props {
+	/** Extra classes for the outer <header>. */
+	class?: string;
+}
+
+const { class: className = '' }: Props = Astro.props;
+
+const currentPath = Astro.url.pathname;
+
+/** A nav item is current only when it points at a real route, not a fragment. */
+const isCurrent = (href: string): boolean => !href.includes('#') && href === currentPath;
+---
+
+<header
+	class:list={[
+		'sticky top-0 z-50 border-b border-charcoal/10 bg-cream/95 backdrop-blur-sm',
+		className,
+	]}
+>
+	<div class="wrapper flex h-20 items-center justify-between gap-8">
+		<a href="/" class="shrink-0 transition-opacity duration-200 hover:opacity-70">
+			<img
+				src={BRAND.wordmarkDark}
+				alt={SITE.name}
+				width={116}
+				height={28}
+				class="h-6 w-auto sm:h-7"
+			/>
+		</a>
+
+		<nav aria-label="Primary" class="hidden items-center gap-10 md:flex">
+			{
+				NAV.map((item) => (
+					<a
+						href={item.href}
+						aria-current={isCurrent(item.href) ? 'page' : undefined}
+						class="eyebrow text-charcoal/70 transition-colors duration-200 hover:text-charcoal aria-[current=page]:text-charcoal"
+					>
+						{item.label}
+					</a>
+				))
+			}
+			<a href="/#contact" class="btn btn-outline">Get in touch</a>
+		</nav>
+
+		<button
+			type="button"
+			data-nav-toggle
+			aria-expanded="false"
+			aria-controls="mobile-nav"
+			class="-mr-3 inline-flex h-11 w-11 items-center justify-center md:hidden"
+		>
+			<span class="sr-only">Menu</span>
+			<span aria-hidden="true" class="flex w-6 flex-col gap-[6px]">
+				<span class="h-px w-full bg-charcoal"></span>
+				<span class="h-px w-full bg-charcoal"></span>
+			</span>
+		</button>
+	</div>
+
+	<div
+		id="mobile-nav"
+		data-nav-panel
+		hidden
+		class="border-t border-charcoal/10 bg-cream md:hidden"
+	>
+		<nav aria-label="Primary (mobile)" class="wrapper flex flex-col py-4">
+			{
+				NAV.map((item) => (
+					<a
+						href={item.href}
+						aria-current={isCurrent(item.href) ? 'page' : undefined}
+						class="eyebrow border-b border-charcoal/10 py-4 text-charcoal"
+					>
+						{item.label}
+					</a>
+				))
+			}
+			<a href="/#contact" class="btn btn-primary mt-6">Get in touch</a>
+		</nav>
+	</div>
+</header>
+
+<script>
+	const toggle = document.querySelector<HTMLButtonElement>('[data-nav-toggle]');
+	const panel = document.querySelector<HTMLElement>('[data-nav-panel]');
+
+	if (toggle && panel) {
+		const setOpen = (open: boolean): void => {
+			toggle.setAttribute('aria-expanded', String(open));
+			panel.hidden = !open;
+		};
+
+		toggle.addEventListener('click', () => {
+			setOpen(toggle.getAttribute('aria-expanded') !== 'true');
+		});
+
+		// Close after tapping a link — same-page anchors don't trigger navigation.
+		panel.addEventListener('click', (event) => {
+			if ((event.target as HTMLElement).closest('a')) setOpen(false);
+		});
+
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
+				setOpen(false);
+				toggle.focus();
+			}
+		});
+
+		// Reset state if the viewport grows past the mobile breakpoint.
+		const desktop = window.matchMedia('(min-width: 48rem)');
+		desktop.addEventListener('change', (event) => {
+			if (event.matches) setOpen(false);
+		});
+	}
+</script>

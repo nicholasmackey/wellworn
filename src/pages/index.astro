@@ -1,17 +1,55 @@
 ---
-
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ServiceCard from '../components/ServiceCard.astro';
+import { SERVICES } from '../config/site';
+import heroImage from '../assets/photography/real-estate/service-real-estate.jpg';
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<BaseLayout schemaOrg>
+	{/* Temporary hero image, borrowed from the real estate photography set. */}
+	<section
+		class="relative flex min-h-[26rem] items-end overflow-hidden sm:min-h-[32rem] lg:h-[78vh] lg:max-h-[50rem]"
+	>
+		<Image
+			src={heroImage}
+			alt="A modern barn-style home at dusk, its windows lit from within, set against a treeline above a gravel drive."
+			widths={[640, 960, 1280, 1600, 1920, 2560]}
+			sizes="100vw"
+			quality={80}
+			loading="eager"
+			fetchpriority="high"
+			class="absolute inset-0 h-full w-full object-cover"
+		/>
+
+		{/* Scrim keeps the heading legible over the bright sky and lawn. */}
+		<div
+			aria-hidden="true"
+			class="absolute inset-0 bg-gradient-to-t from-charcoal/90 via-charcoal/45 to-charcoal/10"
+		>
+		</div>
+
+		<div class="wrapper relative pt-28 pb-12 lg:pb-20">
+			<h1 class="max-w-4xl text-4xl leading-[1.1] text-cream sm:text-5xl lg:text-6xl">
+				Web design, brand identity, and photography.
+			</h1>
+		</div>
+	</section>
+
+	<section id="services" class="wrapper py-20 lg:py-28" aria-labelledby="services-heading">
+		<h2 id="services-heading" class="eyebrow text-charcoal/60">Services</h2>
+
+		<div class="mt-12 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+			{
+				SERVICES.map((service) => (
+					<ServiceCard
+						index={service.index}
+						title={service.title}
+						description={service.description}
+						items={service.items}
+					/>
+				))
+			}
+		</div>
+	</section>
+</BaseLayout>

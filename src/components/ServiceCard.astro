@@ -1,0 +1,66 @@
+---
+interface Props {
+	title: string;
+	description: string;
+	/** Sequence marker, e.g. "01". Decorative — hidden from assistive tech. */
+	index?: string;
+	/** Optional sub-capabilities listed beneath the description. */
+	items?: readonly string[];
+	/** When set, the whole card becomes one link target. */
+	href?: string;
+	/** Heading level, so the card fits the page outline correctly. */
+	as?: 'h2' | 'h3' | 'h4';
+	class?: string;
+}
+
+const {
+	title,
+	description,
+	index,
+	items = [],
+	href,
+	as: Heading = 'h3',
+	class: className = '',
+}: Props = Astro.props;
+---
+
+<article
+	class:list={[
+		'group relative flex flex-col border-t border-charcoal/20 pt-6 transition-colors duration-300',
+		href && 'hover:border-charcoal',
+		className,
+	]}
+>
+	{
+		index && (
+			<span aria-hidden="true" class="eyebrow mb-6 block text-rust">
+				{index}
+			</span>
+		)
+	}
+
+	<Heading class="text-xl leading-snug text-charcoal sm:text-2xl">
+		{
+			href ? (
+				/* Stretched link: one focusable element covering the card. */
+				<a href={href} class="after:absolute after:inset-0 after:content-['']">
+					{title}
+				</a>
+			) : (
+				title
+			)
+		}
+	</Heading>
+
+	<p class="mt-4 text-charcoal/70">{description}</p>
+
+	{
+		items.length > 0 && (
+			<ul class="mt-6 space-y-2 border-t border-charcoal/10 pt-6">
+				{items.map((item) => (
+					<li class="text-sm text-charcoal/70">{item}</li>
+				))}
+			</ul>
+		)
+	}
+</article>
