@@ -1,0 +1,135 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ContactCta from '../components/ContactCta.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import { DESIGN } from '../config/site';
+
+/**
+ * Case studies. Empty until there is real work to show — the section below
+ * renders the grid when this list has entries and an honest placeholder when
+ * it doesn't, so adding the first project is a data change, not a rebuild.
+ * `image` is a path under /public, e.g. "/images/projects/<name>/cover.jpg".
+ */
+interface Project {
+	readonly title: string;
+	readonly category: string;
+	readonly year?: string;
+	readonly image?: string;
+	readonly imageAlt?: string;
+	readonly href?: string;
+}
+
+const PROJECTS: readonly Project[] = [];
+---
+
+<BaseLayout
+	title="Web design, development, and brand identity"
+	description="Wellworn designs and builds websites and the brand identity behind them, made around how your business works and built to grow with it."
+>
+	<section class="wrapper pt-24 pb-16 lg:pt-32 lg:pb-24">
+		<h1 class="max-w-4xl text-4xl leading-[1.1] sm:text-5xl lg:text-6xl">
+			Your website should work for you.
+		</h1>
+
+		<p class="mt-8 max-w-2xl text-lg leading-relaxed text-charcoal/70 sm:text-xl">
+			Not against you. Not around someone else's system.
+		</p>
+
+		<p class="mt-6 max-w-2xl leading-relaxed text-charcoal/70">
+			Wellworn builds websites around your business, then gives you something you can keep,
+			manage, and grow with.
+		</p>
+	</section>
+
+	{/*
+	  Carries the promise the hero just made rather than restarting under a
+	  label, so the statement itself is the heading. `normal-case` and the body
+	  face keep it reading as a sentence: every other h2 on the site is a short
+	  uppercase label, and this one is neither.
+	*/}
+	<section class="bg-charcoal text-cream" aria-labelledby="grow-heading">
+		<div class="wrapper py-20 lg:py-28">
+			<div class="grid gap-10 lg:grid-cols-12 lg:gap-16">
+				<h2
+					id="grow-heading"
+					class="font-sans text-xl leading-snug font-normal normal-case tracking-normal lg:col-span-5 sm:text-2xl"
+				>
+					Made for where you are now. Built for where you're going.
+				</h2>
+
+				<div class="space-y-6 leading-relaxed text-cream/80 lg:col-span-6 lg:col-start-7">
+					<p>Your business will change. Your website should be able to change with it.</p>
+					<p>
+						We handle the identity, design, and development together so the finished site
+						feels complete from day one, without boxing you into what you needed on day one.
+					</p>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	{/*
+	  Every service lives on this page, anchored by slug — the structured data
+	  links straight to these ids. `scroll-padding-top` in global.css keeps the
+	  sticky header clear of the heading.
+	*/}
+	<section class="wrapper py-20 lg:py-28" aria-labelledby="services-heading">
+		<h2 id="services-heading" class="eyebrow text-charcoal/60">Services</h2>
+
+		<div class="mt-12 space-y-16 lg:space-y-24">
+			{
+				DESIGN.services.map((service) => (
+					<article id={service.slug} class="border-t border-charcoal/40 pt-8">
+						{/* Every design service carries a headline; the plain `title` is
+						    what the homepage list and the structured data use. */}
+						<h3 class="max-w-2xl text-2xl leading-snug sm:text-3xl">{service.headline}</h3>
+
+						<p class="mt-5 max-w-xl text-lg leading-relaxed text-charcoal/70">
+							{service.description}
+						</p>
+
+						{/* Two rows per cell, subgridded, so a label that wraps onto a
+						    second line pushes every note in its row down together. */}
+						<dl class="mt-12 grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
+							{service.items.map((item) => (
+								<div class="grid grid-rows-subgrid row-span-2 gap-y-0 border-t border-charcoal/20 pt-4">
+									<dt class="eyebrow text-charcoal">{item.label}</dt>
+									<dd class="mt-3 text-sm leading-relaxed text-charcoal/70">{item.note}</dd>
+								</div>
+							))}
+						</dl>
+					</article>
+				))
+			}
+		</div>
+	</section>
+
+	{/* No placeholder: the section stays out of the page until there is work in
+	    it, rather than explaining its own absence. */}
+	{
+		PROJECTS.length > 0 && (
+			<section class="wrapper pb-20 lg:pb-28" aria-labelledby="work-heading">
+				<div class="border-t border-charcoal/40 pt-8">
+					<h2 id="work-heading" class="eyebrow text-charcoal/60">
+						Selected work
+					</h2>
+
+					<div class="mt-12 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+						{PROJECTS.map((project) => (
+							<ProjectCard
+								title={project.title}
+								category={project.category}
+								year={project.year}
+								image={project.image}
+								imageAlt={project.imageAlt}
+								href={project.href}
+							/>
+						))}
+					</div>
+				</div>
+			</section>
+		)
+	}
+
+	<ContactCta heading="Build something worth keeping." body="Tell us what you're working on." />
+</BaseLayout>

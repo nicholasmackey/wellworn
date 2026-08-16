@@ -9,10 +9,17 @@ interface Props {
 
 const { class: className = '' }: Props = Astro.props;
 
-const currentPath = Astro.url.pathname;
+/**
+ * Trailing slashes differ between the nav hrefs ("/design") and the pathname
+ * the built directory-format page is served at ("/design/"), so both sides are
+ * stripped before comparing — otherwise nothing ever matches.
+ */
+const normalize = (path: string): string => path.replace(/\/+$/, '') || '/';
+
+const currentPath = normalize(Astro.url.pathname);
 
 /** A nav item is current only when it points at a real route, not a fragment. */
-const isCurrent = (href: string): boolean => !href.includes('#') && href === currentPath;
+const isCurrent = (href: string): boolean => !href.includes('#') && normalize(href) === currentPath;
 ---
 
 <header

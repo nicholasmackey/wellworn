@@ -138,4 +138,14 @@
 	.btn-outline {
 		@apply border-charcoal/25 text-charcoal hover:border-charcoal hover:bg-charcoal hover:text-cream;
 	}
+
+	/* Inverted pair, for the charcoal and forest panels. The cream fill stands
+	   in for btn-primary there — forest on forest would disappear. */
+	.btn-cream {
+		@apply border-cream bg-cream text-charcoal hover:border-stone hover:bg-stone;
+	}
+
+	.btn-outline-cream {
+		@apply border-cream/30 text-cream hover:border-cream hover:bg-cream hover:text-charcoal;
+	}
 }

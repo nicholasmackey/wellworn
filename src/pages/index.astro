@@ -1,8 +1,7 @@
 ---
 import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import ServiceCard from '../components/ServiceCard.astro';
-import { SERVICES } from '../config/site';
+import { DISCIPLINES } from '../config/site';
 import heroImage from '../assets/photography/real-estate/service-real-estate.jpg';
 ---
 
@@ -31,23 +30,57 @@ import heroImage from '../assets/photography/real-estate/service-real-estate.jpg
 
 		<div class="wrapper relative pt-28 pb-12 lg:pb-20">
 			<h1 class="max-w-4xl text-4xl leading-[1.1] text-cream sm:text-5xl lg:text-6xl">
-				Web design, brand identity, and photography.
+				Design, development, and photography.
 			</h1>
+
+			<p class="mt-6 max-w-xl text-lg leading-relaxed text-cream/80 sm:text-xl">
+				Wellworn is an independent studio working across websites, brand identity, and
+				photography.
+			</p>
 		</div>
 	</section>
 
+	{/*
+	  Two disciplines. The discipline heading is the only link in the block —
+	  the list beside it names what that page covers rather than pointing at
+	  routes of its own, and the page itself does the explaining.
+	*/}
 	<section id="services" class="wrapper py-20 lg:py-28" aria-labelledby="services-heading">
 		<h2 id="services-heading" class="eyebrow text-charcoal/60">Services</h2>
 
-		<div class="mt-12 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+		{/* Both halves hang from the one rule above rather than each carrying its
+		    own at a different height. */}
+		<div class="mt-12 space-y-16 lg:mt-16 lg:space-y-24">
 			{
-				SERVICES.map((service) => (
-					<ServiceCard
-						index={service.index}
-						title={service.title}
-						description={service.description}
-						items={service.items}
-					/>
+				DISCIPLINES.map((discipline) => (
+					<div class="grid gap-x-8 gap-y-8 border-t border-charcoal/40 pt-8 lg:grid-cols-12">
+						<div class="lg:col-span-5">
+							<h3 class="text-3xl leading-none sm:text-4xl">
+								<a
+									href={discipline.href}
+									class="group inline-flex items-baseline gap-3 transition-colors duration-200 hover:text-forest"
+								>
+									{discipline.title}
+									<span
+										aria-hidden="true"
+										class="inline-block text-rust transition-transform duration-200 group-hover:translate-x-1"
+									>
+										→
+									</span>
+								</a>
+							</h3>
+
+							<p class="mt-5 max-w-sm text-charcoal/70">{discipline.description}</p>
+						</div>
+
+						<ul class="lg:col-span-6 lg:col-start-7">
+							{discipline.services.map((service) => (
+								<li class="border-t border-charcoal/10 py-4 text-lg text-charcoal/70 first:border-t-0 first:pt-0">
+									{service.title}
+								</li>
+							))}
+						</ul>
+					</div>
 				))
 			}
 		</div>

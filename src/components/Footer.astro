@@ -1,5 +1,5 @@
 ---
-import { BRAND, SERVICES, SITE } from '../config/site';
+import { BRAND, NAV, SITE } from '../config/site';
 
 interface Props {
 	class?: string;
@@ -12,8 +12,8 @@ const year = new Date().getFullYear();
 
 <footer class:list={['bg-charcoal text-cream', className]}>
 	<div class="wrapper py-16 lg:py-24">
-		<div class="grid gap-12 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
-			<div class="lg:col-span-2">
+		<div class="grid gap-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+			<div class="sm:col-span-2">
 				<a href="/" class="inline-block transition-opacity duration-200 hover:opacity-70">
 					<img
 						src={BRAND.wordmarkLight}
@@ -25,42 +25,36 @@ const year = new Date().getFullYear();
 						class="h-8 w-auto sm:h-9"
 					/>
 				</a>
-				<p class="mt-6 max-w-sm text-stone">
-					Web design and development, brand identity, and photography.
-				</p>
+				<p class="mt-6 max-w-sm text-stone">Design, development, and photography.</p>
 			</div>
 
-			<div>
-				<h2 class="eyebrow text-stone">Services</h2>
-				<ul class="mt-6 space-y-3">
+			{/* The same two destinations as the header, without the services
+			    beneath them: those are the discipline pages' job to explain. */}
+			<nav aria-label="Footer">
+				<ul class="space-y-3">
 					{
-						SERVICES.map((service) => (
+						NAV.map((item) => (
 							<li>
 								<a
-									href="/#services"
+									href={item.href}
 									class="text-cream/90 transition-colors duration-200 hover:text-cream"
 								>
-									{service.title}
+									{item.label}
 								</a>
 							</li>
 						))
 					}
 				</ul>
-			</div>
+			</nav>
 
 			{/*
 			  The target every "Get in touch" CTA scrolls to. Anchor offset comes
 			  from `scroll-padding-top` in global.css, so the sticky header never
-			  covers the heading. A "Navigate" list used to sit above this; with
-			  Services as the only nav item it just repeated the column alongside,
-			  so it was dropped rather than shipped as a one-entry duplicate.
+			  covers the heading.
 			*/}
 			<section id="contact" aria-labelledby="contact-heading">
-				<h2 id="contact-heading" class="eyebrow text-stone">Contact</h2>
-				<p class="mt-6 text-stone">
-					For new work, quotes, and everything else, email us and we'll get back to you.
-				</p>
-				<p class="mt-4">
+				<h2 id="contact-heading" class="eyebrow text-stone">Have a project?</h2>
+				<p class="mt-6">
 					<a
 						href={`mailto:${SITE.email}`}
 						class="text-cream underline decoration-stone/60 underline-offset-4 transition-colors duration-200 hover:decoration-cream"
@@ -71,13 +65,10 @@ const year = new Date().getFullYear();
 			</section>
 		</div>
 
-		<div
-			class="mt-16 flex flex-col gap-2 border-t border-cream/15 pt-8 sm:flex-row sm:items-center sm:justify-between"
-		>
+		<div class="mt-16 border-t border-cream/15 pt-8">
 			{/* Kept on one line: a newline between two expressions is stripped as
 			    JSX-style whitespace, which would run the year into the name. */}
 			<p class="eyebrow text-stone">&copy; {year} {SITE.name}</p>
-			<p class="eyebrow text-stone">All rights reserved</p>
 		</div>
 	</div>
 </footer>
