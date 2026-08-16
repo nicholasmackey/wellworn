@@ -1,5 +1,5 @@
 ---
-import { CONTACT_HREF, NAV } from '../config/site';
+import { CONTACT_HREF } from '../config/site';
 import Wordmark from './Wordmark.astro';
 
 interface Props {
@@ -8,137 +8,34 @@ interface Props {
 }
 
 const { class: className = '' }: Props = Astro.props;
-
-/**
- * Trailing slashes differ between the nav hrefs ("/design") and the pathname
- * the built directory-format page is served at ("/design/"), so both sides are
- * stripped before comparing — otherwise nothing ever matches.
- */
-const normalize = (path: string): string => path.replace(/\/+$/, '') || '/';
-
-const currentPath = normalize(Astro.url.pathname);
-
-/** A nav item is current only when it points at a real route, not a fragment. */
-const isCurrent = (href: string): boolean => !href.includes('#') && normalize(href) === currentPath;
 ---
 
+{/*
+  There is one page and one destination, so there is no primary nav and
+  nothing for a mobile menu to hold: the wordmark goes home, the button goes
+  to the form. The collapsing panel and the script that drove it came out
+  with the discipline pages.
+*/}
 <header
 	class:list={[
 		'sticky top-0 z-50 border-b border-charcoal/10 bg-cream/95 backdrop-blur-sm',
 		className,
 	]}
 >
-	<div class="wrapper flex h-20 items-center justify-between gap-8">
+	<div class="wrapper flex h-20 items-center justify-between gap-4 sm:gap-8">
 		<a href="/" class="shrink-0 transition-opacity duration-200 hover:opacity-70">
-			<Wordmark animate class="h-9 w-auto text-charcoal sm:h-10" />
+			<Wordmark animate class="h-8 w-auto text-charcoal sm:h-10" />
 		</a>
 
-		<nav aria-label="Primary" class="hidden items-center gap-10 md:flex">
-			{
-				NAV.map((item) => (
-					<a
-						href={item.href}
-						aria-current={isCurrent(item.href) ? 'page' : undefined}
-						class="eyebrow text-charcoal/70 transition-colors duration-200 hover:text-charcoal aria-[current=page]:text-charcoal"
-					>
-						{item.label}
-					</a>
-				))
-			}
-			<a href={CONTACT_HREF} class="btn btn-outline">Get in touch</a>
-		</nav>
-
-		<button
-			type="button"
-			data-nav-toggle
-			aria-expanded="false"
-			aria-controls="mobile-nav"
-			class="group -mr-3 inline-flex h-11 w-11 items-center justify-center md:hidden"
+		{/* The same primary control as the hero CTA, inverted for the cream
+		    header: charcoal fill here, cream fill there. It used to be an outline
+		    button, which made the site's one destination look like two different
+		    offers depending on where you happened to see it. */}
+		{/* Full px-7 overflows a 320px screen once the wordmark is beside it, so
+		    the side padding (and only the side padding) is trimmed below 360px.
+		    Height, fill and radius stay identical to every other primary. */}
+		<a href={CONTACT_HREF} class="btn btn-primary shrink-0 px-4 min-[360px]:px-7"
+			>Get in touch</a
 		>
-			<span class="sr-only">Menu</span>
-			{/* Two bars that meet in the middle and cross into an X when open. */}
-			<span aria-hidden="true" class="relative block h-[7px] w-6">
-				<span
-					class="absolute inset-x-0 top-0 h-px bg-charcoal transition-transform duration-200 group-aria-expanded:translate-y-[3px] group-aria-expanded:rotate-45"
-				></span>
-				<span
-					class="absolute inset-x-0 bottom-0 h-px bg-charcoal transition-transform duration-200 group-aria-expanded:-translate-y-[3px] group-aria-expanded:-rotate-45"
-				></span>
-			</span>
-		</button>
-	</div>
-
-	{/*
-	  Collapsed with grid-template-rows 0fr -> 1fr so the panel animates to its
-	  natural height without hard-coding one. `hidden` can't be used here — it
-	  would skip the transition — so the closed panel is made `inert` instead,
-	  which takes it out of the tab order and the accessibility tree.
-
-	  The middle div only exists to collapse. `min-h-0` clears the automatic
-	  minimum an fr row would otherwise floor at, but padding and borders are
-	  not part of what it lets shrink, so all spacing has to sit on the <nav>
-	  inside it — otherwise the closed panel keeps padding a stripe of height
-	  onto the header.
-	*/}
-	<div
-		id="mobile-nav"
-		data-nav-panel
-		inert
-		class="grid grid-rows-[0fr] overflow-hidden bg-cream opacity-0 transition-[grid-template-rows,opacity] duration-200 md:hidden data-[open]:grid-rows-[1fr] data-[open]:opacity-100"
-	>
-		<div class="min-h-0">
-			<nav
-				aria-label="Primary (mobile)"
-				class="wrapper flex flex-col border-t border-charcoal/10 py-4"
-			>
-				{
-					NAV.map((item) => (
-						<a
-							href={item.href}
-							aria-current={isCurrent(item.href) ? 'page' : undefined}
-							class="eyebrow border-b border-charcoal/10 py-4 text-charcoal"
-						>
-							{item.label}
-						</a>
-					))
-				}
-				<a href={CONTACT_HREF} class="btn btn-primary mt-6">Get in touch</a>
-			</nav>
-		</div>
 	</div>
 </header>
-
-<script>
-	const toggle = document.querySelector<HTMLButtonElement>('[data-nav-toggle]');
-	const panel = document.querySelector<HTMLElement>('[data-nav-panel]');
-
-	if (toggle && panel) {
-		const setOpen = (open: boolean): void => {
-			toggle.setAttribute('aria-expanded', String(open));
-			panel.toggleAttribute('data-open', open);
-			panel.inert = !open;
-		};
-
-		toggle.addEventListener('click', () => {
-			setOpen(toggle.getAttribute('aria-expanded') !== 'true');
-		});
-
-		// Close after tapping a link — same-page anchors don't trigger navigation.
-		panel.addEventListener('click', (event) => {
-			if ((event.target as HTMLElement).closest('a')) setOpen(false);
-		});
-
-		document.addEventListener('keydown', (event) => {
-			if (event.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
-				setOpen(false);
-				toggle.focus();
-			}
-		});
-
-		// Reset state if the viewport grows past the mobile breakpoint.
-		const desktop = window.matchMedia('(min-width: 48rem)');
-		desktop.addEventListener('change', (event) => {
-			if (event.matches) setOpen(false);
-		});
-	}
-</script>

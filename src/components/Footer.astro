@@ -1,5 +1,5 @@
 ---
-import { BRAND, NAV, SITE } from '../config/site';
+import { BRAND, SITE } from '../config/site';
 
 interface Props {
 	class?: string;
@@ -10,7 +10,12 @@ const { class: className = '' }: Props = Astro.props;
 const year = new Date().getFullYear();
 ---
 
-<footer class:list={['bg-charcoal text-cream', className]}>
+{/*
+  The rust rule is what separates the footer from the contact panel above it,
+  which is charcoal now too. One hairline does the job the old forest band
+  was doing, and it is the same accent that opens the sections upstairs.
+*/}
+<footer class:list={['border-t border-stone/40 bg-charcoal text-cream', className]}>
 	<div class="wrapper py-16 lg:py-24">
 		<div class="grid gap-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
 			<div class="sm:col-span-2">
@@ -25,39 +30,20 @@ const year = new Date().getFullYear();
 						class="h-8 w-auto sm:h-9"
 					/>
 				</a>
-				<p class="mt-6 max-w-sm text-stone">Design, development, and photography.</p>
+				<p class="mt-6 max-w-sm text-stone">Web design and development.</p>
 			</div>
 
-			{/* The same two destinations as the header, without the services
-			    beneath them: those are the discipline pages' job to explain. */}
-			<nav aria-label="Footer">
-				<ul class="space-y-3">
-					{
-						NAV.map((item) => (
-							<li>
-								<a
-									href={item.href}
-									class="text-cream/90 transition-colors duration-200 hover:text-cream"
-								>
-									{item.label}
-								</a>
-							</li>
-						))
-					}
-				</ul>
-			</nav>
-
 			{/*
-			  The target every "Get in touch" CTA scrolls to. Anchor offset comes
-			  from `scroll-padding-top` in global.css, so the sticky header never
-			  covers the heading.
+			  Not the #contact target any more: that is the homepage form, which
+			  every CTA now scrolls to. This is the plain email address, for
+			  anyone who would rather not use a form.
 			*/}
-			<section id="contact" aria-labelledby="contact-heading">
-				<h2 id="contact-heading" class="eyebrow text-stone">Have a project?</h2>
+			<section aria-labelledby="footer-contact-heading" class="lg:col-start-4">
+				<h2 id="footer-contact-heading" class="eyebrow text-stone">Have a project?</h2>
 				<p class="mt-6">
 					<a
 						href={`mailto:${SITE.email}`}
-						class="text-cream underline decoration-stone/60 underline-offset-4 transition-colors duration-200 hover:decoration-cream"
+						class="text-cream underline decoration-stone/60 underline-offset-4 transition-colors duration-200 hover:decoration-rust"
 					>
 						{SITE.email}
 					</a>

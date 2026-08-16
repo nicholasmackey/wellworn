@@ -1,18 +1,58 @@
 ---
 import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { DISCIPLINES } from '../config/site';
-import heroImage from '../assets/photography/real-estate/service-real-estate.jpg';
+import {
+	CAPABILITIES,
+	CONTACT_HREF,
+	FORM_ENDPOINT,
+	PROCESS,
+	PROJECTS,
+	PROJECT_TYPES,
+	WHY_WELLWORN,
+} from '../config/site';
+// The hero video's opening frame, pulled from hero.mp4 itself. Being frame one
+// is the point: it is what the video paints anyway, so there is no cut when
+// playback starts, and reduced-motion visitors get the same scene everyone
+// else does rather than an unrelated photograph.
+import heroImage from '../assets/hero-poster.jpg';
+// One photograph per section, each carrying the argument its section is making
+// rather than decorating it: the shopkeeper for the trust case, the two of them
+// over a laptop for the discovery step, the baker for the range of businesses
+// this is built for.
+import customerImage from '../assets/customer.jpg';
+import bakeryImage from '../assets/bakery.jpg';
+import figureItOutImage from '../assets/figure-it-out.jpg';
+
+/**
+ * With no endpoint the form would post to the page itself, which a static host
+ * answers with a 404 and the visitor's message is gone. Better to render the
+ * form and hold the button than to swallow a lead.
+ */
+const formConfigured = FORM_ENDPOINT.length > 0;
+
+/** 01, 02, 03 rather than 1, 2, 3: the numbers read as a set that way. */
+const ordinal = (index: number): string => String(index + 1).padStart(2, '0');
 ---
 
-<BaseLayout schemaOrg>
-	{/* Temporary hero image, borrowed from the real estate photography set. */}
+<BaseLayout
+	schemaOrg
+	description="Wellworn designs and builds websites, web applications, and online stores for businesses that want to look established and easy to say yes to."
+>
+	{/* min-h, not a fixed h: the hero has to be free to grow past 78vh on short
+	    laptop viewports, or overflow-hidden crops the CTA off the bottom. */}
 	<section
-		class="relative flex min-h-[26rem] items-end overflow-hidden sm:min-h-[32rem] lg:h-[78vh] lg:max-h-[50rem]"
+		class="relative flex min-h-[26rem] items-end overflow-hidden sm:min-h-[32rem] lg:min-h-[min(78vh,50rem)]"
 	>
+		{/*
+		  The still sits under the video rather than in the video's poster
+		  attribute, which buys two things a poster cannot: a responsive srcset,
+		  and a real element for the browser to treat as the LCP candidate while
+		  the (large) video is still arriving. It is also the whole picture for
+		  reduced-motion visitors, so it keeps its alt text.
+		*/}
 		<Image
 			src={heroImage}
-			alt="A modern barn-style home at dusk, its windows lit from within, set against a treeline above a gravel drive."
+			alt="Two shopkeepers at a work table in a sunlit clothing store, sorting stock beside a laptop and a rail of garments."
 			widths={[640, 960, 1280, 1600, 1920, 2560]}
 			sizes="100vw"
 			quality={80}
@@ -21,68 +61,485 @@ import heroImage from '../assets/photography/real-estate/service-real-estate.jpg
 			class="absolute inset-0 h-full w-full object-cover"
 		/>
 
-		{/* Scrim keeps the heading legible over the bright sky and lawn. */}
+		{/*
+		  Decorative, so it is hidden from assistive tech and taken out of the tab
+		  order. The media attribute on the source is the reduced-motion fallback:
+		  when the query does not match, resource selection finds no playable
+		  source and the still above is simply never covered, so the file is not
+		  fetched at all. global.css hides the element under the same query as a
+		  second line of defence, for engines that ignore source media.
+
+		  The clip is 4096x2160 (1.9:1) and the hero box crosses that ratio, so the
+		  crop changes direction with the viewport: a 1440x900 desktop makes the
+		  box 2.05:1 and trims about 8% off the top and bottom, while a tablet
+		  trims ~15% off the sides and a 390px phone keeps only the middle ~39% of
+		  the frame. Centre is the one anchor that stays sensible through all
+		  three, since the subject sits mid-frame. If the footage is ever recut
+		  with the subject off-centre, this is the knob to turn.
+		*/}
+		<video
+			class="hero-video absolute inset-0 h-full w-full object-cover object-center"
+			autoplay
+			muted
+			loop
+			playsinline
+			preload="metadata"
+			aria-hidden="true"
+			tabindex="-1"
+			disablepictureinpicture
+		>
+			<source src="/hero.mp4" type="video/mp4" media="(prefers-reduced-motion: no-preference)" />
+		</video>
+
+		{/*
+		  Two scrim layers rather than one. A flat tint first, because a moving
+		  frame can go bright anywhere and a purely bottom-weighted gradient
+		  leaves the upper half unprotected; then the gradient on top of it to
+		  bank the density where the copy actually sits. Together they land at
+		  roughly 92% charcoal behind the text, which holds cream above 10:1
+		  against even a blown-out frame, and stay light enough at the top that
+		  the footage still reads.
+		*/}
+		<div aria-hidden="true" class="absolute inset-0 bg-charcoal/25"></div>
 		<div
 			aria-hidden="true"
-			class="absolute inset-0 bg-gradient-to-t from-charcoal/90 via-charcoal/45 to-charcoal/10"
+			class="absolute inset-0 bg-gradient-to-t from-charcoal/90 via-charcoal/50 to-charcoal/10"
 		>
 		</div>
 
 		<div class="wrapper relative pt-28 pb-12 lg:pb-20">
-			<h1 class="max-w-4xl text-4xl leading-[1.1] text-cream sm:text-5xl lg:text-6xl">
-				Design, development, and photography.
+			{/*
+			  Russo One, regular, 88px/80px at full width, stepping down to 40px on
+			  phones. The 0.9091 ratio holds the same tight block at every size.
+			  The .display class carries the weight and tracking resets that Russo
+			  One needs; the size ladder stays here because the hero is the one
+			  place on the page that runs past the section scale.
+
+			  The three spans are the designed line breaks. They only go block from
+			  lg up, where the longest of them (868px at 72px, 1060px at 88px) fits
+			  the wrapper's inner width (928px, then 1184px); below that the line
+			  wraps on its own rather than being forced into an overflow.
+			*/}
+			<h1
+				class="display text-[2.5rem] leading-[0.9091] text-cream sm:text-[3.25rem] md:text-[4rem] lg:text-[4.5rem] xl:text-[5.5rem]"
+			>
+				<span class="lg:block">Websites for people</span>{' '}
+				<span class="lg:block">who take business</span>{' '}
+				<span class="lg:block">seriously.</span>
 			</h1>
 
-			<p class="mt-6 max-w-xl text-lg leading-relaxed text-cream/80 sm:text-xl">
-				Wellworn is an independent studio working across websites, brand identity, and
-				photography.
+			{/* Montserrat medium, topping out at 24px/33.6px (1.4). Uppercased in
+			    CSS, like the headings, so the sentence stays sentence-case for
+			    screen readers and search engines. The ladder stops at md: the
+			    headline should land first and this should resolve a beat later,
+			    which it does not do if it keeps growing alongside it. */}
+			<p
+				class="mt-6 max-w-3xl font-display text-lg leading-[1.4] font-medium tracking-heading text-cream/80 uppercase sm:text-xl md:text-2xl lg:mt-8"
+			>
+				Look more established, make a stronger first impression, and turn visitors into
+				customers.
 			</p>
+
+			{/* Held a step further off the copy than the copy is off the headline,
+			    so the CTA reads as its own beat rather than the end of the
+			    paragraph. */}
+			<a href={CONTACT_HREF} class="btn btn-cream mt-12 lg:mt-14">Start a project</a>
 		</div>
 	</section>
 
 	{/*
-	  Two disciplines. The discipline heading is the only link in the block —
-	  the list beside it names what that page covers rather than pointing at
-	  routes of its own, and the page itself does the explaining.
+	  Selected work. Screenshots do the talking, so each project gets one
+	  large image and a numbered caption under a hairline rule. The whole
+	  section stays out of the page until PROJECTS has entries rather than
+	  showing empty frames.
 	*/}
-	<section id="services" class="wrapper py-20 lg:py-28" aria-labelledby="services-heading">
-		<h2 id="services-heading" class="eyebrow text-charcoal/60">Services</h2>
+	{
+		PROJECTS.length > 0 && (
+			<section id="work" class="wrapper py-24 lg:py-36" aria-labelledby="work-heading">
+				{/* Heading, then the line that supports it directly underneath. Body
+				    copy belongs under the heading it answers to, not out in a column
+				    beside it, so this block reads top to bottom at every width and
+				    the measure is held by max-w-2xl rather than by a grid column.
 
-		{/* Both halves hang from the one rule above rather than each carrying its
-		    own at a different height. */}
-		<div class="mt-12 space-y-16 lg:mt-16 lg:space-y-24">
-			{
-				DISCIPLINES.map((discipline) => (
-					<div class="grid gap-x-8 gap-y-8 border-t border-charcoal/40 pt-8 lg:grid-cols-12">
-						<div class="lg:col-span-5">
-							<h3 class="text-3xl leading-none sm:text-4xl">
-								<a
-									href={discipline.href}
-									class="group inline-flex items-baseline gap-3 transition-colors duration-200 hover:text-forest"
-								>
-									{discipline.title}
-									<span
-										aria-hidden="true"
-										class="inline-block text-rust transition-transform duration-200 group-hover:translate-x-1"
-									>
-										→
-									</span>
-								</a>
+				    The rule above them is what opens the section — on cream there is
+				    no change of ground to do that job — and it is rust, which is what
+				    makes it read as the start of something rather than as one more
+				    grey hairline. */}
+				<div class="grid gap-y-6 border-t border-rust pt-10 lg:pt-14">
+					<h2 id="work-heading" class="display display-section">See for yourself.</h2>
+
+					<p class="max-w-2xl text-lg leading-relaxed text-charcoal/70 sm:text-xl">
+						A few websites we've designed, built, and put to work.
+					</p>
+				</div>
+
+				<div class="mt-16 space-y-20 lg:mt-24 lg:space-y-32">
+					{PROJECTS.map((project, index) => (
+						<article class="group">
+							{/* 16/10 is the shape of a desktop browser screenshot. The
+							    frame keeps its height whether or not the file has
+							    loaded, so nothing below it jumps. */}
+							<div class="relative aspect-[16/10] overflow-hidden bg-stone/25">
+								{project.image ? (
+									<img
+										src={project.image}
+										alt={project.imageAlt ?? ''}
+										width={project.imageWidth}
+										height={project.imageHeight}
+										loading={index === 0 ? 'eager' : 'lazy'}
+										decoding="async"
+										class="h-full w-full object-cover object-top transition-transform duration-700 ease-out motion-safe:group-hover:scale-[1.02]"
+									/>
+								) : (
+									<div class="h-full w-full border border-charcoal/10" aria-hidden="true" />
+								)}
+							</div>
+
+							<div class="mt-8 grid gap-x-8 gap-y-3 border-t border-charcoal/40 pt-6 sm:grid-cols-[auto_1fr] lg:gap-x-12">
+								<p class="display text-[1.75rem] text-rust sm:pt-1 lg:text-[2.25rem]">
+									{ordinal(index)}
+								</p>
+
+								<div>
+									<h3 class="text-2xl leading-snug sm:text-3xl">
+										{project.href ? (
+											<a
+												href={project.href}
+												rel="noopener"
+												class="transition-colors duration-200 group-hover:text-rust"
+											>
+												{project.title}
+											</a>
+										) : (
+											project.title
+										)}
+									</h3>
+
+									<p class="mt-4 max-w-2xl text-lg leading-relaxed text-charcoal/70">
+										{project.summary}
+									</p>
+								</div>
+							</div>
+						</article>
+					))}
+				</div>
+			</section>
+		)
+	}
+
+	{/*
+	  Why Wellworn. Not four equal columns: the heading and its line hold a
+	  column of their own and stay put while the four points scroll past them.
+	  The points are a single stack on hairlines, numbered in rust, so the
+	  section reads as an argument being made rather than a set of tiles.
+	*/}
+	<section id="why" class="wrapper py-24 lg:py-36" aria-labelledby="why-heading">
+		<div
+			class="grid gap-y-14 border-charcoal/20 pt-10 lg:grid-cols-12 lg:gap-x-12 lg:pt-14"
+		>
+			{/* self-start keeps the grid item from stretching, which is what lets
+			    sticky have anywhere to travel. top-32 clears the 5rem header. */}
+			<div class="lg:sticky lg:top-32 lg:col-span-5 lg:self-start">
+				<h2 id="why-heading" class="display display-section">
+					<span class="lg:block">Your website</span>{' '}
+					<span class="lg:block">has a job</span>{' '}
+					<span class="lg:block">to do.</span>
+				</h2>
+
+				<p class="mt-8 max-w-md text-lg leading-relaxed text-charcoal/70 sm:text-xl">
+					Looking good is part of it. So is earning trust, making your business easy to
+					understand, and giving people a reason to choose you.
+				</p>
+
+				{/* The section argues that a website has to earn trust, so the picture
+				    under it is trust being earned in person. Native 3:2, so nothing
+				    is cropped away. max-w-md ties it to the measure of the paragraph
+				    above rather than letting it run the full column. */}
+				<Image
+					src={customerImage}
+					alt="A shop owner in an apron talking a customer through the shelves of her gift shop."
+					widths={[400, 600, 800, 1200]}
+					sizes="(min-width: 1024px) 28rem, 100vw"
+					width={1200}
+					height={800}
+					quality={80}
+					class="mt-10 aspect-[3/2] w-full max-w-md rounded-sm object-cover"
+				/>
+			</div>
+
+			<ol class="border-b border-charcoal/20 lg:col-span-6 lg:col-start-7">
+				{
+					WHY_WELLWORN.map((point, index) => (
+						<li class="grid grid-cols-[2.75rem_1fr] gap-x-5 border-t border-charcoal/20 py-8 lg:grid-cols-[4rem_1fr] lg:gap-x-8 lg:py-10">
+							{/* The numbers are the page's clearest run of the accent. Rust
+							    clears contrast as large text, which this is at both sizes,
+							    and never has to carry anything smaller. */}
+							<p class="display text-[1.75rem] text-rust lg:text-[2.25rem]">{ordinal(index)}</p>
+
+							<div>
+								<h3 class="text-xl leading-snug sm:text-2xl">{point.title}</h3>
+								<p class="mt-3 leading-relaxed text-charcoal/70 sm:text-lg">{point.body}</p>
+							</div>
+						</li>
+					))
+				}
+			</ol>
+		</div>
+	</section>
+
+	{/*
+	  What we do. An index of capabilities rather than four feature cards:
+	  one rule per row, the name set large and the line that explains it
+	  directly beneath it. Inverted so it carries weight between two cream
+	  sections — the change of ground is what announces it.
+	*/}
+	<section id="services" class="bg-charcoal text-cream" aria-labelledby="services-heading">
+		<div class="wrapper py-24 lg:py-36">
+			{/* Heading, then its line underneath. The same opening move as the work
+			    and contact sections — what makes the three read differently is what
+			    comes under it. */}
+			<div class="grid gap-y-6">
+				<h2 id="services-heading" class="display display-section">
+					<span class="lg:block">Whatever your</span>{' '}
+					<span class="lg:block">business needs next.</span>
+				</h2>
+
+				<p class="max-w-2xl text-lg leading-relaxed text-cream/70 sm:text-xl">
+					Sometimes you need a sharp landing page. Sometimes you need a full website, an
+					online store, or something that doesn't fit neatly into a box.
+				</p>
+			</div>
+
+			{/* Name over description, same as every other pairing on the page. The
+			    rule at the head of each row is what separates one capability from
+			    the next now that the two halves share a column. */}
+			<dl class="mt-16 border-b border-cream/15 lg:mt-24">
+				{
+					CAPABILITIES.map((capability) => (
+						<div class="grid gap-y-4 border-t border-cream/15 py-8 lg:py-12">
+							<dt class="display display-item">{capability.title}</dt>
+							<dd class="max-w-xl text-lg leading-relaxed text-cream/70">{capability.body}</dd>
+						</div>
+					))
+				}
+			</dl>
+
+			{/*
+			  Coda. The line that closes the capability list, set at statement
+			  scale rather than item scale: it is the claim the whole list has
+			  been building to, so it answers the section heading instead of
+			  trailing off under it.
+
+			  The photograph takes the left five columns and the statement runs
+			  from column six to the margin. It used to start at column seven,
+			  which left a whole empty column between the two and read as a
+			  caption parked beside a picture. Sharing one gutter is what makes
+			  them a pair. Seven columns is also what the type needs: it wraps to
+			  three or four lines at this size, and that block of Russo One is
+			  what carries the same weight as 620px of photograph beside it.
+
+			  Portrait at 3:4, the mildest crop this frame takes without cutting
+			  into her, and unchanged from before.
+			*/}
+			<div class="mt-16 grid gap-y-8 lg:mt-24 lg:grid-cols-12 lg:items-center lg:gap-x-12">
+				<Image
+					src={bakeryImage}
+					alt="A baker in a sunlit kitchen boxing cupcakes beside finished cakes on a stand."
+					widths={[400, 600, 800, 1000]}
+					sizes="(min-width: 1024px) 30rem, 100vw"
+					width={1000}
+					height={1628}
+					quality={80}
+					class="aspect-[3/4] w-full rounded-sm object-cover lg:col-span-5"
+				/>
+
+				<p class="display display-statement lg:col-span-7 lg:col-start-6">
+					If it belongs on the web, we can build it.
+				</p>
+			</div>
+		</div>
+	</section>
+
+	{/*
+	  How it works. The one centred moment on a page that is otherwise all
+	  left margin, and the largest type outside the hero. The cream between
+	  the two charcoal bands is the frame — there is no rule top or bottom,
+	  because a hairline laid against either of those edges is a hairline
+	  nobody can see.
+
+	  The statement is the claim; the three steps under it are the whole
+	  process, one rule each, left-aligned so they read as work being done
+	  rather than as three centred cards.
+	*/}
+	<section id="how-it-works" class="wrapper" aria-labelledby="how-it-works-heading">
+		<div class="py-24 lg:py-36">
+			<h2 id="how-it-works-heading" class="display display-statement text-center">
+				<span class="lg:block">We figure out what</span>{' '}
+				<span class="lg:block">you actually need.</span>
+			</h2>
+
+			{/* Centred to match the statement above it, and held to max-w-4xl so it
+			    stays a picture in the middle of the page rather than a band across
+			    it: this section's whole composition is the cream margin around it.
+			    Native 3:2 again, uncropped. */}
+			<Image
+				src={figureItOutImage}
+				alt="Two people sitting together on a sofa in a clothing shop, working through something on a laptop."
+				widths={[640, 960, 1280, 1600, 1920]}
+				sizes="(min-width: 1024px) 56rem, 100vw"
+				width={1920}
+				height={1280}
+				quality={80}
+				class="mx-auto mt-16 aspect-[3/2] w-full max-w-4xl rounded-sm object-cover lg:mt-20"
+			/>
+
+			{/*
+			  An <ol>, because the order is the sequence: it is the only thing
+			  saying these happen in turn, so nothing needs to be numbered on
+			  screen. Three columns at lg — the step names are capped below the
+			  .display-item scale so the longest of them stays on one line and
+			  the three rules keep their run across the row.
+			*/}
+			<ol class="mt-16 grid gap-y-10 lg:mt-24 lg:grid-cols-3 lg:gap-x-12">
+				{
+					PROCESS.map((step) => (
+						<li class="border-t border-charcoal/20 pt-6 lg:pt-8">
+							{/* The one place green is still set as type rather than kept for
+							    a hover. Three step names on cream is a small enough dose to
+							    keep the colour in the brand without letting it own a band of
+							    the page, and forest clears 9.7:1 here, so the size is free. */}
+							<h3 class="display text-forest text-[1.5rem] sm:text-[1.75rem] lg:text-[2rem]">
+								{step.title}
 							</h3>
 
-							<p class="mt-5 max-w-sm text-charcoal/70">{discipline.description}</p>
-						</div>
+							<p class="mt-4 max-w-md leading-relaxed text-charcoal/70 sm:text-lg">{step.body}</p>
+						</li>
+					))
+				}
+			</ol>
+		</div>
+	</section>
 
-						<ul class="lg:col-span-6 lg:col-start-7">
-							{discipline.services.map((service) => (
-								<li class="border-t border-charcoal/10 py-4 text-lg text-charcoal/70 first:border-t-0 first:pt-0">
-									{service.title}
-								</li>
-							))}
-						</ul>
+	{/*
+	  Contact. Charcoal, like the services band above it. This used to be
+	  forest, which separated it from the footer but also handed a full
+	  screen of the page to the secondary accent; the rust rule at the top
+	  of the footer does that separating job now in a single hairline.
+
+	  The chips are real checkboxes: the input is visually hidden and the span
+	  beside it is styled from peer-checked, so the whole thing works with the
+	  keyboard, submits as a normal multi-value field, and needs no JavaScript.
+	*/}
+	<section id="contact" class="bg-charcoal text-cream" aria-labelledby="contact-heading">
+		<div class="wrapper py-24 lg:py-36">
+			{/* One line at 56px comes to 953px, so this heading stays unbroken at
+			    full width and the line under it gets the whole measure beneath. */}
+			<div class="grid gap-y-6">
+				<h2 id="contact-heading" class="display display-section">What are you working on?</h2>
+
+				<p class="max-w-2xl text-lg leading-relaxed text-cream/80 sm:text-xl">
+					Pick what you need. Pick a few. Pick Not sure yet. We'll figure out the rest
+					together.
+				</p>
+			</div>
+
+			{/* Rust opens the form the same way it opens the work section: the one
+			    rule on this panel that is the start of something rather than a
+			    divider inside it. At 3.6:1 on charcoal it clears the floor for a
+			    rule and nothing more, which is all it is being asked to do. */}
+			<form
+				method="post"
+				action={formConfigured ? FORM_ENDPOINT : undefined}
+				class="mt-16 border-t border-rust pt-12 lg:mt-24 lg:pt-16"
+			>
+				<fieldset>
+					<legend class="eyebrow text-cream/70">What do you need help with?</legend>
+
+					<div class="mt-6 flex flex-wrap gap-2.5 sm:gap-3">
+						{
+							PROJECT_TYPES.map((type) => (
+								<label>
+									<input type="checkbox" name="needs" value={type} class="peer sr-only" />
+									<span class="chip peer-checked:border-cream peer-checked:bg-cream peer-checked:text-charcoal peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-cream">
+										{type}
+									</span>
+								</label>
+							))
+						}
 					</div>
-				))
-			}
+				</fieldset>
+
+				{/* Three fields across the top row at desktop, then the message and
+				    the button sharing the row below it, so the CTA sits on the
+				    baseline of the textarea rather than adrift under the form. */}
+				<div
+					class="mt-14 grid gap-x-8 gap-y-10 border-t border-cream/20 pt-12 sm:grid-cols-2 lg:mt-16 lg:grid-cols-12 lg:gap-x-12 lg:gap-y-12 lg:pt-16"
+				>
+					<label class="block lg:col-span-4">
+						<span class="eyebrow text-cream/70">Name</span>
+						<input type="text" name="name" required autocomplete="name" class="field mt-3" />
+					</label>
+
+					<label class="block lg:col-span-4">
+						<span class="eyebrow text-cream/70">Email</span>
+						<input type="email" name="email" required autocomplete="email" class="field mt-3" />
+					</label>
+
+					<label class="block sm:col-span-2 lg:col-span-4">
+						<span class="eyebrow text-cream/70">Business</span>
+						<input
+							type="text"
+							name="business"
+							autocomplete="organization"
+							class="field mt-3"
+						/>
+					</label>
+
+					<label class="block sm:col-span-2 lg:col-span-7">
+						<span class="eyebrow text-cream/70">Tell us a little about it</span>
+						<textarea name="message" rows="5" class="field mt-3 resize-y leading-relaxed"
+						></textarea>
+					</label>
+
+					<div class="sm:col-span-2 lg:col-span-4 lg:col-start-9 lg:self-end">
+						<button
+							type="submit"
+							disabled={!formConfigured}
+							class="btn btn-cream w-full disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-cream disabled:hover:bg-cream sm:w-auto lg:w-full"
+						>
+							Let's talk
+							<svg
+								aria-hidden="true"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="square"
+								class="h-4 w-4"
+							>
+								<path d="M4 12h15M13 6l6 6-6 6"></path>
+							</svg>
+						</button>
+					</div>
+				</div>
+
+				{
+					!formConfigured && import.meta.env.DEV && (
+						<p class="mt-8 text-sm leading-relaxed text-cream/70">
+							Dev only: no form endpoint yet, so the button is held. Set FORM_ENDPOINT in
+							src/config/site.ts.
+						</p>
+					)
+				}
+
+				{/* Honeypot. Bots fill it, people never see it. */}
+				<div class="hidden" aria-hidden="true">
+					<label>
+						Leave this field empty
+						<input type="text" name="_gotcha" tabindex="-1" autocomplete="off" />
+					</label>
+				</div>
+			</form>
 		</div>
 	</section>
 </BaseLayout>

@@ -5,19 +5,44 @@
    ========================================================================== */
 
 @theme {
-	/* Brand palette */
+	/* ----------------------------------------------------------------------
+	   Brand palette, in the order it is meant to be reached for.
+
+	   Charcoal and cream are the site: every ground on every page is one or
+	   the other, and every piece of type is one of the two against the other.
+
+	   Rust is the accent, and the only colour allowed to be loud. It takes
+	   the item numbers, the rule that opens a section, focus rings, and the
+	   hover state of a link. It is a large-text and rule colour on both
+	   grounds — see the contrast table below — so it never sets body copy.
+
+	   Forest is a secondary accent held to small doses: the hover fill of a
+	   filled button, the selection highlight, and the three process step
+	   names. It is deliberately no longer a ground; a full-width green band
+	   put too much of the page in one colour.
+
+	   Stone is the muted neutral — inverted secondary text, and the hover
+	   fill of the cream button.
+
+	   There is no pure white token. Cream is the light in this palette, and
+	   the only place #fff appears is inside the wordmark's SVG masks, where
+	   it is a compositing value rather than a colour anyone sees.
+	   ---------------------------------------------------------------------- */
 	--color-charcoal: #1f211f;
 	--color-cream: #f3f0e8;
 	--color-forest: #2e4033;
 	--color-stone: #a9a398;
-	--color-rust: #b95f45;
+	--color-rust: #b85c3d;
 
-	/* Typefaces. Both are variable fonts self-hosted from Fontsource; the
-	   @font-face rules are imported in BaseLayout.astro. The "Variable"
-	   suffix is part of the family name Fontsource registers — it must match
-	   exactly or the fallback silently wins. */
+	/* Typefaces. Self-hosted from Fontsource; the @font-face rules are imported
+	   in BaseLayout.astro. The "Variable" suffix is part of the family name
+	   Fontsource registers for a variable font — it must match exactly or the
+	   fallback silently wins. Russo One is static and ships one weight (400),
+	   so anything using it must also set font-normal: asking for 600 there
+	   gets a synthesized bold. */
 	--font-montserrat: 'Montserrat Variable', ui-sans-serif, system-ui, sans-serif;
 	--font-source-sans: 'Source Sans 3 Variable', ui-sans-serif, system-ui, sans-serif;
+	--font-russo: 'Russo One', var(--font-montserrat);
 
 	--font-display: var(--font-montserrat);
 	--font-sans: var(--font-source-sans);
@@ -35,14 +60,21 @@
    Contrast rules — measured against cream (#F3F0E8), keep these honest:
 
    charcoal on cream .......... 14.4:1   body copy, headings
-   forest  on cream ...........  9.8:1   headings, links, filled panels
    cream   on charcoal ........ 14.4:1   inverted sections
-   cream   on forest ..........  9.8:1   inverted sections
+   forest  on cream ...........  9.7:1   the process step names — any size
+   cream   on forest ..........  9.7:1   the filled buttons' hover state
+   charcoal on stone ..........  6.5:1   the cream button's hover state
    stone   on charcoal ........  6.1:1   secondary text, inverted only
-   rust    on cream ...........  3.9:1   LARGE text (18.66px+ bold / 24px+),
+   rust    on cream ...........  4.0:1   LARGE text (18.66px+ bold / 24px+),
                                          rules, focus rings, icons — never
                                          small body copy
+   rust    on charcoal ........  3.6:1   rules and focus rings only. Clears
+                                         the 3:1 floor for non-text, and
+                                         nothing else. Never type.
    stone   on cream ...........  2.1:1   FAILS text. Borders and rules only.
+   forest  on charcoal ........  1.5:1   nothing. Green cannot be seen on
+                                         charcoal, which is why the doses of
+                                         it left on the page are all on cream.
 
    For muted body copy on cream use charcoal at reduced opacity
    (e.g. text-charcoal/70 ≈ 9:1), not stone.
@@ -111,6 +143,14 @@
 			transition-duration: 0.01ms !important;
 			scroll-behavior: auto !important;
 		}
+
+		/* The homepage hero's background video. Its <source> is already gated on
+		   the inverse of this query, so a conforming browser never fetches the
+		   file; this hides the empty element too, in case one selects the source
+		   anyway. Either way the still underneath becomes the hero. */
+		.hero-video {
+			display: none;
+		}
 	}
 }
 
@@ -120,9 +160,52 @@
 		@apply mx-auto w-full max-w-[80rem] px-6 sm:px-8 lg:px-12;
 	}
 
-	/* Small uppercase label used for eyebrows, nav, and metadata. */
+	/* Small uppercase label, for form fields and metadata. Not for section
+	   eyebrows: sections are opened by their heading, a rule, or a change of
+	   ground, and nothing else. */
 	.eyebrow {
 		@apply font-display text-xs font-semibold uppercase tracking-label;
+	}
+
+	/* ------------------------------------------------------------------------
+	   Display type — Russo One, for the hero and every section heading.
+
+	   Russo One ships one weight, so font-normal is load-bearing: the base
+	   heading rule asks for 600, which the browser would otherwise fake.
+	   tracking-normal exists for a related reason. The 0.04em in
+	   tracking-heading is there to open up small uppercase labels; at display
+	   size in a face this wide it only makes the block gappy.
+
+	   Sizes are fluid rather than stepped so the curve is continuous from a
+	   320px phone to the 1280px wrapper, and a tablet never lands on a size
+	   that was designed for something else. The three steps below hold the
+	   same proportion to each other at every width.
+	   ------------------------------------------------------------------------ */
+	.display {
+		@apply font-russo font-normal uppercase tracking-normal;
+		line-height: 0.92;
+		text-wrap: balance;
+	}
+
+	/* Section headings. Tops out at 56px, well clear of the hero's 88px. */
+	.display-section {
+		font-size: clamp(2rem, 1.15rem + 3.4vw, 3.5rem);
+	}
+
+	/* The page's statement voice, above the section headings and just under the
+	   hero, so it reads as a second voice rather than another heading. Two
+	   places earn it: the how-it-works claim, and the coda that closes the
+	   capability list. Both are assertions rather than labels for what follows,
+	   which is the test for using this rather than .display-section. */
+	.display-statement {
+		font-size: clamp(2.25rem, 1.25rem + 4vw, 4.5rem);
+	}
+
+	/* Capability names, and the line that closes them. A clear step below a
+	   section heading so the two Russo sizes sharing the charcoal band read as
+	   hierarchy instead of competition. */
+	.display-item {
+		font-size: clamp(1.625rem, 1.15rem + 1.9vw, 2.5rem);
 	}
 
 	.btn {
@@ -131,21 +214,64 @@
 			transition-colors duration-200;
 	}
 
+	/* The primary fill, in both its forms: btn-primary on light ground, btn-cream
+	   on the dark panels. Same button, inverted for the surface it sits on.
+
+	   The hero button is the baseline for every primary CTA on the site: 56px
+	   tall, 4px corners, the same side padding and the same label size. The
+	   height is fixed rather than derived from padding so it holds at 56px
+	   wherever it lands, whatever the font size around it. There is deliberately
+	   no size variant. A form submit that is wider than the button that sent
+	   someone to the form makes the same action look like two different ones,
+	   which is exactly what the old .btn-lg did. */
+	.btn-primary,
+	.btn-cream {
+		@apply h-14 rounded-sm px-7;
+	}
+
+	/* Charcoal rather than rust, which is the accent everywhere else on the
+	   page: a filled rust button cannot carry this label accessibly. The label
+	   is 12px, so it needs 4.5:1, and rust manages 4.0:1 under cream and 3.6:1
+	   under charcoal — fine for a rule, not for type. Forest can carry it
+	   (9.7:1), so green gets the hover instead, which is the one place a
+	   secondary accent belongs on a primary control. */
 	.btn-primary {
-		@apply border-forest bg-forest text-cream hover:border-charcoal hover:bg-charcoal;
+		@apply border-charcoal bg-charcoal text-cream hover:border-forest hover:bg-forest;
 	}
 
 	.btn-outline {
-		@apply border-charcoal/25 text-charcoal hover:border-charcoal hover:bg-charcoal hover:text-cream;
+		@apply border-charcoal/25 text-charcoal hover:border-forest hover:bg-forest hover:text-cream;
 	}
 
-	/* Inverted pair, for the charcoal and forest panels. The cream fill stands
-	   in for btn-primary there — forest on forest would disappear. */
+	/* Inverted pair, for the charcoal panels. The cream fill stands in for
+	   btn-primary there — charcoal on charcoal would disappear. */
 	.btn-cream {
 		@apply border-cream bg-cream text-charcoal hover:border-stone hover:bg-stone;
 	}
 
 	.btn-outline-cream {
 		@apply border-cream/30 text-cream hover:border-cream hover:bg-cream hover:text-charcoal;
+	}
+
+	/* ------------------------------------------------------------------------
+	   Form fields, for the charcoal contact panel. Underlines rather than
+	   boxes, to match the rules the rest of the page is built from.
+
+	   The focus ring is recoloured rather than left to the global rust one.
+	   Rust does clear the 3:1 floor against charcoal, but only just, and a
+	   focus ring is the one piece of the interface where the strongest
+	   available contrast beats the on-brand one. Cream is that, at 14.4:1.
+	   ------------------------------------------------------------------------ */
+	.field {
+		@apply w-full border-b border-cream/25 bg-transparent pt-1 pb-4 text-lg text-cream
+			transition-colors duration-200 focus:border-cream focus-visible:outline-cream;
+	}
+
+	/* py-3.5 puts a chip within a pixel of .btn's height, so every tap target
+	   in the form is the same size. */
+	.chip {
+		@apply inline-flex cursor-pointer items-center rounded border border-cream/25 px-5 py-3.5
+			font-display text-xs font-semibold uppercase tracking-label text-cream/75
+			transition-colors duration-200 select-none hover:border-cream hover:text-cream;
 	}
 }

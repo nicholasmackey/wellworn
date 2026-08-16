@@ -10,12 +10,15 @@ export const SITE = {
   lang: 'en',
   locale: 'en_US',
 
-  /** Used verbatim as the <title> on the homepage. */
-  title: 'WELLWORN | Design, development, and photography',
+  /**
+   * Used verbatim as the <title> on the homepage. The homepage sells web
+   * design and development only, so it does not mention photography.
+   */
+  title: 'WELLWORN | Web design and development',
 
   /** Default meta description. Keep under ~160 characters. */
   description:
-    'Wellworn is an independent studio working across web design and development, brand identity, and real estate and commercial photography.',
+    'Wellworn is an independent studio designing and building websites, web applications, online stores, and the brand identity behind them.',
 
   /**
    * TODO: confirm the real inbox before launch.
@@ -36,7 +39,11 @@ export const SITE = {
   ogImage: '/og-image.jpg',
   ogImageWidth: 1200,
   ogImageHeight: 630,
-  ogImageAlt: 'WELLWORN. Design, development, and photography.',
+  /*
+   * Describes what the card says, so keep it in step with the artwork by hand.
+   * The card is now a supplied file, not generated — see scripts/gen-og-image.mjs.
+   */
+  ogImageAlt: 'WELLWORN. Design and development.',
 } as const
 
 /**
@@ -54,210 +61,133 @@ export const BRAND = {
   wordmarkRatio: 2476 / 597,
 } as const
 
-/* ==========================================================================
-   Services
-   --------------------------------------------------------------------------
-   Two disciplines. The services deliberately do NOT get their own routes —
-   each discipline page covers all of its services, anchored by `slug`. Adding
-   a service here adds it to the homepage, its discipline page, and the
-   structured data at once.
-   ========================================================================== */
-
-export interface ServiceItem {
-  /** Short capability name, e.g. "Front-end development". */
-  readonly label: string
-  /** One-line elaboration. Shown on the discipline pages only. */
-  readonly note: string
-}
-
-export interface Service {
-  /**
-   * Plain capability name. Used for the homepage list, the structured data,
-   * and anywhere the service has to be recognisable rather than persuasive.
-   */
-  readonly title: string
-  /**
-   * Benefit-led heading for the discipline page, where the section is making
-   * a case rather than labelling itself. The discipline pages render this as
-   * the service heading and `title` as the label beneath it, so every service
-   * needs one — the field stays optional only so a new service can be added
-   * before its headline is written.
-   */
-  readonly headline?: string
-  /** Anchor id on the discipline page. The structured data links to it. */
-  readonly slug: string
-  /** Short summary. Homepage card, page intro, and structured data. */
-  readonly description: string
-  readonly items: readonly ServiceItem[]
-}
-
-export interface Discipline {
-  readonly title: string
-  readonly href: string
-  readonly description: string
-  readonly services: readonly Service[]
-}
-
-export const DESIGN = {
-  title: 'Design',
-  href: '/design',
-  description:
-    'Websites and identity systems for small businesses, organizations, and independent brands.',
-  services: [
-    {
-      title: 'Brand identity',
-      headline: "Look like the business you're becoming.",
-      slug: 'brand-identity',
-      description:
-        'A good identity makes a small business feel established before it ever has to explain itself.',
-      items: [
-        {
-          label: 'Look professional',
-          note: 'A clear identity that makes your business feel established.',
-        },
-        {
-          label: 'Stay consistent',
-          note: 'The same look across your site, social, print, and everything else.',
-        },
-        {
-          label: 'Be recognizable',
-          note: 'A visual system people can actually remember.',
-        },
-        {
-          label: 'Have what you need',
-          note: 'The core brand files and assets ready to use.',
-        },
-      ],
-    },
-    {
-      title: 'Web design',
-      headline: 'Make it easy to choose you.',
-      slug: 'web-design',
-      description:
-        'Your site should make the business clear, make the next step obvious, and give people confidence before they ever call or email.',
-      items: [
-        {
-          label: 'Build trust',
-          note: "A site that looks like your business knows what it's doing.",
-        },
-        {
-          label: 'Easy to navigate',
-          note: 'Clear structure so people can find what they came for.',
-        },
-        {
-          label: 'Look right everywhere',
-          note: 'Designed for phones, tablets, and desktops.',
-        },
-        {
-          label: 'Turn visits into action',
-          note: "Make the next step obvious, whether that's calling, booking, buying, or getting in touch.",
-        },
-      ],
-    },
-    {
-      title: 'Front-end development',
-      headline: "Built so you don't have to start over.",
-      slug: 'front-end-development',
-      description:
-        'Fast, easy to manage, and structured to keep working as your business changes.',
-      items: [
-        {
-          label: 'Fast',
-          note: 'Quick to load and responsive across devices.',
-        },
-        {
-          label: 'Easy to update',
-          note: 'Change the content you need to change without rebuilding the site.',
-        },
-        {
-          label: 'Built for the long term',
-          note: 'Structured so the site can keep working as the business changes.',
-        },
-        {
-          label: 'Ready to launch',
-          note: 'Tested, polished, and handed over ready to use.',
-        },
-      ],
-    },
-  ],
-} as const satisfies Discipline
-
-export const PHOTOGRAPHY = {
-  title: 'Photography',
-  href: '/photography',
-  description: 'Real estate and commercial photography for properties, businesses, and brands.',
-  services: [
-    {
-      title: 'Real estate photography',
-      headline: "Show people what they're looking for.",
-      slug: 'real-estate-photography',
-      description:
-        'Good property photography should make a space easy to understand and easy to want.',
-      items: [
-        {
-          label: 'Interiors',
-          note: 'Rooms that feel open, balanced, and true to the space.',
-        },
-        {
-          label: 'Exteriors',
-          note: 'The property, the approach, and the setting at their best.',
-        },
-        {
-          label: 'Architecture',
-          note: 'The materials and details that make the building worth noticing.',
-        },
-        {
-          label: 'Ready to use',
-          note: 'Edited files prepared for listings, print, and web.',
-        },
-      ],
-    },
-    {
-      title: 'Commercial photography',
-      headline: 'Look like the business people want to work with.',
-      slug: 'commercial-photography',
-      description:
-        'Original photography gives your business something stock images never can: a visual identity that actually belongs to you.',
-      items: [
-        {
-          label: 'People',
-          note: 'Portraits and team photography that feel natural and credible.',
-        },
-        {
-          label: 'Spaces',
-          note: 'The places where your business happens.',
-        },
-        {
-          label: 'Products',
-          note: 'Clean, useful imagery for websites, campaigns, and sales.',
-        },
-      ],
-    },
-  ],
-} as const satisfies Discipline
-
-/** Ordered for the homepage and the footer. */
-export const DISCIPLINES: readonly Discipline[] = [DESIGN, PHOTOGRAPHY] as const
-
-export interface NavItem {
-  readonly label: string
-  readonly href: string
-}
-
-/**
- * Primary navigation, desktop and mobile. One entry per discipline — the
- * individual services live inside those two pages rather than on routes of
- * their own. Work and About are held back until those sections exist, rather
- * than shipped as links to nothing.
- */
-export const NAV: readonly NavItem[] = DISCIPLINES.map((discipline) => ({
-  label: discipline.title,
-  href: discipline.href,
-}))
-
 /**
  * Where every "Get in touch" call to action points. Currently the contact
  * block at the foot of the page; change this one value to repoint them all
  * at a dedicated /contact page later.
  */
 export const CONTACT_HREF = '/#contact'
+
+/* ==========================================================================
+   Homepage
+   --------------------------------------------------------------------------
+   The homepage is the site. There are no discipline pages and no primary
+   nav any more, so every section below is content on this one page. It lives
+   here rather than in the page so the copy can be edited without touching
+   layout.
+   ========================================================================== */
+
+export interface Project {
+  readonly title: string
+  /** One line. The work is meant to carry the section, not the caption. */
+  readonly summary: string
+  /** Live site. Omit for work that is no longer up. */
+  readonly href?: string
+  /** Screenshot under /public, e.g. "/images/projects/<slug>/desktop.webp". */
+  readonly image?: string
+  /**
+   * Describe what the screenshot shows, not the project name: the title sits
+   * right beside it and would otherwise be announced twice.
+   */
+  readonly imageAlt?: string
+  /** Intrinsic pixel size of `image`, so the browser can reserve the space. */
+  readonly imageWidth?: number
+  readonly imageHeight?: number
+}
+
+/**
+ * Selected work, strongest first. The section renders nothing at all while
+ * this is empty rather than showing placeholder frames.
+ */
+export const PROJECTS: readonly Project[] = []
+
+/** A short titled paragraph. Shared by the two list sections below. */
+export interface Point {
+  readonly title: string
+  readonly body: string
+}
+
+export const WHY_WELLWORN: readonly Point[] = [
+  {
+    title: 'Look like yourself.',
+    body: "Your website shouldn't look like it could belong to anyone else.",
+  },
+  {
+    title: 'Make it easy to say yes.',
+    body: 'Give people what they need to understand your business, trust it, and take the next step.',
+  },
+  {
+    title: "Don't get stuck.",
+    body: "Your website shouldn't have to be rebuilt because you outgrew a platform or decided to leave it.",
+  },
+  {
+    title: 'Talk to the people who built it.',
+    body: "When you need something, you shouldn't have to explain your website to a support queue.",
+  },
+]
+
+/**
+ * What we do. Also the source for the homepage Organization structured data,
+ * which is why the titles are plain capability names rather than sentences.
+ */
+export const CAPABILITIES: readonly Point[] = [
+  {
+    title: 'Websites',
+    body: 'From focused landing pages to full sites with all the moving parts.',
+  },
+  {
+    title: 'Web Applications',
+    body: 'Tools, dashboards, portals, workflows, and custom functionality.',
+  },
+  {
+    title: 'Ecommerce',
+    body: 'Online stores built around the way your business actually sells.',
+  },
+  {
+    title: 'Branding',
+    body: 'Identity and visual direction when the business needs more than a new website.',
+  },
+]
+
+/**
+ * How it works. Three steps, in order — the order is the only thing that says
+ * they are a sequence, so keep them in it.
+ */
+export const PROCESS: readonly Point[] = [
+  {
+    title: 'Figure it out',
+    body: "We learn what you're trying to do and what actually matters.",
+  },
+  {
+    title: 'Make it',
+    body: 'We design and build the right thing for the job.',
+  },
+  {
+    title: 'Put it to work',
+    body: 'We launch it, hand you the keys, and stay around when you need us.',
+  },
+]
+
+/** Contact form chips. Order is the order they appear. */
+export const PROJECT_TYPES: readonly string[] = [
+  'New Website',
+  'Website Redesign',
+  'Web Application',
+  'Branding',
+  'Online Store',
+  'SEO',
+  'Ongoing Support',
+  'Something Else',
+  'Not Sure Yet',
+]
+
+/**
+ * Where the contact form posts. The site builds to static files with no
+ * server of its own, so this has to be an external form handler (Formspree,
+ * Basin, Getform, or similar).
+ *
+ * TODO: paste the endpoint before launch. While it is empty the form still
+ * renders but its submit button is disabled, so a visitor can never lose a
+ * message to a form that posts nowhere.
+ */
+export const FORM_ENDPOINT = ''

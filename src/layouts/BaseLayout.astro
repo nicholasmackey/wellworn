@@ -1,12 +1,15 @@
 ---
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import { BRAND, DISCIPLINES, SITE } from '../config/site';
+import { BRAND, CAPABILITIES, SITE } from '../config/site';
 // Self-hosted variable fonts from node_modules. `wght.css` is the full weight
 // axis in one file per subset; browsers fetch only the subset they need via
 // unicode-range. Imported before global.css so the @font-face rules land first.
 import '@fontsource-variable/montserrat/wght.css';
 import '@fontsource-variable/source-sans-3/wght.css';
+// Russo One is static, one file per subset at a single weight. Only the
+// homepage hero uses it, so no page but that one downloads the woff2.
+import '@fontsource/russo-one/400.css';
 import '../styles/global.css';
 
 interface Props {
@@ -46,27 +49,28 @@ const organizationSchema = {
 	'@type': 'ProfessionalService',
 	name: SITE.name,
 	url: SITE.url,
-	description: SITE.description,
+	// The page's own description, not the site default, so the homepage does
+	// not describe itself one way in its meta tag and another in its markup.
+	description,
 	email: SITE.email,
 	logo: new URL(BRAND.mark, SITE.url).href,
 	hasOfferCatalog: {
 		'@type': 'OfferCatalog',
 		name: 'Services',
-		// Flat list of the four services. `category` carries the discipline and
-		// `url` points at the page that describes the service, since the
-		// individual services deliberately have no routes of their own.
-		itemListElement: DISCIPLINES.flatMap((discipline) =>
-			discipline.services.map((service) => ({
-				'@type': 'Offer',
-				itemOffered: {
-					'@type': 'Service',
-					name: service.title,
-					description: service.description,
-					category: discipline.title,
-					url: new URL(`${discipline.href}#${service.slug}`, SITE.url).href,
-				},
-			})),
-		),
+		// Emitted on the homepage only, so it lists what the homepage sells:
+		// the web capabilities, not the photography services. `url` points at
+		// the section that describes them, since none of them has a route of
+		// its own.
+		itemListElement: CAPABILITIES.map((capability) => ({
+			'@type': 'Offer',
+			itemOffered: {
+				'@type': 'Service',
+				name: capability.title,
+				description: capability.body,
+				category: 'Web design and development',
+				url: new URL('/#services', SITE.url).href,
+			},
+		})),
 	},
 };
 ---
