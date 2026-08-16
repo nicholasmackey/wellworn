@@ -1,0 +1,60 @@
+---
+import type { Project } from '../config/site'
+
+interface Props {
+	project: Project
+}
+
+const { project } = Astro.props
+---
+
+{/*
+  The furniture every project shares, so the three read as one list however
+  differently their pictures are arranged underneath. There are no numbers on
+  it: three items do not need counting, and a run of large rust ordinals down
+  the section made the projects look like a numbered stack — which is the one
+  thing the compositions below are working not to be.
+
+  The rule is charcoal rather than rust. Rust opens the whole section, and
+  three more of it here would flatten that distinction into a pattern.
+
+  Name and live link sit on one baseline and part to opposite ends of it, with
+  the category tucked directly under the name. The whole block is deliberately
+  tight — title, metadata and the first image should read as one unit, so the
+  only real gap in this section is the one between projects.
+
+  Only the domain is a link: the name repeated as a second anchor to the same
+  page would be one more tab stop that says nothing new, and the URL is the
+  part that tells you where you are about to go.
+*/}
+<div class="border-t border-charcoal/40 pt-5">
+	<div class="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
+		<h3 class="display display-item">{project.title}</h3>
+
+		{/* Label voice rather than body voice: the same small uppercase metadata
+		    as the category under it, marked as a link by its underline and by
+		    taking full-strength charcoal where the category is muted. */}
+		<a
+			href={project.href}
+			rel="noopener"
+			class="eyebrow inline-flex items-center gap-2 text-charcoal underline decoration-charcoal/25 underline-offset-[6px] transition-colors duration-200 hover:text-rust hover:decoration-rust"
+		>
+			{project.label}
+			<svg
+				aria-hidden="true"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="square"
+				class="h-3 w-3 shrink-0"
+			>
+				<path d="M7 17 17 7M8 7h9v9"></path>
+			</svg>
+		</a>
+	</div>
+
+	{/* /70, not /60: this is 12px type, so it needs the full 4.5:1, and charcoal
+	    at 60% lands at 4.1:1 on cream. */}
+	<p class="eyebrow mt-2 text-charcoal/70">{project.kicker}</p>
+</div>

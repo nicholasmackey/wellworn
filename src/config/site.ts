@@ -77,29 +77,112 @@ export const CONTACT_HREF = '/#contact'
    layout.
    ========================================================================== */
 
-export interface Project {
-  readonly title: string
-  /** One line. The work is meant to carry the section, not the caption. */
-  readonly summary: string
-  /** Live site. Omit for work that is no longer up. */
-  readonly href?: string
-  /** Screenshot under /public, e.g. "/images/projects/<slug>/desktop.webp". */
-  readonly image?: string
+/*
+ * Screenshots are imported rather than referenced by URL so Astro's <Image>
+ * can resize and re-encode them: these are 1792px PNGs, and davis-01 alone is
+ * 2.2MB before it goes through the pipeline. Importing them here rather than
+ * in the page keeps each file next to the alt text that describes it.
+ */
+import cadence01 from '../assets/projects/cadence-01.png'
+import cadence02 from '../assets/projects/cadence-02.png'
+import cadence03 from '../assets/projects/cadence-03.png'
+import davis01 from '../assets/projects/davis-01.png'
+import davis02 from '../assets/projects/davis-02.png'
+import veil01 from '../assets/projects/veil-01.png'
+import veil02 from '../assets/projects/veil-02.png'
+
+/** One screenshot and what it shows. */
+export interface Shot {
+  readonly src: ImageMetadata
   /**
    * Describe what the screenshot shows, not the project name: the title sits
-   * right beside it and would otherwise be announced twice.
+   * right above it and would otherwise be announced twice.
    */
-  readonly imageAlt?: string
-  /** Intrinsic pixel size of `image`, so the browser can reserve the space. */
-  readonly imageWidth?: number
-  readonly imageHeight?: number
+  readonly alt: string
+}
+
+export interface Project {
+  readonly title: string
+  /**
+   * What the business is, in a handful of words. Set as metadata rather than
+   * as copy — the screenshots are the argument, and a case study would be a
+   * different page.
+   */
+  readonly kicker: string
+  /** Live site. */
+  readonly href: string
+  /** The domain, shown as the visible link text. */
+  readonly label: string
+  /**
+   * Lead shot first, supporting shots after it. The page composes each project
+   * by hand rather than mapping over this, so both the order and the count are
+   * part of the layout: Cadence takes three, the two under it take two each,
+   * and shots[0] is the one given the room in every composition.
+   */
+  readonly shots: readonly Shot[]
 }
 
 /**
- * Selected work, strongest first. The section renders nothing at all while
- * this is empty rather than showing placeholder frames.
+ * Selected work, lead first. The section renders nothing at all while this is
+ * empty rather than showing placeholder frames.
+ *
+ * Cadence leads because it is the fullest piece of work here, and the page
+ * gives it a composition of its own to say so.
  */
-export const PROJECTS: readonly Project[] = []
+export const PROJECTS: readonly Project[] = [
+  {
+    title: 'Cadence',
+    kicker: 'Homeschool record keeping',
+    href: 'https://recordcadence.com',
+    label: 'recordcadence.com',
+    shots: [
+      {
+        src: cadence01,
+        alt: 'Homepage hero: a headline set over a photograph of a parent and child stretching in a living room, with a lesson card overlaid on it.',
+      },
+      {
+        src: cadence02,
+        alt: 'A near-black section pairing a photograph of someone surrounded by paperwork with the line "Feeling overwhelmed? We\'ve got you."',
+      },
+      {
+        src: cadence03,
+        alt: 'Two product panels side by side, one charting a week of activity by subject and one tracking milestones across the school year.',
+      },
+    ],
+  },
+  {
+    title: 'Davis Property Works',
+    kicker: 'Landscaping and property care',
+    href: 'https://davispropertyworks.com',
+    label: 'davispropertyworks.com',
+    shots: [
+      {
+        src: davis01,
+        alt: 'Homepage hero: a groundskeeper running a hose beside a branded pickup truck, behind a headline and two calls to action.',
+      },
+      {
+        src: davis02,
+        alt: 'The estimate request section: phone, email, and opening hours on one side, a short request form on the other.',
+      },
+    ],
+  },
+  {
+    title: 'Veil',
+    kicker: 'Private cycle tracking',
+    href: 'https://stayveiled.com',
+    label: 'stayveiled.com',
+    shots: [
+      {
+        src: veil01,
+        alt: 'A near-black landing page with a script wordmark above the line "Track privately. Period."',
+      },
+      {
+        src: veil02,
+        alt: 'The tracker on a phone: a month calendar with the current day ringed, above a list of recent entries.',
+      },
+    ],
+  },
+]
 
 /** A short titled paragraph. Shared by the two list sections below. */
 export interface Point {

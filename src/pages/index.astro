@@ -1,6 +1,8 @@
 ---
 import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import ProjectHeading from '../components/ProjectHeading.astro';
+import Screenshot from '../components/Screenshot.astro';
 import {
 	CAPABILITIES,
 	CONTACT_HREF,
@@ -32,6 +34,14 @@ const formConfigured = FORM_ENDPOINT.length > 0;
 
 /** 01, 02, 03 rather than 1, 2, 3: the numbers read as a set that way. */
 const ordinal = (index: number): string => String(index + 1).padStart(2, '0');
+
+/**
+ * Named rather than mapped. The selected-work section lays each of these out
+ * differently on purpose, so the page has to be able to reach for them one at a
+ * time. Order still matters — it is the order they appear in, and the first is
+ * the one the section is built around.
+ */
+const [cadence, davis, veil] = PROJECTS;
 ---
 
 <BaseLayout
@@ -227,86 +237,6 @@ const ordinal = (index: number): string => String(index + 1).padStart(2, '0');
 	</section>
 
 	{/*
-	  Selected work. Screenshots do the talking, so each project gets one
-	  large image and a numbered caption under a hairline rule. The whole
-	  section stays out of the page until PROJECTS has entries rather than
-	  showing empty frames.
-	*/}
-	{
-		PROJECTS.length > 0 && (
-			<section id="work" class="wrapper py-24 lg:py-36" aria-labelledby="work-heading">
-				{/* Heading, then the line that supports it directly underneath. Body
-				    copy belongs under the heading it answers to, not out in a column
-				    beside it, so this block reads top to bottom at every width and
-				    the measure is held by max-w-2xl rather than by a grid column.
-
-				    The rule above them is what opens the section — on cream there is
-				    no change of ground to do that job — and it is rust, which is what
-				    makes it read as the start of something rather than as one more
-				    grey hairline. */}
-				<div class="grid gap-y-6 border-t border-rust pt-10 lg:pt-14">
-					<h2 id="work-heading" class="display display-section">See for yourself.</h2>
-
-					<p class="max-w-2xl text-lg leading-relaxed text-charcoal/70 sm:text-xl">
-						A few websites we've designed, built, and put to work.
-					</p>
-				</div>
-
-				<div class="mt-16 space-y-20 lg:mt-24 lg:space-y-32">
-					{PROJECTS.map((project, index) => (
-						<article class="group">
-							{/* 16/10 is the shape of a desktop browser screenshot. The
-							    frame keeps its height whether or not the file has
-							    loaded, so nothing below it jumps. */}
-							<div class="relative aspect-[16/10] overflow-hidden bg-stone/25">
-								{project.image ? (
-									<img
-										src={project.image}
-										alt={project.imageAlt ?? ''}
-										width={project.imageWidth}
-										height={project.imageHeight}
-										loading={index === 0 ? 'eager' : 'lazy'}
-										decoding="async"
-										class="h-full w-full object-cover object-top transition-transform duration-700 ease-out motion-safe:group-hover:scale-[1.02]"
-									/>
-								) : (
-									<div class="h-full w-full border border-charcoal/10" aria-hidden="true" />
-								)}
-							</div>
-
-							<div class="mt-8 grid gap-x-8 gap-y-3 border-t border-charcoal/40 pt-6 sm:grid-cols-[auto_1fr] lg:gap-x-12">
-								<p class="display text-[1.75rem] text-rust sm:pt-1 lg:text-[2.25rem]">
-									{ordinal(index)}
-								</p>
-
-								<div>
-									<h3 class="text-2xl leading-snug sm:text-3xl">
-										{project.href ? (
-											<a
-												href={project.href}
-												rel="noopener"
-												class="transition-colors duration-200 group-hover:text-rust"
-											>
-												{project.title}
-											</a>
-										) : (
-											project.title
-										)}
-									</h3>
-
-									<p class="mt-4 max-w-2xl text-lg leading-relaxed text-charcoal/70">
-										{project.summary}
-									</p>
-								</div>
-							</div>
-						</article>
-					))}
-				</div>
-			</section>
-		)
-	}
-
-	{/*
 	  Why Wellworn. Not four equal columns: the heading and its line hold a
 	  column of their own and stay put while the four points scroll past them.
 	  The points are a single stack on hairlines, numbered in rust, so the
@@ -496,6 +426,155 @@ const ordinal = (index: number): string => String(index + 1).padStart(2, '0');
 					))
 				}
 			</ol>
+		</div>
+	</section>
+
+	{/*
+	  Selected work. It sits here, after the argument and the process, because
+	  by this point a visitor knows what they are looking at: the screenshots
+	  are evidence for a case that has already been made, and the contact form
+	  is the next thing they hit.
+
+	  Screenshots do all the talking. There are no case-study paragraphs, no
+	  browser chrome and no device frames — just the work, a name, and a way to
+	  go and see it running.
+
+	  Every project is one lead image and its supporting shots, and the three are
+	  written out by hand rather than mapped, because the differences between
+	  them are the layout. Each one puts its weight and its empty space somewhere
+	  else:
+
+	      Cadence  full-width lead, a pair indented beneath  air lower right
+	      Davis    large left, one small shot dropped right  air upper right
+	      Veil     large right, the phone standing at left   air upper left
+
+	  Read down the section, the mass swings from centre to left to right and the
+	  void swings the opposite way. Three identical rows would say the three are
+	  equal and turn the section into a stack of screenshots, which is the one
+	  thing it is trying not to be. A fourth project means writing a fourth
+	  composition, and that is the intended cost.
+	*/}
+	<section id="work" class="wrapper py-24 lg:py-36" aria-labelledby="work-heading">
+		{/* The same opening as the other cream sections: a rust rule, because on
+		    cream there is no change of ground to start one, then the heading and
+		    the single line that supports it. */}
+		<div class="grid gap-y-6 border-t border-rust pt-10 lg:pt-14">
+			<h2 id="work-heading" class="display display-section">See for yourself.</h2>
+
+			<p class="max-w-2xl text-lg leading-relaxed text-charcoal/70 sm:text-xl">
+				A few websites we've designed, built, and put to work.
+			</p>
+		</div>
+
+		<div class="mt-16 space-y-24 lg:mt-24 lg:space-y-36">
+			{/*
+			  Cadence, the lead. Its opening shot is the widest image on the page
+			  outside the hero, and it is the only one here that runs the full
+			  measure — that alone is how the section says which piece of work
+			  matters most. No colour, no label, no badge.
+
+			  The pair beneath take four columns each and stop at column eight, so
+			  they sit under the left half of the shot they belong to and leave a
+			  third of the row empty. Indented rather than equal is what makes them
+			  read as supporting the image above rather than following it.
+
+			  Side by side at every width, including phones. Two small captures on
+			  one line say "detail, detail" where two full-width ones in a column
+			  say "and another, and another", and they cost a fifth of the height.
+			*/}
+			<article>
+				<ProjectHeading project={cadence} />
+
+				<div class="mt-6 lg:mt-8">
+					<Screenshot
+						shot={cadence.shots[0]}
+						href={cadence.href}
+						sizes="(min-width: 80rem) 74rem, (min-width: 64rem) calc(100vw - 6rem), (min-width: 40rem) calc(100vw - 4rem), calc(100vw - 3rem)"
+					/>
+
+					<div class="mt-4 grid grid-cols-2 gap-4 sm:mt-6 sm:gap-6 lg:mt-8 lg:grid-cols-12 lg:gap-8">
+						<Screenshot
+							shot={cadence.shots[1]}
+							href={cadence.href}
+							sizes="(min-width: 80rem) 24rem, (min-width: 64rem) 29vw, (min-width: 40rem) calc((100vw - 5.5rem) / 2), calc((100vw - 4rem) / 2)"
+							class="lg:col-span-4"
+						/>
+
+						<Screenshot
+							shot={cadence.shots[2]}
+							href={cadence.href}
+							sizes="(min-width: 80rem) 24rem, (min-width: 64rem) 29vw, (min-width: 40rem) calc((100vw - 5.5rem) / 2), calc((100vw - 4rem) / 2)"
+							class="lg:col-span-4"
+						/>
+					</div>
+				</div>
+			</article>
+
+			{/*
+			  Davis. Eight columns and four, which is a lead and a detail rather
+			  than the near-halves a seven-and-five split gives you, and the small
+			  one is dropped to the foot of the row so the two share a baseline and
+			  the leftover space collects above it. Both shots are landscape, so
+			  this is the horizontal composition of the three.
+
+			  On phones the second keeps two thirds of the column and its left
+			  margin. Held back rather than stacked full width, it stays a detail
+			  all the way down instead of turning into a second lead.
+			*/}
+			<article>
+				<ProjectHeading project={davis} />
+
+				<div class="mt-6 grid gap-4 sm:gap-6 lg:mt-8 lg:grid-cols-12 lg:gap-8">
+					<Screenshot
+						shot={davis.shots[0]}
+						href={davis.href}
+						sizes="(min-width: 80rem) 49rem, (min-width: 64rem) 61vw, (min-width: 40rem) calc(100vw - 4rem), calc(100vw - 3rem)"
+						class="lg:col-span-8"
+					/>
+
+					<Screenshot
+						shot={davis.shots[1]}
+						href={davis.href}
+						sizes="(min-width: 80rem) 24rem, (min-width: 64rem) 29vw, (min-width: 40rem) calc((100vw - 4rem) / 2), calc((100vw - 3rem) * 0.67)"
+						class="w-2/3 sm:w-1/2 lg:col-span-4 lg:w-auto lg:self-end"
+					/>
+				</div>
+			</article>
+
+			{/*
+			  Veil, and the mirror of the row above it. The landing page leads and
+			  takes the right nine columns; the phone is the detail and stands at
+			  the left margin, so the mass and the void both land on the opposite
+			  side from Davis. Bottom-aligned again, which is what keeps the two
+			  rows a pair rather than two unrelated ideas.
+
+			  The phone is capped hard, and has to be: a 3:6.5 frame given a whole
+			  column at tablet width would stand over 1500px tall and take the
+			  screen off the project it is a footnote to. 11rem at lg puts it at
+			  roughly four fifths of the lead's height on a twentieth of its width,
+			  which is a detail standing beside a picture rather than a second one
+			  competing with it. It comes second in the source at every width, so
+			  the lead is what you meet first on a phone too.
+			*/}
+			<article>
+				<ProjectHeading project={veil} />
+
+				<div class="mt-6 grid gap-4 sm:gap-6 lg:mt-8 lg:grid-cols-12 lg:items-end lg:gap-8">
+					<Screenshot
+						shot={veil.shots[0]}
+						href={veil.href}
+						sizes="(min-width: 80rem) 55rem, (min-width: 64rem) 68vw, (min-width: 40rem) calc(100vw - 4rem), calc(100vw - 3rem)"
+						class="lg:col-span-9 lg:col-start-4"
+					/>
+
+					<Screenshot
+						shot={veil.shots[1]}
+						href={veil.href}
+						sizes="(min-width: 64rem) 11rem, (min-width: 40rem) calc((100vw - 4rem) / 4), calc((100vw - 3rem) / 3)"
+						class="w-1/3 sm:w-1/4 lg:col-span-3 lg:col-start-1 lg:row-start-1 lg:w-auto lg:max-w-[11rem]"
+					/>
+				</div>
+			</article>
 		</div>
 	</section>
 
