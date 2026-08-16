@@ -82,6 +82,25 @@ const organizationSchema = {
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="generator" content={Astro.generator} />
 
+		{/*
+		  The hero video is served from this origin, so the handshake to it sits on
+		  the critical path of the one asset the homepage most wants early. Opening
+		  it here overlaps the DNS lookup and TLS negotiation with the rest of head
+		  parsing instead of paying for them after the <source> is reached.
+
+		  Deliberately no crossorigin: browsers pool CORS and non-CORS connections
+		  separately, and the <video> carries no crossorigin attribute, so it
+		  fetches in non-CORS mode. Adding it here would warm the CORS pool and
+		  leave the video to open a second connection of its own — the opposite of
+		  the point. If the element ever gains crossorigin (a canvas reading frames
+		  back, say), this hint has to gain it at the same time.
+
+		  Every page pays for the hint, but only the homepage has the hero. The
+		  cost of a spare warm socket is small next to threading a per-page flag
+		  through the layout for it.
+		*/}
+		<link rel="preconnect" href="https://assets.wellworncreative.com" />
+
 		<title>{pageTitle}</title>
 		<meta name="description" content={description} />
 		<link rel="canonical" href={canonicalUrl.href} />
