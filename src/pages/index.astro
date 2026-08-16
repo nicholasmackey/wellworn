@@ -69,13 +69,33 @@ const ordinal = (index: number): string => String(index + 1).padStart(2, '0');
 		  fetched at all. global.css hides the element under the same query as a
 		  second line of defence, for engines that ignore source media.
 
-		  The clip is 4096x2160 (1.9:1) and the hero box crosses that ratio, so the
+		  The clip is 1920x1012 (1.9:1) and the hero box crosses that ratio, so the
 		  crop changes direction with the viewport: a 1440x900 desktop makes the
 		  box 2.05:1 and trims about 8% off the top and bottom, while a tablet
 		  trims ~15% off the sides and a 390px phone keeps only the middle ~39% of
 		  the frame. Centre is the one anchor that stays sensible through all
 		  three, since the subject sits mid-frame. If the footage is ever recut
 		  with the subject off-centre, this is the knob to turn.
+
+		  The file is served from R2 at assets.wellworncreative.com rather than out
+		  of public/, which keeps 8.5MB of video out of the repo and out of every
+		  deploy. It costs a DNS lookup and TLS handshake to a second origin
+		  before the first byte arrives. No crossorigin attribute: nothing here
+		  reads pixels back, so the request stays a plain no-CORS media fetch.
+
+		  It is encoded H.264 High@4.0 (avc1.640028), and the level is
+		  load-bearing. x264 derives it from the DPB, and at 1920x1012 (7680
+		  macroblocks) a fifth reference frame needs a DPB of 38400 — past the
+		  34816 that Level 4.2 allows — so it stamps the stream Level 5.0. iPhone
+		  hardware decoders top out at High@4.2 and refuse such a file outright,
+		  which is why this hero once played on every desktop and silently stayed
+		  a still on iOS. Capping refs at 4 keeps it inside Level 4.0. Anything
+		  re-uploaded to that bucket wants -profile:v high -level:v 4.0 -refs 4,
+		  and `ffprobe` should report level=40 before it ships.
+
+		  preload is auto rather than metadata: this element is meant to play the
+		  moment it can, and metadata-only tells the browser to fetch the header
+		  and stop, which just buys a second round trip before playback starts.
 		*/}
 		<video
 			class="hero-video absolute inset-0 h-full w-full object-cover object-center"
@@ -83,12 +103,16 @@ const ordinal = (index: number): string => String(index + 1).padStart(2, '0');
 			muted
 			loop
 			playsinline
-			preload="metadata"
+			preload="auto"
 			aria-hidden="true"
 			tabindex="-1"
 			disablepictureinpicture
 		>
-			<source src="/hero.mp4" type="video/mp4" media="(prefers-reduced-motion: no-preference)" />
+			<source
+				src="https://assets.wellworncreative.com/hero.mp4"
+				type="video/mp4"
+				media="(prefers-reduced-motion: no-preference)"
+			/>
 		</video>
 
 		{/*

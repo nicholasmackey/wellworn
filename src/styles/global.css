@@ -130,6 +130,17 @@
 		@apply block max-w-full;
 	}
 
+	/* The hero still sits *under* the video, so the video must not paint its own
+	   ground before it has a frame to show. WebKit gives a media element an
+	   opaque black backdrop once it opens a decode session, which would cover the
+	   still while the file buffers — and cover it indefinitely on an iPhone in
+	   Low Power Mode, where autoplay is blocked outright and no frame ever
+	   arrives. Transparent lets the still be the fallback the hero was built
+	   around. Cheap insurance; it costs nothing when playback works. */
+	.hero-video {
+		background-color: transparent;
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		html {
 			scroll-behavior: auto;
