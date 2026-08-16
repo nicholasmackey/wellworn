@@ -2,7 +2,7 @@
 import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ProjectHeading from '../components/ProjectHeading.astro';
-import Screenshot from '../components/Screenshot.astro';
+import ProjectStack from '../components/ProjectStack.astro';
 import {
 	CAPABILITIES,
 	CONTACT_HREF,
@@ -42,6 +42,17 @@ const ordinal = (index: number): string => String(index + 1).padStart(2, '0');
  * the one the section is built around.
  */
 const [cadence, davis, veil] = PROJECTS;
+
+/**
+ * The width a stack renders at: the wrapper's 80rem cap less its 3rem gutters,
+ * and the viewport less the gutters below that. One expression rather than a
+ * media-query list because every card in a stack is a fixed fraction of the
+ * stack, so this is all ProjectStack needs to size the srcset of every shot in
+ * it. It rounds up by an inch at sm and lg, where the gutters are narrower than
+ * the 3rem assumed here, which costs a slightly larger candidate and nothing
+ * else.
+ */
+const STACK_WIDTH = 'min(74rem, 100vw - 3rem)';
 ---
 
 <BaseLayout
@@ -263,17 +274,26 @@ const [cadence, davis, veil] = PROJECTS;
 				{/* The section argues that a website has to earn trust, so the picture
 				    under it is trust being earned in person. Native 3:2, so nothing
 				    is cropped away. max-w-md ties it to the measure of the paragraph
-				    above rather than letting it run the full column. */}
-				<Image
-					src={customerImage}
-					alt="A shop owner in an apron talking a customer through the shelves of her gift shop."
-					widths={[400, 600, 800, 1200]}
-					sizes="(min-width: 1024px) 28rem, 100vw"
-					width={1200}
-					height={800}
-					quality={80}
-					class="mt-10 aspect-[3/2] w-full max-w-md rounded-sm object-cover"
-				/>
+				    above rather than letting it run the full column.
+
+				    The frame is now a wrapper rather than the image itself, because
+				    the image moves inside it: see .scroll-settle in global.css. The
+				    aspect and the rounding move with it, so the box the layout sees
+				    is identical either way. */}
+				<div
+					class="scroll-settle mt-10 aspect-[3/2] w-full max-w-md overflow-clip rounded-sm"
+				>
+					<Image
+						src={customerImage}
+						alt="A shop owner in an apron talking a customer through the shelves of her gift shop."
+						widths={[400, 600, 800, 1200]}
+						sizes="(min-width: 1024px) 28rem, 100vw"
+						width={1200}
+						height={800}
+						quality={80}
+						class="h-full w-full object-cover"
+					/>
+				</div>
 			</div>
 
 			<ol class="border-b border-charcoal/20 lg:col-span-6 lg:col-start-7">
@@ -321,13 +341,24 @@ const [cadence, davis, veil] = PROJECTS;
 
 			{/* Name over description, same as every other pairing on the page. The
 			    rule at the head of each row is what separates one capability from
-			    the next now that the two halves share a column. */}
+			    the next now that the two halves share a column.
+
+			    A row answers a pointer resting on it by stepping in from the margin
+			    and coming up out of the muted grey it sits at — the rule above it
+			    brightening at the same time, so what responds is the whole row and
+			    not just a word in it. Deliberately no fill and no cursor change:
+			    these are not links, and a tinted band under one would say they
+			    were. It is the index acknowledging where you are reading. */}
 			<dl class="mt-16 border-b border-cream/15 lg:mt-24">
 				{
 					CAPABILITIES.map((capability) => (
-						<div class="grid gap-y-4 border-t border-cream/15 py-8 lg:py-12">
-							<dt class="display display-item">{capability.title}</dt>
-							<dd class="max-w-xl text-lg leading-relaxed text-cream/70">{capability.body}</dd>
+						<div class="group grid gap-y-4 border-t border-cream/15 py-8 transition-colors duration-300 hover:border-cream/40 lg:py-12">
+							<dt class="display display-item transition-transform duration-300 ease-out motion-safe:group-hover:translate-x-1.5">
+								{capability.title}
+							</dt>
+							<dd class="max-w-xl text-lg leading-relaxed text-cream/70 transition-colors duration-300 group-hover:text-cream/90">
+								{capability.body}
+							</dd>
 						</div>
 					))
 				}
@@ -351,16 +382,18 @@ const [cadence, davis, veil] = PROJECTS;
 			  into her, and unchanged from before.
 			*/}
 			<div class="mt-16 grid gap-y-8 lg:mt-24 lg:grid-cols-12 lg:items-center lg:gap-x-12">
-				<Image
-					src={bakeryImage}
-					alt="A baker in a sunlit kitchen boxing cupcakes beside finished cakes on a stand."
-					widths={[400, 600, 800, 1000]}
-					sizes="(min-width: 1024px) 30rem, 100vw"
-					width={1000}
-					height={1628}
-					quality={80}
-					class="aspect-[3/4] w-full rounded-sm object-cover lg:col-span-5"
-				/>
+				<div class="scroll-settle aspect-[3/4] w-full overflow-clip rounded-sm lg:col-span-5">
+					<Image
+						src={bakeryImage}
+						alt="A baker in a sunlit kitchen boxing cupcakes beside finished cakes on a stand."
+						widths={[400, 600, 800, 1000]}
+						sizes="(min-width: 1024px) 30rem, 100vw"
+						width={1000}
+						height={1628}
+						quality={80}
+						class="h-full w-full object-cover"
+					/>
+				</div>
 
 				<p class="display display-statement lg:col-span-7 lg:col-start-6">
 					If it belongs on the web, we can build it.
@@ -391,16 +424,20 @@ const [cadence, davis, veil] = PROJECTS;
 			    stays a picture in the middle of the page rather than a band across
 			    it: this section's whole composition is the cream margin around it.
 			    Native 3:2 again, uncropped. */}
-			<Image
-				src={figureItOutImage}
-				alt="Two people sitting together on a sofa in a clothing shop, working through something on a laptop."
-				widths={[640, 960, 1280, 1600, 1920]}
-				sizes="(min-width: 1024px) 56rem, 100vw"
-				width={1920}
-				height={1280}
-				quality={80}
-				class="mx-auto mt-16 aspect-[3/2] w-full max-w-4xl rounded-sm object-cover lg:mt-20"
-			/>
+			<div
+				class="scroll-settle mx-auto mt-16 aspect-[3/2] w-full max-w-4xl overflow-clip rounded-sm lg:mt-20"
+			>
+				<Image
+					src={figureItOutImage}
+					alt="Two people sitting together on a sofa in a clothing shop, working through something on a laptop."
+					widths={[640, 960, 1280, 1600, 1920]}
+					sizes="(min-width: 1024px) 56rem, 100vw"
+					width={1920}
+					height={1280}
+					quality={80}
+					class="h-full w-full object-cover"
+				/>
+			</div>
 
 			{/*
 			  An <ol>, because the order is the sequence: it is the only thing
@@ -408,11 +445,21 @@ const [cadence, davis, veil] = PROJECTS;
 			  screen. Three columns at lg — the step names are capped below the
 			  .display-item scale so the longest of them stays on one line and
 			  the three rules keep their run across the row.
+
+			  Each step rises in as it comes up the screen, and the offset walks
+			  the range along by a step per item so they resolve first, second,
+			  third — the order being the whole content of this list, it is worth
+			  having the row arrive in it. At lg they are side by side and would
+			  otherwise land together; stacked on a phone they are already in
+			  order, and the offset only spaces them a little further apart.
 			*/}
 			<ol class="mt-16 grid gap-y-10 lg:mt-24 lg:grid-cols-3 lg:gap-x-12">
 				{
-					PROCESS.map((step) => (
-						<li class="border-t border-charcoal/20 pt-6 lg:pt-8">
+					PROCESS.map((step, index) => (
+						<li
+							class="rise-in border-t border-charcoal/20 pt-6 lg:pt-8"
+							style={`--rise-offset:${index * 8}%`}
+						>
 							{/* The one place green is still set as type rather than kept for
 							    a hover. Three step names on cream is a small enough dose to
 							    keep the colour in the brand without letting it own a band of
@@ -439,20 +486,21 @@ const [cadence, davis, veil] = PROJECTS;
 	  browser chrome and no device frames — just the work, a name, and a way to
 	  go and see it running.
 
-	  Every project is one lead image and its supporting shots, and the three are
-	  written out by hand rather than mapped, because the differences between
-	  them are the layout. Each one puts its weight and its empty space somewhere
-	  else:
+	  Every project is a pile of prints rather than a grid of screenshots: the
+	  lead on top and square to the page, the rest behind it showing an edge
+	  each. Pointing at one opens it; pressing it deals the next shot to the
+	  front. What used to be three hand-written compositions is now one component
+	  told which way to open, which is what makes a fourth project a line of
+	  markup rather than a fourth layout — see ProjectStack.astro for the
+	  geometry.
 
-	      Cadence  full-width lead, a pair indented beneath  air lower right
-	      Davis    large left, one small shot dropped right  air upper right
-	      Veil     large right, the phone standing at left   air upper left
-
-	  Read down the section, the mass swings from centre to left to right and the
-	  void swings the opposite way. Three identical rows would say the three are
-	  equal and turn the section into a stack of screenshots, which is the one
-	  thing it is trying not to be. A fourth project means writing a fourth
-	  composition, and that is the intended cost.
+	  The three still do not read alike, because what is in them differs. Cadence
+	  is three deep and opens to the right; Davis is two deep and opens to the
+	  left, so the mass and the void swap sides between them; Veil is a landing
+	  page with the phone capture laid on its left edge, which parts rather than
+	  fans because both of its shots are already in view. Read down the section
+	  the weight still swings, and the section is still not a stack of
+	  screenshots — it is three stacks of them, which is a different thing.
 	*/}
 	<section id="work" class="wrapper py-24 lg:py-36" aria-labelledby="work-heading">
 		{/* The same opening as the other cream sections: a rust rule, because on
@@ -468,112 +516,43 @@ const [cadence, davis, veil] = PROJECTS;
 
 		<div class="mt-16 space-y-24 lg:mt-24 lg:space-y-36">
 			{/*
-			  Cadence, the lead. Its opening shot is the widest image on the page
-			  outside the hero, and it is the only one here that runs the full
-			  measure — that alone is how the section says which piece of work
-			  matters most. No colour, no label, no badge.
-
-			  The pair beneath take four columns each and stop at column eight, so
-			  they sit under the left half of the shot they belong to and leave a
-			  third of the row empty. Indented rather than equal is what makes them
-			  read as supporting the image above rather than following it.
-
-			  Side by side at every width, including phones. Two small captures on
-			  one line say "detail, detail" where two full-width ones in a column
-			  say "and another, and another", and they cost a fifth of the height.
+			  Cadence, the lead, and the deepest pile here: three shots, opening to
+			  the right. That is how the section says which piece of work matters
+			  most — there is simply more of it to look through than the other two,
+			  and it takes two turns rather than one to come back to the top. No
+			  colour, no label, no badge.
 			*/}
 			<article>
 				<ProjectHeading project={cadence} />
 
-				<div class="mt-6 lg:mt-8">
-					<Screenshot
-						shot={cadence.shots[0]}
-						href={cadence.href}
-						sizes="(min-width: 80rem) 74rem, (min-width: 64rem) calc(100vw - 6rem), (min-width: 40rem) calc(100vw - 4rem), calc(100vw - 3rem)"
-					/>
-
-					<div class="mt-4 grid grid-cols-2 gap-4 sm:mt-6 sm:gap-6 lg:mt-8 lg:grid-cols-12 lg:gap-8">
-						<Screenshot
-							shot={cadence.shots[1]}
-							href={cadence.href}
-							sizes="(min-width: 80rem) 24rem, (min-width: 64rem) 29vw, (min-width: 40rem) calc((100vw - 5.5rem) / 2), calc((100vw - 4rem) / 2)"
-							class="lg:col-span-4"
-						/>
-
-						<Screenshot
-							shot={cadence.shots[2]}
-							href={cadence.href}
-							sizes="(min-width: 80rem) 24rem, (min-width: 64rem) 29vw, (min-width: 40rem) calc((100vw - 5.5rem) / 2), calc((100vw - 4rem) / 2)"
-							class="lg:col-span-4"
-						/>
-					</div>
-				</div>
+				<ProjectStack project={cadence} width={STACK_WIDTH} class="mt-6 lg:mt-8" />
 			</article>
 
 			{/*
-			  Davis. Eight columns and four, which is a lead and a detail rather
-			  than the near-halves a seven-and-five split gives you, and the small
-			  one is dropped to the foot of the row so the two share a baseline and
-			  the leftover space collects above it. Both shots are landscape, so
-			  this is the horizontal composition of the three.
-
-			  On phones the second keeps two thirds of the column and its left
-			  margin. Held back rather than stacked full width, it stays a detail
-			  all the way down instead of turning into a second lead.
+			  Davis, and the mirror of the pile above it: two shots, opening left,
+			  so the mass sits to the right and the air it opens into is on the
+			  left. Read one after the other, the two swing the composition across
+			  the page the way the old eight-and-four and nine-and-three rows did.
 			*/}
 			<article>
 				<ProjectHeading project={davis} />
 
-				<div class="mt-6 grid gap-4 sm:gap-6 lg:mt-8 lg:grid-cols-12 lg:gap-8">
-					<Screenshot
-						shot={davis.shots[0]}
-						href={davis.href}
-						sizes="(min-width: 80rem) 49rem, (min-width: 64rem) 61vw, (min-width: 40rem) calc(100vw - 4rem), calc(100vw - 3rem)"
-						class="lg:col-span-8"
-					/>
-
-					<Screenshot
-						shot={davis.shots[1]}
-						href={davis.href}
-						sizes="(min-width: 80rem) 24rem, (min-width: 64rem) 29vw, (min-width: 40rem) calc((100vw - 4rem) / 2), calc((100vw - 3rem) * 0.67)"
-						class="w-2/3 sm:w-1/2 lg:col-span-4 lg:w-auto lg:self-end"
-					/>
-				</div>
+				<ProjectStack project={davis} width={STACK_WIDTH} fan="left" class="mt-6 lg:mt-8" />
 			</article>
 
 			{/*
-			  Veil, and the mirror of the row above it. The landing page leads and
-			  takes the right nine columns; the phone is the detail and stands at
-			  the left margin, so the mass and the void both land on the opposite
-			  side from Davis. Bottom-aligned again, which is what keeps the two
-			  rows a pair rather than two unrelated ideas.
-
-			  The phone is capped hard, and has to be: a 3:6.5 frame given a whole
-			  column at tablet width would stand over 1500px tall and take the
-			  screen off the project it is a footnote to. 11rem at lg puts it at
-			  roughly four fifths of the lead's height on a twentieth of its width,
-			  which is a detail standing beside a picture rather than a second one
-			  competing with it. It comes second in the source at every width, so
-			  the lead is what you meet first on a phone too.
+			  Veil, the odd one, and the reason the component knows about portrait
+			  shots at all. A phone capture cannot be a card in a deck of landscape
+			  ones — cropped to their frame there would be nothing left of it — so
+			  it is laid on the pile instead, tucked under the landing page's left
+			  edge and hanging below it, and the two part rather than fan. Nothing
+			  is hidden in a pile of two prints of different shapes, so this is the
+			  one project with no control and no count on it.
 			*/}
 			<article>
 				<ProjectHeading project={veil} />
 
-				<div class="mt-6 grid gap-4 sm:gap-6 lg:mt-8 lg:grid-cols-12 lg:items-end lg:gap-8">
-					<Screenshot
-						shot={veil.shots[0]}
-						href={veil.href}
-						sizes="(min-width: 80rem) 55rem, (min-width: 64rem) 68vw, (min-width: 40rem) calc(100vw - 4rem), calc(100vw - 3rem)"
-						class="lg:col-span-9 lg:col-start-4"
-					/>
-
-					<Screenshot
-						shot={veil.shots[1]}
-						href={veil.href}
-						sizes="(min-width: 64rem) 11rem, (min-width: 40rem) calc((100vw - 4rem) / 4), calc((100vw - 3rem) / 3)"
-						class="w-1/3 sm:w-1/4 lg:col-span-3 lg:col-start-1 lg:row-start-1 lg:w-auto lg:max-w-[11rem]"
-					/>
-				</div>
+				<ProjectStack project={veil} width={STACK_WIDTH} class="mt-6 lg:mt-8" />
 			</article>
 		</div>
 	</section>

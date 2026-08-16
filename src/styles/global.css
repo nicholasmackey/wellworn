@@ -285,4 +285,76 @@
 			font-display text-xs font-semibold uppercase tracking-label text-cream/75
 			transition-colors duration-200 select-none hover:border-cream hover:text-cream;
 	}
+
+	/* ------------------------------------------------------------------------
+	   Two entrances tied to the scroll position, both of them opt-in.
+
+	   Neither is written in JavaScript and neither needs to be: a view timeline
+	   is the element's own progress through the viewport, so there is no
+	   observer to wire up, nothing to run on the main thread while scrolling,
+	   and — the part that matters most — no state where the content has been
+	   hidden by a script that has not arrived yet.
+
+	   Both live behind @supports as well as the motion query. That is
+	   load-bearing rather than tidy: a browser that does not understand
+	   `animation-timeline` ignores the property and runs the animation on the
+	   document timeline instead, which would turn a scroll entrance into a
+	   decorative one that plays itself on load. Where the timeline is not
+	   supported, or motion is not wanted, nothing is declared at all and the
+	   element is simply where the layout puts it.
+
+	   Both are written in longhand, and have to be. `animation: rise-in linear
+	   both` reads better, but with the timeline set beside it the minifier folds
+	   the two into one shorthand — and `animation` does not take a timeline, so
+	   what ships is `animation: linear both rise-in view()`, which every browser
+	   drops on the floor as invalid. The whole entrance then silently does
+	   nothing, which is exactly the kind of failure that survives a review.
+	   Leave these in longhand.
+	   ------------------------------------------------------------------------ */
+	@media (prefers-reduced-motion: no-preference) {
+		@supports (animation-timeline: view()) {
+			/* A short rise as the element comes up into the viewport, done well
+			   before it reaches the middle of the screen. --rise-offset walks the
+			   range along for each item in a row, so a set of them resolves in
+			   order as the row rises rather than all at once. */
+			.rise-in {
+				animation-name: rise-in;
+				animation-timing-function: linear;
+				animation-fill-mode: both;
+				animation-timeline: view();
+				animation-range: entry calc(14% + var(--rise-offset, 0%)) entry
+					calc(72% + var(--rise-offset, 0%));
+			}
+
+			/* A photograph settling into its frame: it enters a few per cent over
+			   size and is at rest by the time it is fully in view. The frame never
+			   moves and the crop is the same one at rest, so this reads as the
+			   picture arriving rather than as the page moving. The wrapper has to
+			   clip with `overflow: clip` rather than `hidden` — hidden makes a
+			   scroll container, and view() would then measure the image against
+			   that box instead of against the page. */
+			.scroll-settle > img {
+				animation-name: scroll-settle;
+				animation-timing-function: linear;
+				animation-fill-mode: both;
+				animation-timeline: view();
+				animation-range: entry 0% entry 100%;
+			}
+		}
+	}
+}
+
+/* Only a from: the resting state is the element exactly as the layout leaves
+   it, so an entrance that never runs leaves the page simply present. */
+@keyframes rise-in {
+	from {
+		opacity: 0;
+		transform: translateY(1.5rem);
+	}
+}
+
+@keyframes scroll-settle {
+	from {
+		transform: scale(1.05);
+	}
 }

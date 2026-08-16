@@ -1,0 +1,412 @@
+---
+import { Image } from 'astro:assets'
+import type { Project, Shot } from '../config/site'
+
+interface Props {
+	project: Project
+	/**
+	 * A CSS length expression for the width the stack renders at, e.g.
+	 * `min(74rem, 100vw - 3rem)`. Every card inside is a fixed fraction of the
+	 * stack, so this one expression is enough to size the srcset of all of them
+	 * and there is no per-shot `sizes` string to keep in step with the layout.
+	 */
+	width: string
+	/** Which way the deck opens. The section alternates it down the page. */
+	fan?: 'right' | 'left'
+	/** Grid placement and any width cap. Applied to the outer element. */
+	class?: string
+	loading?: 'eager' | 'lazy'
+}
+
+const { project, width, fan = 'right', class: className, loading = 'lazy' } = Astro.props
+
+/* ---------------------------------------------------------------------------
+   Geometry.
+
+   Every number below is a fraction of the stack's own width. That is the whole
+   trick: expressed that way the entire composition can be handed to CSS in cqw
+   — 1cqw being 1% of the stack — and it holds its proportions from a 320px
+   phone to the 1184px wrapper without a single breakpoint, while still being
+   arithmetic this file can do at build time to work out how tall the box has
+   to be.
+
+   The box is sized for the *opened* stack, not the closed one. Cards move on
+   hover, and a card that moves into space the layout never reserved either
+   overlaps the next project or forces a scrollbar at some width nobody tested.
+   So the reserve is taken out of the card width up front and the fan opens into
+   it; what it costs is that a lead shot is a few per cent narrower than the
+   measure, and what it buys is that nothing on this page ever moves anything
+   else.
+   --------------------------------------------------------------------------- */
+
+/** Step from one card to the next, closed and fully opened. */
+const STEP_REST = 0.024
+const STEP_OPEN = 0.06
+
+/** The step is a diagonal. This is its vertical component, as a share of it. */
+const STEP_Y = 0.5
+
+/**
+ * How much smaller each card sits than the one in front of it while the stack
+ * is closed. It is depth, not perspective — two per cent is enough to say
+ * "behind" and little enough that the cards still read as the same object.
+ * Opening the stack takes it back to zero, so the shots come up to full size as
+ * they come out.
+ */
+const DEPTH = 0.018
+
+/* A portrait shot — a phone capture — cannot be a card in the deck: cropping
+   it to the lead's landscape frame would throw away the whole screen. It gets
+   laid on the pile instead, a smaller print on top of a larger one, tucked
+   under the deck's left edge and hanging a little below it. Opening the stack
+   slides it down and out. */
+const INSET_W = 0.18
+const INSET_OVERLAP_REST = 0.085
+const INSET_OVERLAP_OPEN = 0.03
+const INSET_DROP = 0.02
+const INSET_SLIDE_Y = 0.035
+
+const isPortrait = (shot: Shot): boolean => shot.src.height > shot.src.width
+
+const deck = project.shots.filter((shot) => !isPortrait(shot))
+const insets = project.shots.filter(isPortrait)
+
+/* Both are layout invariants rather than data the component can bend to, so
+   they fail the build with something readable rather than rendering a stack
+   with a hole in it. */
+if (deck.length === 0) {
+	throw new Error(`${project.title}: a stack needs at least one landscape shot to lead it.`)
+}
+if (insets.length > 1) {
+	throw new Error(`${project.title}: only one portrait shot can sit on the pile.`)
+}
+
+const inset = insets[0]
+
+/** How far the inset card travels left as the stack opens. */
+const insetSlideX = INSET_OVERLAP_REST - INSET_OVERLAP_OPEN
+/** The strip down the left the inset card claims, its travel included. */
+const insetReserve = inset ? insetSlideX + INSET_W - INSET_OVERLAP_REST : 0
+/** The strip the deck fans into. */
+const fanReserve = (deck.length - 1) * STEP_OPEN
+
+/** Every deck card is congruent with the lead, so the closed stack has one edge. */
+const cardW = 1 - insetReserve - fanReserve
+const cardRatio = deck[0].src.width / deck[0].src.height
+const cardH = cardW / cardRatio
+
+/** Fanning left means starting from the far side of the reserve and walking back. */
+const deckX = fan === 'left' ? insetReserve + fanReserve : insetReserve
+
+const insetRatio = inset ? inset.src.width / inset.src.height : 1
+const insetH = inset ? INSET_W / insetRatio : 0
+/** Bottom-aligned with the lead, then dropped clear of it by INSET_DROP. */
+const insetY = Math.max(0, cardH + INSET_DROP - insetH)
+
+const stackH = Math.max(
+	cardH + fanReserve * STEP_Y,
+	inset ? insetY + insetH + INSET_SLIDE_Y : 0
+)
+
+/** Trim float noise: `0.4602000000000001cqw` in the markup helps nobody. */
+const round = (value: number): string => String(Number(value.toFixed(4)))
+const cqw = (fraction: number): string => `${round(fraction * 100)}cqw`
+
+const vars = [
+	`--n:${deck.length}`,
+	`--stack-ratio:${round(1 / stackH)}`,
+	`--card-w:${cqw(cardW)}`,
+	`--card-ratio:${round(cardRatio)}`,
+	`--deck-x:${cqw(deckX)}`,
+	`--dir:${fan === 'left' ? -1 : 1}`,
+	`--step-rest:${cqw(STEP_REST)}`,
+	`--step-open:${cqw(STEP_OPEN)}`,
+	`--step-y:${STEP_Y}`,
+	`--depth:${DEPTH}`,
+	...(inset
+		? [
+				`--inset-w:${cqw(INSET_W)}`,
+				`--inset-ratio:${round(insetRatio)}`,
+				`--inset-x-rest:${cqw(insetSlideX)}`,
+				`--inset-x-open:0cqw`,
+				`--inset-y-rest:${cqw(insetY)}`,
+				`--inset-y-open:${cqw(insetY + INSET_SLIDE_Y)}`,
+			]
+		: []),
+].join(';')
+
+/**
+ * Only a stack deep enough to hide something needs a way through it. Veil's two
+ * shots are both in view at rest — one landscape, one phone beside it — so it
+ * gets the parting motion and nothing else: no control, no counter, nothing to
+ * press that would only ever cycle a card back to where it already was.
+ */
+const cycles = deck.length > 1
+
+const deckSizes = `calc(${width} * ${round(cardW)})`
+const insetSizes = `calc(${width} * ${round(INSET_W)})`
+
+/**
+ * Never ask for a candidate wider than the source — sharp will upscale on
+ * request, which costs bytes and adds no detail. The desktop captures are
+ * 1792px wide and the phone one is 463, so the ladder is filtered against each
+ * file and the file's own width pinned on the end.
+ */
+const ladder = (shot: Shot): number[] => [
+	...[320, 480, 640, 960, 1280, 1600].filter((candidate) => candidate < shot.src.width),
+	shot.src.width,
+]
+---
+
+{/*
+  A project as a pile of prints rather than a grid of screenshots. The lead is
+  on top and square to the page; the rest sit behind it, offset down and out,
+  showing an edge each. Pointing at it opens the pile — every card steps further
+  out and comes up to full size — and clicking or tapping it deals the next shot
+  to the front. On a touch screen, where nothing hovers, the pile is simply
+  drawn part-opened so the edges underneath are visible from the start.
+
+  No device frames, no browser chrome, no rotation. The hairline round each card
+  is the same rule the rest of the page is drawn with, and the shadow is the
+  minimum that makes one card read as being in front of another — without it a
+  screenshot on a near-white ground has no edge to stack.
+*/}
+<div class:list={['project-stack', className]} style={vars} data-stack data-title={project.title}>
+	<div class="stack">
+		{
+			deck.map((shot, index) => (
+				<div
+					class="stack-card stack-deck overflow-clip rounded-sm border border-charcoal/15 bg-stone/15"
+					style={`--i:${index}`}
+					data-deck-card
+				>
+					{/* Cropped to the lead's frame rather than its own, so the closed
+					    stack has one silhouette. The captures are within 2% of each
+					    other's ratio, so what this takes is a couple of pixels off the
+					    foot of a supporting shot. */}
+					<Image
+						src={shot.src}
+						alt={shot.alt}
+						widths={ladder(shot)}
+						sizes={deckSizes}
+						quality={80}
+						loading={loading}
+						decoding="async"
+						class="h-full w-full object-cover object-top"
+					/>
+				</div>
+			))
+		}
+
+		{
+			inset && (
+				<div class="stack-card stack-inset overflow-clip rounded-sm border border-charcoal/15 bg-stone/15">
+					<Image
+						src={inset.src}
+						alt={inset.alt}
+						widths={ladder(inset)}
+						sizes={insetSizes}
+						quality={80}
+						loading={loading}
+						decoding="async"
+						class="h-full w-full object-cover"
+					/>
+				</div>
+			)
+		}
+
+		{/*
+		  Rendered hidden and unhidden by the script, which is the whole of the
+		  progressive enhancement here: with no JavaScript there is no control
+		  advertising an action that cannot happen, and the shots are all still in
+		  the document with their alt text and their edges showing.
+
+		  It is one button over the whole stack rather than a link per card
+		  because the images cannot be links any more — a tap has to deal the next
+		  shot, not leave the page. The way to the live site is the domain in the
+		  heading above, which is the part that says where you are about to go.
+		*/}
+		{
+			cycles && (
+				<button
+					type="button"
+					class="stack-advance"
+					aria-label={`Show the next ${project.title} screenshot`}
+					hidden
+				/>
+			)
+		}
+	</div>
+
+	{
+		cycles && (
+			<p class="mt-4 text-right">
+				{/* The count is the only interface this thing has: on a phone it is
+				    what says the pile is a pile and that pressing it does something.
+				    Set as metadata, in the same small uppercase as the domain above —
+				    dots and arrows would make a carousel out of a stack. */}
+				<span class="eyebrow text-charcoal/50" aria-hidden="true" data-stack-ticker>
+					01 / {String(deck.length).padStart(2, '0')}
+				</span>
+
+				{/* Said properly, and only for the people who need it said. The
+				    padded numerals above are read as "zero one" by some screen
+				    readers, which is why they are not the thing being announced. */}
+				<span class="sr-only" aria-live="polite" data-stack-status>
+					Screenshot 1 of {deck.length}
+				</span>
+			</p>
+		)
+	}
+</div>
+
+<style>
+	/*
+	  The stack is its own containment context, so 1cqw is 1% of the stack's
+	  width and every offset in here is a proportion of the composition rather
+	  than a pixel value that has to be re-picked per breakpoint.
+	*/
+	.project-stack {
+		container-type: inline-size;
+	}
+
+	.stack {
+		position: relative;
+		width: 100%;
+		aspect-ratio: var(--stack-ratio);
+
+		/*
+		  0 closed, 1 opened. Every part of the open state is interpolated from
+		  this one number, so the two ways of opening a stack — a pointer over it,
+		  a keyboard landing on it — are written once, and a touch screen can sit
+		  at a fraction of the way open rather than needing a state of its own.
+		*/
+		--open: 0;
+		--step: calc(var(--step-rest) + var(--open) * (var(--step-open) - var(--step-rest)));
+		--lift: calc(1 - var(--open));
+		--inset-x: calc(
+			var(--inset-x-rest) + var(--open) * (var(--inset-x-open) - var(--inset-x-rest))
+		);
+		--inset-y: calc(
+			var(--inset-y-rest) + var(--open) * (var(--inset-y-open) - var(--inset-y-rest))
+		);
+	}
+
+	/*
+	  z-index cannot be interpolated, so it is switched at the midpoint of the
+	  move instead: the card being dealt to the back keeps the front for the
+	  first half of its travel, which is what sliding a print off a pile and
+	  setting it down behind actually looks like. Anything sooner and it clips
+	  through the card it is leaving.
+	*/
+	.stack-card {
+		position: absolute;
+		top: 0;
+		left: 0;
+		transform-origin: 0 0;
+		box-shadow:
+			0 1px 2px rgb(31 33 31 / 0.05),
+			0 14px 30px -20px rgb(31 33 31 / 0.5);
+		transition:
+			transform 500ms cubic-bezier(0.33, 1, 0.68, 1),
+			z-index 0s linear 250ms;
+	}
+
+	.stack-deck {
+		width: var(--card-w);
+		aspect-ratio: var(--card-ratio);
+		z-index: calc(var(--n) - var(--i));
+		transform: translate(
+				calc(var(--deck-x) + var(--dir) * var(--i) * var(--step)),
+				calc(var(--i) * var(--step) * var(--step-y))
+			)
+			scale(calc(1 - var(--i) * var(--depth) * var(--lift)));
+	}
+
+	/* On top of the pile, always: it is the smallest card, and behind anything
+	   it would be behind entirely. */
+	.stack-inset {
+		width: var(--inset-w);
+		aspect-ratio: var(--inset-ratio);
+		z-index: calc(var(--n) + 1);
+		transform: translate(var(--inset-x), var(--inset-y));
+	}
+
+	.stack-advance {
+		position: absolute;
+		inset: 0;
+		z-index: calc(var(--n) + 2);
+		padding: 0;
+		border: 0;
+		/* Matches the cards' rounded-sm, so the focus ring is the same shape as
+		   the thing it is drawn around. */
+		border-radius: 0.25rem;
+		background: none;
+		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	/*
+	  Opening the stack is motion, so it is offered only where motion is wanted.
+	  Reaching the shots is not: the control and the count are outside this
+	  query, and with motion suppressed the cards simply arrive at the next
+	  position rather than travelling to it.
+	*/
+	@media (prefers-reduced-motion: no-preference) {
+		.stack:has(:focus-visible) {
+			--open: 1;
+		}
+
+		@media (hover: hover) and (pointer: fine) {
+			.stack:hover {
+				--open: 1;
+			}
+		}
+	}
+
+	/*
+	  Nothing hovers on a touch screen, so there the pile is drawn part-opened
+	  instead. The edges showing underneath are the only thing that says there is
+	  more than one shot here and that the stack is worth pressing.
+	*/
+	@media (hover: none) {
+		.stack {
+			--open: 0.7;
+		}
+	}
+</style>
+
+<script>
+	/*
+	  Deals the next screenshot to the front. Each card carries its slot in the
+	  pile as --i and its position, size and depth are all read from that, so a
+	  turn is one integer per card and the transition in the stylesheet does the
+	  rest.
+	*/
+	const pad = (value: number): string => String(value).padStart(2, '0')
+
+	for (const stack of document.querySelectorAll<HTMLElement>('[data-stack]')) {
+		const button = stack.querySelector<HTMLButtonElement>('.stack-advance')
+		const cards = [...stack.querySelectorAll<HTMLElement>('[data-deck-card]')]
+
+		// A stack with nothing hidden in it has no button, and vice versa.
+		if (!button || cards.length < 2) continue
+
+		const ticker = stack.querySelector<HTMLElement>('[data-stack-ticker]')
+		const status = stack.querySelector<HTMLElement>('[data-stack-status]')
+		let front = 0
+
+		button.addEventListener('click', () => {
+			front = (front + 1) % cards.length
+
+			for (const [index, card] of cards.entries()) {
+				card.style.setProperty('--i', String((index - front + cards.length) % cards.length))
+			}
+
+			if (ticker) ticker.textContent = `${pad(front + 1)} / ${pad(cards.length)}`
+			if (status) status.textContent = `Screenshot ${front + 1} of ${cards.length}`
+		})
+
+		button.hidden = false
+	}
+</script>
