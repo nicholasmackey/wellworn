@@ -11,37 +11,13 @@
  * On mount the box draws itself clockwise from the top-left while the letters
  * wipe in left to right, staggered 55ms apart but timed to finish
  * together with the box at 1150ms.
- *
- * That draw runs once per tab session, not once per page load. Every
- * navigation on a static site is a fresh document, so without the guard below
- * the mark would redraw on each one — an entrance animation replaying on the
- * fourth page reads as a glitch rather than a flourish.
  */
 import { SITE } from '../config/site'
-
-/**
- * Runs synchronously while the parser sits on this tag, so `data-animate` is
- * gone before the first paint and the animation never starts — a deferred or
- * module script would let a frame or two of the draw through first.
- * `previousElementSibling` is the <svg> immediately above it.
- *
- * sessionStorage rather than localStorage: a genuinely new visit still gets
- * the mark drawn. Storage access throws in some privacy modes, in which case
- * the animation simply runs as it did before.
- */
-const DRAW_ONCE = `(function () {
-	var svg = document.currentScript && document.currentScript.previousElementSibling
-	if (!svg) return
-	try {
-		if (sessionStorage.getItem('ww:wordmark-drawn')) svg.removeAttribute('data-animate')
-		else sessionStorage.setItem('ww:wordmark-drawn', '1')
-	} catch (e) {}
-})()`
 
 interface Props {
 	/** Extra classes for the <svg>. */
 	class?: string
-	/** Draw the mark on the first load of a tab session. Off by default. */
+	/** Draw the mark on mount. Off by default — opt in where it earns its keep. */
 	animate?: boolean
 	/**
 	 * Prefix for this instance's mask ids. Mask ids are document-global, so
@@ -195,8 +171,6 @@ const FRAME_CENTRELINE = 'M84.855 91.855H2390.575V504.145H84.855V91.855H146.855'
 
 	<path d={FRAME} mask={`url(#${uid}-frame)`} />
 </svg>
-
-{animate && <script is:inline set:html={DRAW_ONCE} />}
 
 <style>
 	/* The dash lives only inside the keyframes, never at rest. A dashed stroke
