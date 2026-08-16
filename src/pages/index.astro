@@ -139,26 +139,73 @@ const ordinal = (index: number): string => String(index + 1).padStart(2, '0');
 			  One needs; the size ladder stays here because the hero is the one
 			  place on the page that runs past the section scale.
 
-			  The three spans are the designed line breaks. They only go block from
-			  lg up, where the longest of them (868px at 72px, 1060px at 88px) fits
-			  the wrapper's inner width (928px, then 1184px); below that the line
-			  wraps on its own rather than being forced into an overflow.
+			  The three outer spans are the designed line breaks. They only go block
+			  from lg up, where the longest of them (868px at 72px, 1060px at 88px)
+			  fits the wrapper's inner width (928px, then 1184px); below that the
+			  line wraps on its own rather than being forced into an overflow.
+
+			  The five inner spans are the animation units, and they are five
+			  because the headline sets as three lines at lg and four below it:
+
+			      Websites for | people ‖ who | take business ‖ seriously.
+
+			  Split at both sets of breaks and each rendered line is a whole number
+			  of pieces, so the pieces that share a line can share a delay and what
+			  reads is one line at a time.
+
+			  The four-line grouping is what the text does on its own, not a shape
+			  imposed on it: at 390px the column is 8.55em of Russo One, and
+			  "Websites for" (7.72em), "people who" (6.78em), "take business"
+			  (8.20em) and "seriously." (6.12em) are the only four-line wrap that
+			  fits it. Splitting there makes the breaks deterministic rather than
+			  left to a balancer, which matters once a delay is pinned to each one.
+
+			  The ladder switches at lg, which is where the layout already switches.
+			  Between the two there are two windows — about 690-767px, and 836px up
+			  to lg — where the headline is wide enough to set as three lines while
+			  the four-line ladder is still in force, and the two pieces sharing a
+			  line arrive 120ms apart rather than together. That is a wave along the
+			  line rather than a break in it. The alternative was pinning the switch
+			  to the width at which one string in one face stops fitting, which is a
+			  number that goes quietly wrong the first time the copy changes.
+
+			  inline-block because a transform does nothing to an inline box. It
+			  also means a piece is never broken across lines while it fits, which
+			  is the point; on a phone too narrow for one of them (375px and under,
+			  where "take business" runs past the column) it wraps inside itself and
+			  animates as a unit, which is the graceful end of this rather than an
+			  overflow.
 			*/}
 			<h1
 				class="display text-[2.5rem] leading-[0.9091] text-cream sm:text-[3.25rem] md:text-[4rem] lg:text-[4.5rem] xl:text-[5.5rem]"
 			>
-				<span class="lg:block">Websites for people</span>{' '}
-				<span class="lg:block">who take business</span>{' '}
-				<span class="lg:block">seriously.</span>
+				<span class="lg:block">
+					<span class="hero-rise inline-block" style="--m:0ms">Websites for</span>{' '}
+					<span class="hero-rise inline-block" style="--m:120ms;--d:0ms">people</span>
+				</span>{' '}
+				<span class="lg:block">
+					<span class="hero-rise inline-block" style="--m:120ms">who</span>{' '}
+					<span class="hero-rise inline-block" style="--m:240ms;--d:120ms">take business</span>
+				</span>{' '}
+				<span class="lg:block">
+					<span class="hero-rise inline-block" style="--m:360ms;--d:240ms">seriously.</span>
+				</span>
 			</h1>
 
 			{/* Montserrat medium, topping out at 24px/33.6px (1.4). Uppercased in
 			    CSS, like the headings, so the sentence stays sentence-case for
 			    screen readers and search engines. The ladder stops at md: the
 			    headline should land first and this should resolve a beat later,
-			    which it does not do if it keeps growing alongside it. */}
+			    which it does not do if it keeps growing alongside it.
+
+			    Its entrance holds at 480ms whether the headline above it is three
+			    lines or four. The headline is the part that changes shape between
+			    the two, and pegging this to the last of its lines would drag the
+			    end of the sequence around with it; keeping the number still means
+			    the hero finishes the same way at every width. */}
 			<p
-				class="mt-6 max-w-3xl font-display text-lg leading-[1.4] font-medium tracking-heading text-cream/80 uppercase sm:text-xl md:text-2xl lg:mt-8"
+				class="hero-rise mt-6 max-w-3xl font-display text-lg leading-[1.4] font-medium tracking-heading text-cream/80 uppercase sm:text-xl md:text-2xl lg:mt-8"
+				style="--m:480ms"
 			>
 				Look more established, make a stronger first impression, and turn visitors into
 				customers.
@@ -166,8 +213,16 @@ const ordinal = (index: number): string => String(index + 1).padStart(2, '0');
 
 			{/* Held a step further off the copy than the copy is off the headline,
 			    so the CTA reads as its own beat rather than the end of the
-			    paragraph. */}
-			<a href={CONTACT_HREF} class="btn btn-cream mt-12 lg:mt-14">Start a project</a>
+			    paragraph. Its entrance is spaced the same way and comes last: the
+			    140ms after the supporting line is wider than the 120ms between
+			    headline lines, so the button lands as its own arrival. */}
+			<a
+				href={CONTACT_HREF}
+				class="hero-rise btn btn-cream mt-12 lg:mt-14"
+				style="--m:620ms"
+			>
+				Start a project
+			</a>
 		</div>
 	</section>
 
@@ -567,3 +622,59 @@ const ordinal = (index: number): string => String(index + 1).padStart(2, '0');
 		</div>
 	</section>
 </BaseLayout>
+
+<style>
+	/*
+	  The hero's entrance. Every piece of it starts 16px low and transparent and
+	  arrives over 550ms: the headline a line at a time 120ms apart, then the
+	  supporting line, then the button. Nothing scales, blurs, or overshoots —
+	  the hero already has a moving picture behind it, and a second kind of
+	  movement in front of it would be one too many. This is only the copy
+	  settling into place.
+
+	  The last of it starts at 620ms and is done at 1170ms, which is where the
+	  header's wordmark finishes drawing, so the top of the page and the hero
+	  come to rest together rather than one after the other.
+
+	  Each element carries its own delay: --m is the mobile ladder, where the
+	  headline is four lines, and --d the desktop one, where it is three.
+	  Anything whose timing is the same at both widths — the supporting line, the
+	  button, and the headline pieces that do not move between the two — sets
+	  only --m, and --d falls back to it.
+	*/
+	.hero-rise {
+		animation: hero-rise 550ms cubic-bezier(0.33, 1, 0.68, 1) var(--m, 0ms) backwards;
+	}
+
+	/* lg, where the headline goes to three lines. The longhand has to come after
+	   the shorthand that sets the same property: a media query adds no
+	   specificity, so source order is the whole of what makes this win. */
+	@media (min-width: 64rem) {
+		.hero-rise {
+			animation-delay: var(--d, var(--m, 0ms));
+		}
+	}
+
+	/* Only a from: the resting state is the element exactly where the layout
+	   puts it, so `backwards` is what holds it low and hidden through its delay,
+	   and an animation that never runs leaves the hero simply present. */
+	@keyframes hero-rise {
+		from {
+			opacity: 0;
+			transform: translateY(1rem);
+		}
+	}
+
+	/*
+	  The global reduce rule collapses animation duration but not delay, which
+	  with `backwards` would hold each piece at opacity 0 for its full stagger —
+	  up to 620ms of blank hero, which is worse than the animation it is meant to
+	  spare anyone. Drop it outright instead: everything is there on the first
+	  frame.
+	*/
+	@media (prefers-reduced-motion: reduce) {
+		.hero-rise {
+			animation: none;
+		}
+	}
+</style>
