@@ -90,6 +90,20 @@
 		scroll-behavior: smooth;
 		/* Offset anchor jumps so the sticky header never covers a heading. */
 		scroll-padding-top: 6rem;
+		/* Hold the scrollbar's gutter open at all times. Opening the header menu
+		   locks the page behind it, and without a reserved gutter the scrollbar
+		   would vanish at that moment and every line on the page would jump a
+		   scrollbar's width sideways underneath it. Costs nothing where the
+		   scrollbar is an overlay (macOS, touch), which is most places. */
+		scrollbar-gutter: stable;
+	}
+
+	/* The page behind the open menu does not scroll. Set here rather than in
+	   Header.astro because it is the document that stops scrolling, not the
+	   component — and because it has to survive the component's styles being
+	   scoped. The panel does its own scrolling on a short screen. */
+	html[data-menu-open] {
+		overflow: hidden;
 	}
 
 	body {
@@ -171,9 +185,13 @@
 		@apply mx-auto w-full max-w-[80rem] px-6 sm:px-8 lg:px-12;
 	}
 
-	/* Small uppercase label, for form fields and metadata. Not for section
-	   eyebrows: sections are opened by their heading, a rule, or a change of
-	   ground, and nothing else. */
+	/* Small uppercase label, for form fields, metadata, and the eyebrow over a
+	   section heading. Kept to the two sections that need naming — the work and
+	   the argument beneath it — rather than stamped on every heading on the
+	   page: an eyebrow over all of them is a label nobody reads, and the charcoal
+	   panels are already announced by their change of ground. Never rust on
+	   cream at this size; 12px needs 4.5:1 and rust reaches 4.0:1. The rule above
+	   it is where the accent goes. */
 	.eyebrow {
 		@apply font-display text-xs font-semibold uppercase tracking-label;
 	}
@@ -205,9 +223,11 @@
 
 	/* The page's statement voice, above the section headings and just under the
 	   hero, so it reads as a second voice rather than another heading. Two
-	   places earn it: the how-it-works claim, and the coda that closes the
-	   capability list. Both are assertions rather than labels for what follows,
-	   which is the test for using this rather than .display-section. */
+	   places earn it: the claim that the work is built around the business, and
+	   the close at the foot of the page. Both are assertions rather than labels
+	   for what follows, which is the test for using this rather than
+	   .display-section — and holding it to two is what keeps it a voice instead
+	   of a size. */
 	.display-statement {
 		font-size: clamp(2.25rem, 1.25rem + 4vw, 4.5rem);
 	}
@@ -228,15 +248,21 @@
 	/* The primary fill, in both its forms: btn-primary on light ground, btn-cream
 	   on the dark panels. Same button, inverted for the surface it sits on.
 
-	   The hero button is the baseline for every primary CTA on the site: 56px
-	   tall, 4px corners, the same side padding and the same label size. The
-	   height is fixed rather than derived from padding so it holds at 56px
-	   wherever it lands, whatever the font size around it. There is deliberately
-	   no size variant. A form submit that is wider than the button that sent
-	   someone to the form makes the same action look like two different ones,
-	   which is exactly what the old .btn-lg did. */
+	   The hero button is the baseline for every CTA on the site: 56px tall, 4px
+	   corners, the same side padding and the same label size. The height is fixed
+	   rather than derived from padding so it holds at 56px wherever it lands,
+	   whatever the font size around it. There is deliberately no size variant. A
+	   form submit that is wider than the button that sent someone to the form
+	   makes the same action look like two different ones, which is exactly what
+	   the old .btn-lg did.
+
+	   The outline pair carries the same geometry, which is the point: where the
+	   hero sets a primary and a secondary side by side, they have to be the same
+	   object in two weights. Only the fill says which one is the ask. */
 	.btn-primary,
-	.btn-cream {
+	.btn-cream,
+	.btn-outline,
+	.btn-outline-cream {
 		@apply h-14 rounded-sm px-7;
 	}
 

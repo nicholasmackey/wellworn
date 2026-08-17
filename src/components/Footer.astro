@@ -30,7 +30,11 @@ const year = new Date().getFullYear();
 						class="h-8 w-auto sm:h-9"
 					/>
 				</a>
-				<p class="mt-6 max-w-sm text-stone">Web design and development.</p>
+				{/* "Independent" is doing real work here rather than padding the
+				    line: it is the one word that separates this from an agency and
+				    from a template shop, which is the distinction the rest of the
+				    page has been drawing. */}
+				<p class="mt-6 max-w-sm text-stone">Independent web design + development.</p>
 			</div>
 
 			{/*
@@ -52,9 +56,16 @@ const year = new Date().getFullYear();
 		</div>
 
 		<div class="mt-16 border-t border-cream/15 pt-8">
-			{/* Kept on one line: a newline between two expressions is stripped as
+			{/* Not .eyebrow, which would uppercase the name. The mark above is
+			    uppercase because the artwork is drawn that way; the name set as
+			    running text is not, and shouting it here would only make the two
+			    disagree. Everything else about the line — face, weight, size —
+			    matches the labels it sits with, at heading tracking rather than
+			    label tracking, which is what sentence case wants.
+
+			    Kept on one line: a newline between two expressions is stripped as
 			    JSX-style whitespace, which would run the year into the name. */}
-			<p class="eyebrow text-stone">&copy; {year} {SITE.name}</p>
+			<p class="font-display text-xs font-semibold tracking-heading text-stone">&copy; {year} {SITE.name}</p>
 		</div>
 	</div>
 </footer>

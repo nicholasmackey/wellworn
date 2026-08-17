@@ -1,7 +1,7 @@
 ---
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import { BRAND, CAPABILITIES, SITE } from '../config/site';
+import { BRAND, BRANDING, CAPABILITIES, SITE } from '../config/site';
 // Self-hosted variable fonts from node_modules. `wght.css` is the full weight
 // axis in one file per subset; browsers fetch only the subset they need via
 // unicode-range. Imported before global.css so the @font-face rules land first.
@@ -60,8 +60,9 @@ const organizationSchema = {
 		// Emitted on the homepage only, so it lists what the homepage sells:
 		// the web capabilities, not the photography services. `url` points at
 		// the section that describes them, since none of them has a route of
-		// its own.
-		itemListElement: CAPABILITIES.map((capability) => ({
+		// its own. Branding is held apart from the three in the page's layout,
+		// but it is still work we take on, so it belongs in the catalogue.
+		itemListElement: [...CAPABILITIES, BRANDING].map((capability) => ({
 			'@type': 'Offer',
 			itemOffered: {
 				'@type': 'Service',

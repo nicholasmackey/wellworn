@@ -4,8 +4,14 @@
  */
 
 export const SITE = {
-  /** Displayed brand name. "Creative" is part of the domain only, never the mark. */
-  name: 'WELLWORN',
+  /**
+   * Displayed brand name. "Creative" is part of the domain only, never the
+   * mark. Set in sentence case, not caps: the wordmark artwork is already
+   * uppercase, so shouting the name in running text only makes the two
+   * disagree — and a screen reader spells an all-caps word out letter by
+   * letter. Where the name is meant to look uppercase, use the artwork.
+   */
+  name: 'Wellworn',
   url: 'https://wellworncreative.com',
   lang: 'en',
   locale: 'en_US',
@@ -14,11 +20,11 @@ export const SITE = {
    * Used verbatim as the <title> on the homepage. The homepage sells web
    * design and development only, so it does not mention photography.
    */
-  title: 'WELLWORN | Web design and development',
+  title: 'Wellworn | Web design and development',
 
   /** Default meta description. Keep under ~160 characters. */
   description:
-    'Wellworn is an independent studio designing and building websites, web applications, online stores, and the brand identity behind them.',
+    'Wellworn is an independent studio designing and building websites, online stores, and the custom pieces a growing business needs around them.',
 
   /**
    * TODO: confirm the real inbox before launch.
@@ -68,6 +74,63 @@ export const BRAND = {
  */
 export const CONTACT_HREF = '/#contact'
 
+/** One destination in the header menu. */
+export interface NavItem {
+  readonly label: string
+  /**
+   * Root-relative, not a bare fragment: the menu ships in the header on every
+   * page, so `#work` would do nothing at all from /404. `/#work` scrolls on the
+   * homepage and loads it from anywhere else.
+   */
+  readonly href: string
+  /**
+   * One line saying what is down there. The menu covers the page, so it can
+   * afford to describe a section rather than just name it — and a visitor who
+   * opens it is asking what is here, which a list of five nouns does not
+   * answer.
+   */
+  readonly note: string
+}
+
+/**
+ * The header menu, in page order — which is the order the sections argue in,
+ * so the menu doubles as a summary of the page rather than a shortcut list.
+ * The sections it points at are the ones carrying an id in index.astro; the
+ * two statement sections have none, deliberately, because they are the page
+ * making a claim rather than places to be sent.
+ *
+ * Contact is last and is still the one ask, which is what the header button
+ * used to be. It is a row like the others here: the menu is an index, and
+ * dressing one line in it as a button would make the index look like a form.
+ */
+export const NAV: readonly NavItem[] = [
+  {
+    label: 'Selected work',
+    href: '/#work',
+    note: 'A few of the websites we’ve put to work.',
+  },
+  {
+    label: 'Why it matters',
+    href: '/#why',
+    note: 'What a website owes the business paying for it.',
+  },
+  {
+    label: 'What we do',
+    href: '/#services',
+    note: 'Websites, online selling, and the custom pieces.',
+  },
+  {
+    label: 'How it works',
+    href: '/#how-it-works',
+    note: 'Figure it out, make it, put it to work.',
+  },
+  {
+    label: 'Get in touch',
+    href: CONTACT_HREF,
+    note: 'Tell us what you’re working on.',
+  },
+]
+
 /* ==========================================================================
    Homepage
    --------------------------------------------------------------------------
@@ -104,11 +167,20 @@ export interface Shot {
 export interface Project {
   readonly title: string
   /**
-   * What the business is, in a handful of words. Set as metadata rather than
-   * as copy — the screenshots are the argument, and a case study would be a
-   * different page.
+   * What the work did for the business, in one sentence. This is the line the
+   * preview is built around — it runs at lede scale under the name, in
+   * sentence case, and it is the only place on the page where a project gets
+   * to make its own argument rather than leaving it to the screenshots.
    */
-  readonly kicker: string
+  readonly headline: string
+  /** A sentence of context under the headline: what the job actually was. */
+  readonly summary: string
+  /**
+   * What we did, as discrete pieces. Joined with a middot for display, so the
+   * separator stays a presentation decision rather than something baked into
+   * the copy.
+   */
+  readonly services: readonly string[]
   /** Live site. */
   readonly href: string
   /** The domain, shown as the visible link text. */
@@ -132,7 +204,10 @@ export interface Project {
 export const PROJECTS: readonly Project[] = [
   {
     title: 'Cadence',
-    kicker: 'Homeschool record keeping',
+    headline: 'Making homeschool record keeping feel less like record keeping.',
+    summary:
+      'Homeschool planning, product design, and development built around a more flexible way to learn.',
+    services: ['Product strategy', 'UX', 'Website design', 'Development'],
     href: 'https://recordcadence.com',
     label: 'recordcadence.com',
     shots: [
@@ -152,7 +227,11 @@ export const PROJECTS: readonly Project[] = [
   },
   {
     title: 'Davis Property Works',
-    kicker: 'Landscaping and property care',
+    headline:
+      'Helping a local property company look as established online as it does on the job.',
+    summary:
+      'A straightforward website built to explain the work, establish trust, and turn local traffic into estimate requests.',
+    services: ['Website strategy', 'Design', 'Development'],
     href: 'https://davispropertyworks.com',
     label: 'davispropertyworks.com',
     shots: [
@@ -168,7 +247,10 @@ export const PROJECTS: readonly Project[] = [
   },
   {
     title: 'Veil',
-    kicker: 'Private cycle tracking',
+    headline: 'Making private cycle tracking feel private from the first click.',
+    summary:
+      'A focused landing experience built around clarity, discretion, and a strong point of view.',
+    services: ['Brand direction', 'Website design', 'Development'],
     href: 'https://stayveiled.com',
     label: 'stayveiled.com',
     shots: [
@@ -200,68 +282,84 @@ export const WHY_WELLWORN: readonly Point[] = [
     body: 'Give people what they need to understand your business, trust it, and take the next step.',
   },
   {
-    title: "Don't get stuck.",
-    body: "Your website shouldn't have to be rebuilt because you outgrew a platform or decided to leave it.",
+    title: 'Grow without starting over.',
+    body: 'Your website should be able to change with your business instead of holding it back.',
   },
   {
-    title: 'Talk to the people who built it.',
-    body: "When you need something, you shouldn't have to explain your website to a support queue.",
+    title: "Know who you're calling.",
+    body: 'When you need something, you talk to the people who know your website, not a support queue.',
   },
 ]
 
 /**
- * What we do. Also the source for the homepage Organization structured data,
- * which is why the titles are plain capability names rather than sentences.
+ * What we do. Three, not four: branding sits below as a supporting capability
+ * rather than an equal service, because most of the businesses this page is
+ * written for arrive wanting a website and discover the identity question
+ * second.
+ *
+ * The titles are the customer-facing labels and are deliberately plain. "Web
+ * Applications" used to be one of them, which is a phrase that means something
+ * to a developer and nothing to a shop owner — "Custom functionality" is the
+ * same offer said in a way the buyer can price.
  */
 export const CAPABILITIES: readonly Point[] = [
   {
-    title: 'Websites',
-    body: 'From focused landing pages to full sites with all the moving parts.',
+    title: 'Business websites',
+    body: 'From focused landing pages to full websites with all the moving parts.',
   },
   {
-    title: 'Web Applications',
-    body: 'Tools, dashboards, portals, workflows, and custom functionality.',
+    title: 'Online selling',
+    body: 'Stores, products, payments, shipping, local pickup, and the systems around them.',
   },
   {
-    title: 'Ecommerce',
-    body: 'Online stores built around the way your business actually sells.',
-  },
-  {
-    title: 'Branding',
-    body: 'Identity and visual direction when the business needs more than a new website.',
+    title: 'Custom functionality',
+    body: "Portals, dashboards, workflows, integrations, and things an off-the-shelf website builder can't quite do.",
   },
 ]
 
 /**
- * How it works. Three steps, in order — the order is the only thing that says
- * they are a sequence, so keep them in it.
+ * Branding, held apart from the three above: it is real work we take on, but
+ * offering it as a fourth equal service muddles what this page is selling.
+ * `title` is the name it goes by in structured data; `heading` is the question
+ * it is introduced with on the page.
+ */
+export const BRANDING: Point & { readonly heading: string } = {
+  title: 'Branding',
+  heading: 'Need the identity too?',
+  body: 'Brand direction and visual identity can be part of the project when the business needs more than a new website.',
+}
+
+/**
+ * How it works. Three steps, in order — and numbered on the page, because the
+ * promise the section makes is that there is no mystery to it.
  */
 export const PROCESS: readonly Point[] = [
   {
     title: 'Figure it out',
-    body: "We learn what you're trying to do and what actually matters.",
+    body: "We talk through the business, what's working, what's not, and what the website actually needs to accomplish.",
   },
   {
     title: 'Make it',
-    body: 'We design and build the right thing for the job.',
+    body: 'You see the direction before we disappear into development. Then we design and build the real thing.',
   },
   {
     title: 'Put it to work',
-    body: 'We launch it, hand you the keys, and stay around when you need us.',
+    body: "We launch it, show you how everything works, and we're still here when something changes.",
   },
 ]
 
-/** Contact form chips. Order is the order they appear. */
+/**
+ * Contact form chips. Order is the order they appear, and they are phrased the
+ * way someone would say them out loud rather than as service names — the form
+ * is asking what you need, not asking you to categorise yourself.
+ */
 export const PROJECT_TYPES: readonly string[] = [
-  'New Website',
-  'Website Redesign',
-  'Web Application',
-  'Branding',
-  'Online Store',
-  'SEO',
-  'Ongoing Support',
-  'Something Else',
-  'Not Sure Yet',
+  'New website',
+  'Replace my current website',
+  'Sell online',
+  'Build something custom',
+  'Branding or visual identity',
+  'Not sure yet',
 ]
 
 /**
@@ -271,6 +369,8 @@ export const PROJECT_TYPES: readonly string[] = [
  *
  * TODO: paste the endpoint before launch. While it is empty the form still
  * renders but its submit button is disabled, so a visitor can never lose a
- * message to a form that posts nowhere.
+ * message to a form that posts nowhere. The page says nothing about it on
+ * screen — a note about a missing endpoint is a message to us, not to a
+ * customer — and warns on the build console instead.
  */
 export const FORM_ENDPOINT = ''
