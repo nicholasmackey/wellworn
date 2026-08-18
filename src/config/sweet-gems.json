@@ -1,0 +1,93 @@
+{
+  "clientName": "Nicole",
+  "projectName": "Sweet Gems Boutique",
+  "stage": "Getting started",
+  "stageSummary": "We’re getting the project foundation in place before design and development begin.",
+  "lastUpdated": "2026-08-18",
+  "targetLaunch": "TBD",
+  "agreementStatus": "awaiting-signature",
+  "depositStatus": "not-paid",
+  "phases": [
+    {
+      "id": "getting-started",
+      "title": "Getting started",
+      "status": "current",
+      "description": "Project setup, agreement, initial payment, and the information needed to begin.",
+      "steps": [
+        {
+          "label": "Initial brand conversation",
+          "status": "complete",
+          "clientAction": false
+        },
+        {
+          "label": "Project agreement",
+          "detail": "Review the agreement, then use the link to add your signature.",
+          "status": "pending",
+          "clientAction": true,
+          "url": "https://www.signwell.com/docs/5b6ba0ddcd/",
+          "ctaLabel": "Sign agreement"
+        },
+        {
+					"label": "Pay initial deposit",
+					"detail": "Choose your preferred payment schedule and submit the first payment to begin the project.",
+					"status": "pending",
+					"clientAction": true,
+					"url": "/documents/Wellworn_Sweet_Gems_Invoice.pdf",
+					"ctaLabel": "View invoice & payment options"
+        },
+        {
+          "label": "Gather product/menu information",
+          "detail": "Send us the product or menu list, including names, descriptions, pricing, and available options. (Don't worry if you don't have everything available right now. We can help walk you through it if you need assistance.)",
+          "status": "pending",
+          "clientAction": true
+        },
+        {
+          "label": "Gather product photography",
+          "detail": "Send us the original, highest-resolution product photos currently available.",
+          "status": "pending",
+          "clientAction": true
+        },
+        {
+          "label": "Confirm pickup, delivery, and shipping details",
+          "detail": "Share the planned pickup, delivery, and shipping areas, fees, timing, and policies.",
+          "status": "pending",
+          "clientAction": true
+        },
+        {
+          "label": "Refine brand direction",
+          "status": "pending",
+          "clientAction": false
+        },
+        {
+          "label": "Prepare website structure",
+          "status": "pending",
+          "clientAction": false
+        }
+      ]
+    },
+    {
+      "id": "brand-content",
+      "title": "Brand + content",
+      "status": "next",
+      "description": "Finalize the visual direction, products, imagery, copy, and store information."
+    },
+    {
+      "id": "website-store-build",
+      "title": "Website + store build",
+      "status": "upcoming",
+      "description": "Design and build the Sweet Gems website, store, and customer ordering experience."
+    },
+    {
+      "id": "review-revisions",
+      "title": "Review + revisions",
+      "status": "upcoming",
+      "description": "Review the complete site, refine the details, and test everything before launch."
+    },
+    {
+      "id": "launch-handoff",
+      "title": "Launch + handoff",
+      "status": "upcoming",
+      "description": "Go live, complete final checks, and hand over the tools and training needed to manage the site."
+    }
+  ]
+}

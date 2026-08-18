@@ -11,7 +11,17 @@ export default defineConfig({
 	// Emits /sitemap-index.xml plus the /sitemap-0.xml it points at. Status-code
 	// pages (404, 500) are excluded by the integration. public/robots.txt
 	// advertises the index to crawlers.
-	integrations: [sitemap()],
+	//
+	// Everything under /projects/ is a private client portal reached by a link
+	// we send, not a public page: unlisted, absent from the nav and from the
+	// work section, and carrying `noindex` in its own head. Listing one in the
+	// sitemap would hand crawlers the URL and undo all of that. `page` is the
+	// full absolute URL, not a path.
+	integrations: [
+		sitemap({
+			filter: (page) => !page.includes('/projects/'),
+		}),
+	],
 
 	// Prefetch links on hover/viewport. Zero dependencies, static-friendly.
 	prefetch: true,

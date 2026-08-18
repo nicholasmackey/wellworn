@@ -27,6 +27,13 @@ interface Props {
 	/** Emit Organization structured data. Homepage only. */
 	schemaOrg?: boolean;
 	bodyClass?: string;
+	/**
+	 * The browser-chrome colour on mobile. Defaults to cream, which is the
+	 * ground of every public page; the client portals set their own, so the
+	 * address bar does not sit in the marketing palette above a page that has
+	 * left it behind.
+	 */
+	themeColor?: string;
 }
 
 const {
@@ -38,6 +45,7 @@ const {
 	noindex = false,
 	schemaOrg = false,
 	bodyClass = '',
+	themeColor = '#F3F0E8',
 }: Props = Astro.props;
 
 const pageTitle = title ? `${title} | ${SITE.name}` : SITE.title;
@@ -108,7 +116,7 @@ const organizationSchema = {
 		{noindex && <meta name="robots" content="noindex, nofollow" />}
 
 		<link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
-		<meta name="theme-color" content="#F3F0E8" />
+		<meta name="theme-color" content={themeColor} />
 
 		{/* Open Graph */}
 		<meta property="og:type" content="website" />
@@ -160,12 +168,20 @@ const organizationSchema = {
 			Skip to content
 		</a>
 
-		<Header />
+		{/*
+		  The site header and footer are the fallback rather than the rule. A page
+		  that has its own chrome — the client portals, which are not part of the
+		  marketing site and must not be dressed as it — passes its own into these
+		  slots, and every other page gets the pair below without knowing the
+		  slots exist. Kept here rather than in a second layout so the head, the
+		  skip link and the flex column stay written once.
+		*/}
+		<slot name="header"><Header /></slot>
 
 		<main id="main" class="flex-1">
 			<slot />
 		</main>
 
-		<Footer />
+		<slot name="footer"><Footer /></slot>
 	</body>
 </html>

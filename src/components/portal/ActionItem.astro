@@ -1,0 +1,91 @@
+---
+/**
+ * One row of "Your next steps" — a thing the client has to do.
+ *
+ * Never written by hand. The list is assembled from the steps of the live
+ * phase, so an item exists here because a step in the project data is
+ * unfinished and marked `clientAction`, and it stops existing the moment that
+ * step is marked complete.
+ *
+ * The button is the part worth being careful about: it renders only when the
+ * step actually has somewhere to send her. Until a signing link or a payment
+ * link exists, the item is the task and its status and nothing else — a button
+ * that goes nowhere, or worse a plausible one that 404s, undoes exactly the
+ * impression this page is for.
+ */
+import type { PhaseStep } from '../../config/project';
+import StateChip from './StateChip.astro';
+
+interface Props {
+	step: PhaseStep;
+}
+
+const { step }: Props = Astro.props;
+
+/* The instruction if the step carries one, the task's own name otherwise. */
+const label = step.actionLabel ?? step.label;
+
+/* A task becomes a link only when the project data supplies the destination
+   and its label. A partial CTA is omitted instead of being completed here. */
+const cta = step.url && step.ctaLabel ? { href: step.url, label: step.ctaLabel } : null;
+
+/* Red only where the data actually says so. A step that is merely waiting is
+   orange; a step that has failed or gone overdue is the one that earns red. */
+const actionState =
+	step.status === 'overdue'
+		? { label: 'Overdue', variant: 'blocked' as const }
+		: step.status === 'blocked'
+			? { label: 'Blocked', variant: 'blocked' as const }
+			: { label: 'Action needed', variant: 'action' as const };
+---
+
+{/*
+  Mobile gives the task, state, and optional CTA their own clean rows. From the
+  small breakpoint up, the state returns inline and the CTA sits to the right.
+
+  No marker in the left margin. ACTION NEEDED follows the task in amber text,
+  and the label starts hard against the shell's own left edge with the rest of
+  the page's type.
+*/}
+<li
+	class="border-t border-charcoal/12 py-4 sm:flex sm:flex-wrap sm:items-baseline sm:justify-between sm:gap-x-6 sm:gap-y-3"
+>
+	<div class="min-w-0 flex-1">
+		<p class="text-[1.0625rem] leading-snug">
+			{label}
+			<span class="mt-2 block sm:mt-0 sm:ml-2 sm:inline">
+				<StateChip label={actionState.label} variant={actionState.variant} />
+			</span>
+		</p>
+
+		{
+			step.detail && (
+				<p class="mt-1 text-[0.9375rem] leading-relaxed text-charcoal/60">{step.detail}</p>
+			)
+		}
+	</div>
+
+	{
+		cta && (
+			<a
+				href={cta.href}
+				target="_blank"
+				rel="noopener noreferrer"
+				class="portal-cta mt-4 w-full justify-center sm:mt-0 sm:w-auto"
+			>
+				{cta.label}
+				<svg
+					viewBox="0 0 12 12"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="square"
+					class="h-2.5 w-2.5"
+					aria-hidden="true"
+				>
+					<path d="M2.5 6h7M6.5 3l3 3-3 3" />
+				</svg>
+			</a>
+		)
+	}
+</li>

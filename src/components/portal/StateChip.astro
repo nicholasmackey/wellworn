@@ -1,0 +1,21 @@
+---
+/**
+ * One state label. Most variants are chips; client actions are plain text.
+ *
+ * Real text rather than a coloured dot with a tooltip, so the state survives
+ * being read aloud, printed, or looked at by someone who cannot separate the
+ * ochre from the green.
+ */
+import { CHIP, type ChipVariant } from './state';
+
+interface Props {
+	/** Sentence case here; the shared status class sets it uppercase in CSS. */
+	label: string;
+	variant: ChipVariant;
+	class?: string;
+}
+
+const { label, variant, class: className = '' }: Props = Astro.props;
+---
+
+<span class:list={['portal-chip', CHIP[variant], className]}>{label}</span>

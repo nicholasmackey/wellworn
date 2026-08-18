@@ -1,0 +1,169 @@
+---
+/**
+ * One phase of the project timeline: a marker on the rail, a number, a name, a
+ * chip, a sentence — and, for the live phase only, its checklist.
+ *
+ * Only the current phase opens. A finished phase collapses back to its row
+ * because the detail has stopped being news, and a phase that has not started
+ * never shows work nobody is doing yet, which is what makes it safe to write
+ * steps into the later phases whenever it suits. Five phases each showing eight
+ * tasks is not a timeline; it is a spreadsheet with a heading.
+ *
+ * A row rather than a card. The whole timeline is one column of rules — the
+ * same furniture the marketing site builds its sections from — because five
+ * bordered panels stacked up is the look of software the studio bought rather
+ * than of a page it made.
+ *
+ * The rail is built out of flex rather than absolute positioning: a spacer, the
+ * marker, then a segment taking the rest of the row. `-my` cancels the row's
+ * own padding so each segment runs edge to edge and meets its neighbour
+ * exactly, and the first and last are simply left unpainted rather than
+ * measured around. The spacer's height is the one measured number here — it
+ * drops the marker onto the centre of the phase title's first line.
+ */
+import type { ProjectPhase } from '../../config/project';
+import { PHASE_CHIP, PHASE_MARK } from './state';
+import StateChip from './StateChip.astro';
+
+interface Props {
+	phase: ProjectPhase;
+	/** Zero-based. Supplies the 01–05 in front of the title. */
+	index: number;
+	/** How many phases there are, so the last rail segment can be left off. */
+	total: number;
+}
+
+const { phase, index, total }: Props = Astro.props;
+
+const ordinal = String(index + 1).padStart(2, '0');
+const chip = PHASE_CHIP[phase.status];
+
+/* The one phase that opens. Driven by the status rather than by an index, so
+   moving the project on is a one-word edit in the data file. */
+const isCurrent = phase.status === 'current';
+const steps = isCurrent ? (phase.steps ?? []) : [];
+---
+
+<li
+	class="grid grid-cols-[1.25rem_minmax(0,1fr)] gap-x-4 border-t border-charcoal/12 py-6 sm:grid-cols-[1.5rem_minmax(0,1fr)] sm:gap-x-5 sm:py-7"
+>
+	{/* The rail. Hidden from assistive tech: it is a picture of the sequence,
+	    and the sequence is already said by the numbers and the chips. */}
+	<div class="col-start-1 -my-6 flex flex-col items-center sm:-my-7" aria-hidden="true">
+		<span class:list={['h-[1.6875rem] w-px shrink-0 sm:h-[1.9375rem]', index > 0 && 'bg-portal-rail']}
+		></span>
+
+		<span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+			<span class:list={['flex items-center justify-center rounded-full', PHASE_MARK[phase.status]]}>
+				{
+					phase.status === 'complete' && (
+						<svg
+							viewBox="0 0 14 14"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2.5"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							class="h-2 w-2 text-portal-paper"
+						>
+							<path d="m2.5 7.5 3 3 6-7" />
+						</svg>
+					)
+				}
+			</span>
+		</span>
+
+		<span class:list={['w-px flex-1', index < total - 1 && 'bg-portal-rail']}></span>
+	</div>
+
+	<div class="col-start-2">
+		{/* Number, name and chip on one line, wrapping where the room runs out.
+		    Russo One at 17px, which is the site's own heading face at the size a
+		    working document wants — the same object as a section heading on the
+		    marketing page, three steps down. .display carries line-height 0.92
+		    for hero type, so it is reopened here or a wrapped name touches. */}
+		<div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+			<h3 id={phase.id} class="display flex items-baseline gap-3 text-[1.0625rem] leading-[1.15]">
+				<span class="text-charcoal/40 tabular-nums">{ordinal}</span>
+				<span>{phase.title}</span>
+			</h3>
+
+			<StateChip label={chip.label} variant={chip.variant} />
+		</div>
+
+		<p class="mt-2 max-w-[70ch] leading-relaxed text-charcoal/70">{phase.description}</p>
+
+		{
+			steps.length > 0 && (
+				<ul class="mt-5 border-t border-charcoal/10">
+					{steps.map((step) => {
+						const done = step.status === 'complete';
+						const blocked = step.status === 'blocked';
+						const overdue = step.status === 'overdue';
+
+						return (
+							<li class="border-b border-charcoal/10 py-2.5">
+								<span class="flex min-w-0 items-start gap-3">
+									{/* One box for every marker, so each label starts on the
+									    same left edge whatever state its step is in.
+
+									    Only two of the four carry colour, and both have earned
+									    it: a green tick for work that is finished, a blue ring
+									    for work happening right now. A pending step and a step
+									    the client owes get the same hollow charcoal circle —
+									    the ACTION NEEDED chip at the other end of the row is
+									    what separates them — so the left margin stays quiet
+									    and the eye can run down the ticks to see how far the
+									    phase has actually got.
+
+									    The tick is drawn at 2.25 rather than 2. Green this
+									    saturated is lighter on white than the charcoal around
+									    it, and a hairline stroke would read as faint where a
+									    slightly heavier one reads as definite. */}
+									<span
+										class="mt-[0.1875rem] flex h-4 w-4 shrink-0 items-center justify-center"
+										aria-hidden="true"
+									>
+										{done ? (
+											<svg
+												viewBox="0 0 14 14"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2.25"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												class="h-4 w-4 text-state-complete"
+											>
+												<path d="m2 7.5 3.25 3.25L12 3.5" />
+											</svg>
+										) : blocked || overdue ? (
+											<span class="h-2.5 w-2.5 rounded-full bg-state-blocked" />
+										) : step.status === 'in-progress' ? (
+											<span class="h-2.5 w-2.5 rounded-full border-2 border-state-current bg-state-current/20" />
+										) : (
+											<span class="h-2.5 w-2.5 rounded-full border-[1.5px] border-charcoal/30" />
+										)}
+									</span>
+
+									<span class:list={['leading-snug', done ? 'text-charcoal/60' : 'text-charcoal']}>
+										{/* The state in words, for anyone the markers are not
+										    reaching. The chip says the rest. */}
+										<span class="sr-only">{done ? 'Done: ' : 'To do: '}</span>
+										{step.label}
+										{(blocked || overdue) && (
+											<StateChip
+												label={overdue ? 'Overdue' : 'Blocked'}
+												variant="blocked"
+												class="ml-2 align-middle"
+											/>
+										)}
+									</span>
+								</span>
+							</li>
+						);
+					})}
+				</ul>
+			)
+		}
+	</div>
+</li>

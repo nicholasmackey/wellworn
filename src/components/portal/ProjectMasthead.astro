@@ -1,0 +1,71 @@
+---
+/**
+ * The masthead: the client's own co-brand lockup, and two lines of small type
+ * under it.
+ *
+ * The artwork is supplied — public/images/projects/sweet-gems-project-header.png
+ * — and is the one piece of this page that belongs to Sweet Gems rather than to
+ * Wellworn. It is the whole of the branding here: nothing below it is coloured,
+ * scripted or decorated, which is what lets a lockup this ornate sit at the top
+ * of a page this plain without either one arguing with the other. It is not
+ * rebuilt in text and it is not accompanied by a heading repeating what it
+ * already says; the <h1> IS the artwork, with the lockup's own words as its alt
+ * text.
+ *
+ * The crop is measured rather than guessed. The PNG carries its own margin —
+ * ink occupies the middle 26% of its height, evenly padded above and below — so
+ * a box at the artwork's own 3.1:1 would set the lockup in a third of a screen
+ * of white and leave the page unable to say how much space it wanted. The
+ * wrapper takes a flatter ratio and `object-cover` trims that margin off
+ * symmetrically, leaving roughly a third of the lockup's height in clear space
+ * on each side. The horizontal margin is left alone: it is what keeps the two
+ * marks off the page's edges.
+ *
+ * If the artwork is ever replaced, the ratio below is the one number to
+ * re-measure. Anything with more of its own padding starts losing ink to the
+ * crop; anything with less starts crowding.
+ */
+import type { ClientProject } from '../../config/project';
+
+interface Props {
+	project: ClientProject;
+}
+
+const { project }: Props = Astro.props;
+---
+
+{/*
+  No rule under the masthead. The first band opens with one of its own two
+  pixels lower, and two hairlines that close to each other read as a mistake
+  rather than as a frame.
+*/}
+<header>
+	<div class="pt-8 pb-7 sm:pt-11 sm:pb-9">
+		<h1 class="portal-enter w-full lg:mx-auto lg:max-w-[64rem] lg:px-8">
+			<span class="block aspect-[2103/430] overflow-hidden">
+				<img
+					src="/images/projects/sweet-gems-project-header.png"
+					alt={`Wellworn × ${project.projectName}`}
+					width="2103"
+					height="677"
+					fetchpriority="high"
+					decoding="async"
+					class="h-full w-full object-cover object-center"
+				/>
+			</span>
+		</h1>
+
+		{/*
+		  Two labels rather than a subtitle. They say the two things a client
+		  wants confirmed before reading anything else: that this page was made
+		  for them by name, and that it is theirs rather than a page anyone can
+		  find. Centred under a centred lockup, and the page turns left-aligned
+		  the moment the masthead ends.
+		*/}
+		<p
+			class="portal-enter portal-enter-delay-1 eyebrow mt-6 px-5 text-center text-charcoal/55 sm:mt-8 sm:px-8"
+		>
+			Prepared for {project.projectName}
+		</p>
+	</div>
+</header>

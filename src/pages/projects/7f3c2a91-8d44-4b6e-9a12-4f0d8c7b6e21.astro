@@ -1,0 +1,280 @@
+---
+/*
+  Sweet Gems Boutique — the private client portal.
+
+  Unlisted, not secret. The route is a UUID nobody can guess, the page is not
+  in the nav, the sitemap, or any listing, and nothing on the site links to it.
+  What keeps it out of search results is `noindex` below rather than a
+  robots.txt rule: a disallowed path cannot be crawled, and a crawler that
+  cannot fetch the page never reads the directive telling it not to index the
+  page. So the page stays crawlable and says no to indexing itself. The sitemap
+  exclusion lives in astro.config.mjs, since that is where the integration is.
+
+  Built to answer five questions inside five seconds:
+
+      Where is my project?        the stage, set in the site's display face
+                                  directly under the masthead
+      Is anything needed of me?   the column of solid orange chips down the
+                                  right of the second band
+      What exactly do I do?       the named actions beside them, each with its
+                                  status and, once there is one, a link
+      What has happened already?  the ticked steps inside the live phase
+      What comes after this?      the four phases collapsed beneath it
+
+  Three bands, each opened by a 2px charcoal rule and a wide uppercase label.
+  That is the marketing site's own device — every section there opens with a
+  rule and a heading — carried over unchanged, and deliberately so. The rule
+  briefly took a state colour, so the band doing the asking opened in amber; the
+  trouble is that a rule is furniture and runs the full width of the page, so
+  colouring it spent the page's one signal on decoration. Every rule, divider
+  and hairline here is charcoal or grey, and the whole colour budget goes to the
+  chips, the checkmarks and the markers on the rail. Colour anywhere means a
+  status, which is what lets an 11px chip carry one.
+
+  The spacing is the site's rhythm at working scale. A marketing page is read
+  once at arm's length; this is read in a hurry, on a phone, to find one fact —
+  so the type is a step down, the rules are closer together, and every row that
+  carries a chip may wrap it onto its own line rather than shrink.
+
+  Every value comes from src/config/sweet-gems.json, and the two lists that could
+  contradict each other — the checklist and "Your next steps" — are the same
+  array filtered twice. Nothing here decides what a status is or which phase is
+  live; the page only decides how each is set.
+*/
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ActionItem from '../../components/portal/ActionItem.astro';
+import PortalFooter from '../../components/portal/PortalFooter.astro';
+import ProjectMasthead from '../../components/portal/ProjectMasthead.astro';
+import TimelinePhase from '../../components/portal/TimelinePhase.astro';
+import { AGREEMENT_STATUS, DEPOSIT_STATUS, DETAIL_TONE } from '../../components/portal/state';
+import type { ClientProject, DetailTone, PhaseStep } from '../../config/project';
+import sweetGems from '../../config/sweet-gems.json';
+
+const project = sweetGems as ClientProject;
+
+/*
+  Formatted at build time, in UTC, with the locale named explicitly. Both are
+  load-bearing. A bare `new Date('2026-08-18')` is midnight UTC, so formatting
+  it in any timezone west of Greenwich prints the day before — the one bug in a
+  "last updated" line that makes a client think they are reading something
+  stale. Naming en-US rather than leaving it to the host keeps the build
+  deterministic wherever it runs.
+*/
+const lastUpdated = project.lastUpdated
+	? new Date(`${project.lastUpdated}T00:00:00Z`).toLocaleDateString('en-US', {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric',
+			timeZone: 'UTC',
+		})
+	: null;
+
+/*
+  "Your next steps", derived rather than written.
+
+  Every unfinished step marked `clientAction`, taken only from the current
+  phase. Future and completed phases keep their checklists out of this list.
+
+  This is the single most important expression in the file. It is why marking
+  `status: 'complete'` on the agreement step in the data file removes the item
+  from this list, strikes the ACTION NEEDED chip from the timeline and ticks
+  the checklist all at once — and why the page cannot end up asking for
+  something in one place that it says is done in another.
+*/
+const activePhase = project.phases.find((phase) => phase.status === 'current');
+const nextSteps: readonly PhaseStep[] = (activePhase?.steps ?? [])
+	.filter((step) => step.clientAction && step.status !== 'complete');
+
+const hasActions = nextSteps.length > 0;
+
+/*
+  The administrative summary: the state of the engagement, which is not the
+  same thing as the state of the work. The agreement and the deposit appear in
+  the Getting started checklist as well, because nothing else can start until
+  they happen — but this is the column a client scans to see where they stand
+  with the studio, and the timeline is the sequence of what gets built.
+
+  A coloured value rather than four chips: the band below is already saying
+  ACTION NEEDED once per item, and a second set of badges up here would flatten
+  the difference between a summary and a call to act. The colour is carried by
+  the word itself — see DETAIL_TONE, which is the one place on the page a status
+  is set as type rather than drawn as a fill, and so the one place the deeper
+  half of each hue is used.
+*/
+interface Detail {
+	readonly label: string;
+	readonly value: string;
+	readonly tone: DetailTone;
+	/** Machine-readable date, for the one value that is one. */
+	readonly datetime?: string;
+}
+
+const agreement = AGREEMENT_STATUS[project.agreementStatus];
+const deposit = DEPOSIT_STATUS[project.depositStatus];
+
+const DETAILS: readonly Detail[] = [
+	{ label: 'Agreement', value: agreement.label, tone: agreement.tone },
+	{ label: 'Deposit', value: deposit.label, tone: deposit.tone },
+	/* Neutral on purpose. There is no date yet, and dressing "TBD" in a colour
+	   would make an unknown look like a problem. */
+	{ label: 'Target launch', value: project.targetLaunch, tone: 'neutral' },
+	...(lastUpdated && project.lastUpdated
+		? [{ label: 'Last updated', value: lastUpdated, tone: 'neutral' as const, datetime: project.lastUpdated }]
+		: []),
+];
+---
+
+<BaseLayout
+	title={project.projectName}
+	description={`Private project portal for ${project.projectName}.`}
+	noindex
+	bodyClass="portal"
+	themeColor="#FFFFFF"
+>
+	<ProjectMasthead project={project} slot="header" />
+	<PortalFooter slot="footer" />
+
+	<div class="portal-shell">
+		{/*
+		  Band one: where the project is, and where it stands with the studio.
+		  The stage on the left in the display face, the four administrative
+		  facts on the right as a short table — big type against small data,
+		  which is the fastest pairing to read and the reason this band needs no
+		  heading of its own beyond the one for screen readers.
+		*/}
+		<section class="portal-enter portal-enter-delay-2" aria-labelledby="overview-heading">
+			<span class="portal-rule" aria-hidden="true"></span>
+
+			<h2 id="overview-heading" class="sr-only">Project overview</h2>
+
+			<div class="grid gap-8 pt-6 lg:grid-cols-[minmax(0,1fr)_21rem] lg:gap-14">
+				<div>
+					{/* Charcoal, like the other two band labels, and with no marker beside
+					    it. It was blue with a blue square, which put a status colour on a
+					    label rather than on a status — and the thing it was marking is
+					    already named in the largest type on the page two lines below. The
+					    top of the page is black and white; the colour starts where the
+					    asking does. */}
+					<p class="eyebrow text-charcoal">Current stage</p>
+
+					<p class="display mt-3.5 text-[clamp(1.75rem,1.4rem+1.2vw,2.25rem)] leading-[1.05]">
+						{project.stage}
+					</p>
+
+					{
+						project.stageSummary && (
+							<p class="mt-4 max-w-[48ch] text-[1.0625rem] leading-relaxed text-charcoal/70">
+								{project.stageSummary}
+							</p>
+						)
+					}
+				</div>
+
+				{/*
+				  Name on the left, value on the right, one hairline per fact — the
+				  spec-sheet setting, which is the one that stays readable whether it is
+				  21rem wide on a laptop or the whole width of a phone.
+
+				  The value carries the whole of the state, in the deep of its own hue and
+				  nothing else. There were small coloured dots here too, and they went for
+				  the same reason the ones in "Your next steps" did: a dot beside an orange
+				  word says the orange word twice. "TBD" and the date stay charcoal, because
+				  a date is not a state, and an unknown dressed in colour looks like a
+				  problem.
+				*/}
+				<dl class="border-t border-charcoal/15 sm:max-w-[28rem] lg:max-w-none lg:pt-1">
+					{
+						DETAILS.map((detail) => (
+							<div class="flex items-baseline justify-between gap-4 border-b border-charcoal/12 py-2.5">
+								<dt class="eyebrow text-charcoal/55">{detail.label}</dt>
+
+								<dd
+									class:list={[
+										'text-right text-[0.9375rem] leading-snug font-semibold',
+										DETAIL_TONE[detail.tone],
+									]}
+								>
+									{detail.datetime ? (
+										<time datetime={detail.datetime}>{detail.value}</time>
+									) : (
+										detail.value
+									)}
+								</dd>
+							</div>
+						))
+					}
+				</dl>
+			</div>
+		</section>
+
+		{/*
+		  Band two: the only thing on the page asking for anything, and where nearly
+		  all of its colour lives. The emphasis is entirely in the chips — a column
+		  of solid orange down the right edge, one per row — and the rule above them
+		  is the same charcoal as every other rule on the page. A tinted rule was
+		  doing the same job less precisely: it coloured a whole band rather than
+		  the rows that actually need something.
+
+		  The band empties itself. When the last client step is marked complete the
+		  copy changes and there is no list — which is a better thing for a client
+		  to find than a list that has quietly stopped being true.
+		*/}
+		<section
+			class="portal-enter portal-enter-delay-3 mt-11 sm:mt-13"
+			aria-labelledby="next-steps-heading"
+		>
+			<span class="portal-rule" aria-hidden="true"></span>
+
+			<div class="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2 pt-6">
+				<h2 id="next-steps-heading" class="eyebrow">Your next steps</h2>
+
+				<p class="text-[1.0625rem] text-charcoal/70">
+					{
+						hasActions
+							? 'These items are needed to keep the project moving.'
+							: 'Nothing is needed from you right now — we’ll be in touch when there is.'
+					}
+				</p>
+			</div>
+
+			{
+				hasActions && (
+					<ul class="mt-5 border-b border-charcoal/12">
+						{nextSteps.map((step) => (
+							<ActionItem step={step} />
+						))}
+					</ul>
+				)
+			}
+		</section>
+
+		{/*
+		  Band three: the whole project, with only the live phase opened. One
+		  column of rules with a rail down the left — no cards, because five
+		  bordered panels stacked up is the look of software the studio bought
+		  rather than of a page it made.
+		*/}
+		<section
+			class="portal-enter portal-enter-delay-4 mt-11 sm:mt-13"
+			aria-labelledby="timeline-heading"
+		>
+			<span class="portal-rule" aria-hidden="true"></span>
+
+			<div class="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2 pt-6">
+				<h2 id="timeline-heading" class="eyebrow">Project timeline</h2>
+
+				<p class="text-[1.0625rem] text-charcoal/70">
+					Only the phase we’re in is opened out.
+				</p>
+			</div>
+
+			<ol class="mt-5 border-b border-charcoal/12">
+				{
+					project.phases.map((phase, index) => (
+						<TimelinePhase phase={phase} index={index} total={project.phases.length} />
+					))
+				}
+			</ol>
+		</section>
+	</div>
+</BaseLayout>
