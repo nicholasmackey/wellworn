@@ -5,7 +5,7 @@
   "stageSummary": "We’re getting the project foundation in place before design and development begin.",
   "lastUpdated": "2026-08-18",
   "targetLaunch": "TBD",
-  "agreementStatus": "awaiting-signature",
+  "agreementStatus": "signed",
   "depositStatus": "not-paid",
   "phases": [
     {
@@ -22,7 +22,7 @@
         {
           "label": "Project agreement",
           "detail": "Review the agreement, then use the link to add your signature.",
-          "status": "pending",
+          "status": "complete",
           "clientAction": true,
           "url": "https://www.signwell.com/docs/5b6ba0ddcd/",
           "ctaLabel": "Sign agreement"
