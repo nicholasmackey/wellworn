@@ -3,7 +3,7 @@
   "projectName": "Sweet Gems Boutique",
   "stage": "Getting started",
   "stageSummary": "We’re getting the project foundation in place before design and development begin.",
-  "lastUpdated": "2026-08-18",
+  "lastUpdated": "2026-08-28",
   "targetLaunch": "TBD",
   "agreementStatus": "signed",
   "depositStatus": "not-paid",
@@ -28,12 +28,12 @@
           "ctaLabel": "Sign agreement"
         },
         {
-					"label": "Pay initial deposit",
-					"detail": "Choose your preferred payment schedule and submit the first payment to begin the project.",
-					"status": "pending",
-					"clientAction": true,
-					"url": "/documents/Wellworn_Sweet_Gems_Invoice.pdf",
-					"ctaLabel": "View invoice & payment options"
+          "label": "Pay initial deposit",
+          "detail": "Choose your preferred payment schedule and submit the first payment to begin the project.",
+          "status": "pending",
+          "clientAction": true,
+          "url": "/documents/Wellworn_Sweet_Gems_Invoice_Amended.pdf",
+          "ctaLabel": "View invoice & payment options"
         },
         {
           "label": "Gather product/menu information",
