@@ -1,0 +1,83 @@
+---
+/**
+ * The masthead, built to the portal's own proportions.
+ *
+ * Two forms, and which one appears depends only on whether the definition
+ * supplies artwork:
+ *
+ * With a co-brand lockup, this is the Sweet Gems masthead exactly — the
+ * artwork IS the <h1>, cropped to a measured ratio, with the lockup's own words
+ * as its alt text and no heading repeating what the picture already says.
+ *
+ * Without one, the page falls back to type: the Wellworn wordmark, then the
+ * client's name in the display face. Most clients have no lockup, and inventing
+ * one out of two logos side by side would look like a placeholder. The name in
+ * Russo One over a wide uppercase title is the same lockup the submission email
+ * uses for its header, which is a small consistency worth having.
+ */
+import { BRAND } from '../../config/site';
+import type { Questionnaire } from '../../lib/questionnaire/schema';
+
+interface Props {
+	questionnaire: Questionnaire;
+}
+
+const { questionnaire }: Props = Astro.props;
+const { masthead, client, title } = questionnaire;
+
+/* The wordmark is 2476×597. Set from a height so the artwork can be swapped
+   without anyone recomputing a width by hand. */
+const WORDMARK_HEIGHT = 26;
+const wordmarkWidth = Math.round(WORDMARK_HEIGHT * BRAND.wordmarkRatio);
+---
+
+<header>
+	<div class="pt-8 pb-7 sm:pt-11 sm:pb-9">
+		{
+			masthead ? (
+				<h1 class="portal-enter w-full lg:mx-auto lg:max-w-[64rem] lg:px-8">
+					<span
+						class="block overflow-hidden"
+						style={`aspect-ratio:${masthead.ratio ?? `${masthead.width}/${masthead.height}`}`}
+					>
+						<img
+							src={masthead.src}
+							alt={`Wellworn × ${client}`}
+							width={masthead.width}
+							height={masthead.height}
+							fetchpriority="high"
+							decoding="async"
+							class="h-full w-full object-cover object-center"
+						/>
+					</span>
+				</h1>
+			) : (
+				<div class="portal-shell text-center">
+					<img
+						src={BRAND.wordmarkDark}
+						alt="Wellworn"
+						width={wordmarkWidth}
+						height={WORDMARK_HEIGHT}
+						fetchpriority="high"
+						decoding="async"
+						class="portal-enter mx-auto"
+						style={`height:${WORDMARK_HEIGHT}px;width:auto`}
+					/>
+
+					<h1 class="display portal-enter portal-enter-delay-1 mt-7 text-[clamp(2rem,1.5rem+2.2vw,3rem)]">
+						{client}
+					</h1>
+				</div>
+			)
+		}
+
+		{/* What the page is, under whichever lockup was drawn. Centred with it,
+		    and the page turns left-aligned the moment the masthead ends — which is
+		    the portal's own behaviour. */}
+		<p
+			class="portal-enter portal-enter-delay-2 eyebrow mt-5 px-5 text-center text-charcoal/55 sm:mt-7 sm:px-8"
+		>
+			{title}
+		</p>
+	</div>
+</header>

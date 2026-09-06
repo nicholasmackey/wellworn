@@ -1,0 +1,93 @@
+---
+/**
+ * A confirmation, asked in the page's own voice.
+ *
+ * This replaces window.confirm(), which was the one piece of the questionnaire
+ * drawn by the browser rather than by us: an OS alert in the OS's typeface,
+ * with the studio's name on the title bar and no way to say the sentence the
+ * way the rest of the page says things. On a page whose whole argument is that
+ * a client should recognise it as the same room as their portal, that is the
+ * wrong object in the middle of the screen.
+ *
+ * Native <dialog> and showModal(), so the browser still supplies everything
+ * that is genuinely hard: the top layer, the inert page behind it, the focus
+ * trap, and Escape. What is left to us is the card and the copy.
+ *
+ * The panel is a <form method="dialog">, which is what makes this small. A
+ * submit button in such a form closes the dialog and puts its `value` in
+ * dialog.returnValue — so the two answers, Escape, and a click on the backdrop
+ * all arrive at one `close` event, and the only branch anywhere is whether
+ * returnValue came back as 'confirm'. Nothing has to be undone if the dialog is
+ * dismissed, because nothing happens until that check passes.
+ *
+ * That form is also why this cannot be rendered inside the questionnaire's
+ * <form>: nested form elements are not merely invalid, the HTML parser throws
+ * the inner tag away, and the buttons would quietly start submitting the
+ * questionnaire instead. It is a sibling of the form for that reason.
+ *
+ * Deliberately not a modal framework. It is one component with four strings and
+ * a boolean answer — enough to ask a second destructive question later, and not
+ * enough to become a system nobody remembers the rules of.
+ */
+interface Props {
+	/** Queried by the client script to open it. */
+	id: string;
+	heading: string;
+	body: string;
+	/** The button that does the thing. Say the thing, not "OK". */
+	confirmLabel: string;
+	cancelLabel?: string;
+}
+
+const { id, heading, body, confirmLabel, cancelLabel = 'Cancel' }: Props = Astro.props;
+
+const headingId = `${id}-heading`;
+const bodyId = `${id}-body`;
+---
+
+{/*
+  p-0 and a transparent ground are load-bearing rather than tidy: the dialog
+  element is sized to the panel exactly, so a click that lands on the element
+  itself can only have come from the backdrop — which is how the client script
+  tells an outside click from an inside one without measuring anything. Padding
+  here would put a ring of dialog around the card and close it on a near miss.
+
+  m-auto because Tailwind's preflight zeroes the margin on every element,
+  including the `margin: auto` a modal dialog is centred by.
+*/}
+<dialog
+	id={id}
+	aria-labelledby={headingId}
+	aria-describedby={bodyId}
+	class="m-auto w-[calc(100%-2rem)] max-w-[26rem] bg-transparent p-0 backdrop:bg-charcoal/50"
+>
+	{/* The portal's own device opens this the way it opens a section: a 2px
+	    charcoal rule across the top, and the heading in the display face under
+	    it. No shadow and no rounded corners — the backdrop is what lifts the
+	    card off the page, and every other object on this page is square. */}
+	<form method="dialog" class="border-t-2 border-charcoal bg-portal-paper px-6 py-7 sm:px-8">
+		<h2 id={headingId} class="display text-[1.25rem] leading-[1.15]">{heading}</h2>
+
+		<p id={bodyId} class="mt-3 text-[0.9375rem] leading-relaxed text-charcoal/75">{body}</p>
+
+		{/*
+		  Cancel first, in the markup and on the screen. It takes `autofocus` so
+		  the dialog opens on the way out rather than on the button that cannot
+		  be undone — a person who hit the wrong control can press Enter twice
+		  and lose nothing.
+
+		  Stacked on a phone and full width, side by side from `sm` up: two
+		  56px buttons and a gap do not fit across a 320px screen, and wrapping
+		  them would leave one hanging under the other's right edge.
+		*/}
+		<div class="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-end">
+			<button type="submit" value="cancel" autofocus class="btn btn-outline w-full sm:w-auto">
+				{cancelLabel}
+			</button>
+
+			<button type="submit" value="confirm" class="btn btn-destructive w-full sm:w-auto">
+				{confirmLabel}
+			</button>
+		</div>
+	</form>
+</dialog>

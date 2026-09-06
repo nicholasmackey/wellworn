@@ -1,0 +1,134 @@
+---
+/**
+ * The furniture around one question: its name, its hint, the control, and the
+ * place an error goes.
+ *
+ * Every question on the page is wrapped in one of these, so the label, the
+ * required marker, the hint and the error message sit in the same relationship
+ * to the control whatever type it is — which is what keeps a page of twelve
+ * different field types reading as one document.
+ *
+ * `naming` picks how the question is announced, and each of the three is a
+ * correctness decision rather than a layout one:
+ *
+ *   label   One control. A <label for> names it.
+ *   legend  A group of radios or checkboxes. A <label> can only name a single
+ *           control, so on a set of radios it would name the first one and the
+ *           question itself would never be read; a <fieldset>/<legend> names
+ *           the group. The hint and error are described from the fieldset, for
+ *           the same reason.
+ *   none    A confirmation. The statement IS the tick target, so the control
+ *           brings its own inline label and this renders no naming element at
+ *           all — otherwise the sentence would appear twice, once as a heading
+ *           and once beside the box.
+ *
+ * The hint is always a sibling of the naming element, tied on with
+ * aria-describedby, never nested inside it. Nested, it becomes part of the
+ * field's accessible name, so the label announces as one long sentence;
+ * described this way it arrives after the name, which is what a hint is. That
+ * is the contact form's own reasoning, carried over.
+ */
+import type { AnswerableQuestion } from '../../lib/questionnaire/schema';
+import {
+	controlId,
+	describedBy,
+	errorId,
+	helpId,
+	questionId,
+	DATA,
+	showIfAttr,
+} from '../../lib/questionnaire/dom';
+
+interface Props {
+	question: AnswerableQuestion;
+	naming: 'label' | 'legend' | 'none';
+	/** Conditionally hidden on first paint. */
+	isHidden: boolean;
+}
+
+const { question, naming, isHidden }: Props = Astro.props;
+
+const described = describedBy(question);
+
+const attrs = {
+	[DATA.question]: question.id,
+	[DATA.type]: question.type,
+	...(question.required ? { [DATA.required]: 'true' } : {}),
+	...(question.showIf ? { [DATA.showIf]: showIfAttr(question.showIf) } : {}),
+	/* Group bounds, for the one rule HTML cannot carry on the control itself. */
+	...(question.type === 'checkbox' && question.min !== undefined
+		? { [DATA.min]: String(question.min) }
+		: {}),
+	...(question.type === 'checkbox' && question.max !== undefined
+		? { [DATA.max]: String(question.max) }
+		: {}),
+};
+
+/* A word rather than an asterisk. An asterisk means nothing without a legend
+   explaining it, and the legend is always somewhere else on the page. */
+const requiredMark = question.required;
+---
+
+{
+	naming === 'legend' ? (
+		<fieldset
+			id={questionId(question.id)}
+			class="q-question"
+			hidden={isHidden}
+			aria-describedby={described}
+			{...attrs}
+		>
+			<legend class="q-label">
+				{question.label}
+				{requiredMark && <span class="q-required">Required</span>}
+			</legend>
+
+			{question.help && (
+				<p id={helpId(question.id)} class="q-help">
+					{question.help}
+				</p>
+			)}
+
+			<div class="mt-3">
+				<slot />
+			</div>
+
+			<p id={errorId(question.id)} class="q-error" hidden />
+		</fieldset>
+	) : (
+		<div id={questionId(question.id)} class="q-question" hidden={isHidden} {...attrs}>
+			{naming === 'label' && (
+				<label class="q-label" for={controlId(question.id)}>
+					{question.label}
+					{requiredMark && <span class="q-required">Required</span>}
+				</label>
+			)}
+
+			{/* For a confirmation the hint follows the statement rather than
+			    preceding it: there is no heading above it to qualify, and a note
+			    like "leave this unticked if…" only makes sense once the reader has
+			    met the thing they are being asked to tick. */}
+			{naming === 'label' && question.help && (
+				<p id={helpId(question.id)} class="q-help">
+					{question.help}
+				</p>
+			)}
+
+			<div class:list={[naming === 'label' && 'mt-3']}>
+				<slot />
+			</div>
+
+			{naming === 'none' && question.help && (
+				<p id={helpId(question.id)} class="q-help">
+					{question.help}
+				</p>
+			)}
+
+			{/* Empty and hidden until validation fills it. A hidden element is
+			    outside the accessibility tree, so the control's aria-describedby can
+			    point here from the start and the script never has to rewrite the
+			    attribute. */}
+			<p id={errorId(question.id)} class="q-error" hidden />
+		</div>
+	)
+}

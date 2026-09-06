@@ -9,21 +9,28 @@
     "dev": "astro dev",
     "build": "astro check && astro build",
     "check": "astro check",
+    "schema": "node scripts/gen-questionnaire-schema.mjs",
+    "pretest:unit": "esbuild tests/questionnaire.test.ts --bundle --platform=node --format=esm --outfile=/tmp/wellworn-questionnaire.test.mjs",
+    "test:unit": "node --test /tmp/wellworn-questionnaire.test.mjs",
+    "test:browser": "node tests/questionnaire.browser.mjs",
+    "test": "pnpm test:unit",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/cloudflare": "~14.2.6",
     "@astrojs/sitemap": "^3.7.3",
     "@fontsource-variable/montserrat": "^5.3.0",
     "@fontsource-variable/source-sans-3": "^5.3.0",
     "@fontsource/russo-one": "^5.3.0",
     "@tailwindcss/vite": "^4.3.3",
-    "astro": "^7.2.2",
+    "astro": "7.2.2",
     "sharp": "^0.35.3",
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "esbuild": "0.28.2",
     "typescript": "^6.0.3"
   }
 }

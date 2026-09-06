@@ -337,7 +337,8 @@
 	.btn-primary,
 	.btn-cream,
 	.btn-outline,
-	.btn-outline-cream {
+	.btn-outline-cream,
+	.btn-destructive {
 		@apply h-14 rounded-sm px-7;
 	}
 
@@ -353,6 +354,27 @@
 
 	.btn-outline {
 		@apply border-charcoal/25 text-charcoal hover:border-forest hover:bg-forest hover:text-cream;
+	}
+
+	/* The one button on the site that destroys something, and so far the only
+	   one: "Clear answers" in the questionnaire's start-fresh dialog. Filled
+	   rather than outlined, because a destructive action confirmed in a modal is
+	   the ask of that modal — an outlined one beside an outlined Cancel would
+	   leave the reader to work out which button is which.
+
+	   state-blocked-deep rather than the state-blocked fill the chips use. This
+	   is a 12px uppercase label, which needs 4.5:1; the fill value reaches
+	   4.87:1 with white on it and the deep value 5.89:1, and on a control the
+	   reader has to read before pressing, the larger margin is the right one.
+
+	   Hover goes to charcoal rather than to a lighter red, which is the pattern
+	   btn-primary already sets by hovering to forest: the hover state is another
+	   colour from the palette, never a tint of the same one. Every red in the
+	   palette above state-blocked-deep is lighter, so a tint here would hand back
+	   contrast at the exact moment the pointer is on the button. */
+	.btn-destructive {
+		@apply border-state-blocked-deep bg-state-blocked-deep text-portal-paper
+			hover:border-charcoal hover:bg-charcoal;
 	}
 
 	/* Inverted pair, for the charcoal panels. The cream fill stands in for
@@ -510,6 +532,158 @@
 		@apply inline-flex h-9 items-center gap-2 rounded-xs border border-charcoal bg-charcoal px-4
 			font-display text-[0.6875rem] font-semibold uppercase tracking-label text-portal-paper
 			transition-colors duration-200 hover:border-charcoal/80 hover:bg-charcoal/80;
+	}
+
+	/* ------------------------------------------------------------------------
+	   THE QUESTIONNAIRE — the fields a /projects/*\/questionnaire page is built
+	   from.
+
+	   These exist because .field above cannot be reused: it is cream-on-charcoal
+	   underlines built for the contact panel, and this page is charcoal on white.
+	   Everything else is the portal's own furniture — .portal-shell for the
+	   measure, .portal-rule to open a band, .eyebrow for labels, charcoal at
+	   reduced opacity for secondary copy.
+
+	   Two deliberate departures from the marketing site, both because a
+	   questionnaire is read differently from a page:
+
+	   A question's label is sentence case at 17px, not .eyebrow. The contact
+	   form's labels are single words ("Name", "Email") and wear 12px uppercase
+	   tracking well. "Is Avioric marine veteran owned?" does not — wide-tracked
+	   uppercase is unreadable at sentence length, and the label IS the question
+	   here rather than a name for a box.
+
+	   Fields are boxed rather than underlined. The rest of the portal is built
+	   from rules, and underlined inputs would match it more closely, but a
+	   twenty-question form is filled in rather than read: a box says "put
+	   something here" at a glance and gives a bigger, more obvious target on a
+	   phone. The boxes are hairline-thin and square-ish so they read as fields
+	   rather than as cards.
+
+	   Colour still means status. Nothing here is tinted except an error, which
+	   takes state-blocked-deep — 5.89:1 on white, the one red in the palette
+	   already documented as safe for small text.
+	   ------------------------------------------------------------------------ */
+
+	/* The question's own name. Sentence case, and the one piece of type on the
+	   page sized between body copy and a heading. */
+	.q-label {
+		@apply block text-[1.0625rem] leading-snug font-semibold text-charcoal;
+	}
+
+	/* "Required", beside the label. A word rather than an asterisk, which means
+	   nothing until a legend explains it, and charcoal rather than a colour: a
+	   required field is not a status, and spending a hue on one would undercut
+	   the rule that colour on a portal page always means something. */
+	.q-required {
+		@apply ml-2 align-middle font-display text-[0.625rem] font-semibold uppercase
+			tracking-label text-charcoal/45;
+	}
+
+	/* The hint under a label. Never inside the <label> — see FieldShell. */
+	.q-help {
+		@apply mt-1.5 max-w-[62ch] text-[0.9375rem] leading-relaxed text-charcoal/60;
+	}
+
+	/* Every single-line control, the textarea and the select. One class, so a
+	   row of mixed field types lines up on the same edges and heights. */
+	.q-input {
+		@apply w-full rounded-xs border border-charcoal/25 bg-portal-paper px-3.5 py-2.5
+			text-[1.0625rem] leading-normal text-charcoal transition-colors duration-200
+			placeholder:text-charcoal/35 hover:border-charcoal/40 focus:border-charcoal;
+	}
+
+	.q-input:disabled {
+		@apply cursor-not-allowed border-charcoal/12 text-charcoal/40;
+	}
+
+	/* Width is set per kind of answer rather than left at the shell's full
+	   64rem. A name, an email address or a phone number in a box a thousand
+	   pixels wide reads as a mistake — the eye has to travel the whole line to
+	   confirm there is nothing else in it, and the box no longer looks related
+	   to the ~62ch hint above it. A textarea keeps the full width, because a
+	   paragraph genuinely wants the room.
+
+	   Both are `sm:` only. On a phone every field is the width of the page. */
+	.q-input--text {
+		@apply sm:max-w-[34rem];
+	}
+
+	/* A number or a date does not need the width of a sentence either. */
+	.q-input--narrow {
+		@apply sm:max-w-[14rem];
+	}
+
+	/* Capped at the same measure as the text inputs and the option groups.
+	   A textarea left to fill the column runs past 90 characters, which is
+	   hard to read back and makes the form look like two different widths. */
+	.q-textarea {
+		@apply resize-y leading-relaxed sm:max-w-[34rem];
+	}
+
+	/* The chevron is painted rather than left to the platform, so the select
+	   sits at the same height and border as the text inputs beside it. The
+	   arrow is a data URI because a CSS-drawn one cannot follow the box's
+	   padding as it wraps. */
+	.q-select {
+		@apply appearance-none bg-no-repeat pr-10;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%231f211f' stroke-width='1.5' stroke-linecap='square'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E");
+		background-position: right 0.875rem center;
+		background-size: 0.75rem;
+	}
+
+	/* The measure every answer shares. Section rules and headings run the full
+	   64rem shell; the controls under them line up on one narrower edge, so the
+	   page reads as structure at one width and answers at another rather than as
+	   a stack of differently-sized boxes. */
+	.q-controls {
+		@apply sm:max-w-[34rem];
+	}
+
+	/* One option in a radio or checkbox group.
+	   A full-width row with a hairline under it — the same list rhythm the
+	   timeline's checklist is built from — rather than an inline pill. The whole
+	   row is the label, so the tap target is the width of the page. */
+	.q-choice {
+		@apply flex cursor-pointer items-start gap-3 border-b border-charcoal/10 py-3
+			text-[1.0625rem] leading-snug text-charcoal transition-colors duration-200
+			hover:bg-charcoal/[0.025];
+	}
+
+	/* Native controls, given the portal's blue. accent-color is the whole
+	   treatment: a hand-built radio has to reimplement focus, indeterminate,
+	   forced-colors and high-contrast behaviour, and gets at least one of them
+	   wrong. */
+	.q-box {
+		@apply mt-0.5 h-[1.125rem] w-[1.125rem] shrink-0 cursor-pointer;
+		accent-color: var(--color-state-current);
+	}
+
+	/* The standalone acknowledgement. Rules above and below rather than a list
+	   row, because it is one statement and not a choice among several. */
+	.q-confirm {
+		@apply flex cursor-pointer items-start gap-3 border-y border-charcoal/15 py-4
+			text-[1.0625rem] leading-snug text-charcoal;
+	}
+
+	/* An error under a field. state-blocked-deep is the palette's one red that
+	   clears 4.5:1 on white, which is what small type needs. */
+	.q-error {
+		@apply mt-2 flex items-start gap-2 text-[0.9375rem] leading-snug font-semibold
+			text-state-blocked-deep;
+	}
+
+	/* An invalid control. The border carries it; the message underneath says
+	   what is wrong. Never colour alone. */
+	.q-input[aria-invalid='true'] {
+		@apply border-state-blocked;
+	}
+
+	/* Space for the eye above a question the page has just scrolled to. The
+	   portal has no sticky header, so this is breathing room rather than
+	   clearance. */
+	.q-question {
+		scroll-margin-top: 2rem;
 	}
 
 	/* py-3.5 puts a chip within a pixel of .btn's height, so every tap target

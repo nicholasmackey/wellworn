@@ -1,0 +1,63 @@
+---
+/*
+  The generic questionnaire route: /projects/<token>/questionnaire
+
+  One page for every client. The token is an unguessable UUID carried in each
+  definition, so a new questionnaire is a YAML file and nothing else — no route
+  to add, no component to write.
+
+  Living under /projects/ is not cosmetic. That path already carries
+  `X-Robots-Tag: noindex, nofollow` from public/_headers and is already excluded
+  from the sitemap in astro.config.mjs, so this page inherits both without
+  either file changing. Unlisted, not secret — the same posture as the portals,
+  and the `noindex` below is what actually keeps it out of search results, since
+  a crawler blocked by robots.txt can never read a directive telling it not to
+  index the page.
+
+  Nothing about the Sweet Gems portal changes to accommodate this. It keeps its
+  literal-UUID filename and sits alongside untouched.
+*/
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import PortalFooter from '../../../components/portal/PortalFooter.astro';
+import Questionnaire from '../../../components/questionnaire/Questionnaire.astro';
+import QuestionnaireMasthead from '../../../components/questionnaire/QuestionnaireMasthead.astro';
+
+export async function getStaticPaths() {
+	const entries = await getCollection('questionnaires');
+
+	return entries.map((entry) => ({
+		params: { token: entry.data.token },
+		props: { questionnaire: entry.data },
+	}));
+}
+
+const { questionnaire } = Astro.props;
+---
+
+<BaseLayout
+	title={`${questionnaire.client} ${questionnaire.title}`}
+	description={`Questionnaire for ${questionnaire.client}.`}
+	noindex
+	bodyClass="portal"
+	themeColor="#FFFFFF"
+>
+	<QuestionnaireMasthead questionnaire={questionnaire} slot="header" />
+	<PortalFooter slot="footer" />
+
+	<div class="portal-shell">
+		{
+			questionnaire.intro.length > 0 && (
+				<div class="portal-enter portal-enter-delay-3 mb-12 flex flex-col gap-4 sm:mb-14">
+					{questionnaire.intro.map((paragraph) => (
+						<p class="max-w-[64ch] text-[1.0625rem] leading-relaxed text-charcoal/75">
+							{paragraph}
+						</p>
+					))}
+				</div>
+			)
+		}
+
+		<Questionnaire questionnaire={questionnaire} />
+	</div>
+</BaseLayout>

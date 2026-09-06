@@ -1,5 +1,6 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
+import cloudflare from '@astrojs/cloudflare';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 
@@ -25,6 +26,44 @@ export default defineConfig({
 
 	// Prefetch links on hover/viewport. Zero dependencies, static-friendly.
 	prefetch: true,
+
+	/*
+	 * `output` stays at its default of 'static'. With an adapter present that
+	 * does NOT make the site server-rendered: every page is still prerendered
+	 * to a file at build time, and a route becomes a worker route only by
+	 * saying so itself with `export const prerender = false`.
+	 *
+	 * Exactly one route does — src/pages/api/questionnaire.ts. Everything else
+	 * on this site, the client portals and the questionnaire page included, is
+	 * a static file on the CDN exactly as it was before the adapter arrived.
+	 * The adapter emits dist/client + dist/server. Cloudflare's ASSETS binding
+	 * serves matching static files before falling back to the Worker, as pinned
+	 * by `assets.run_worker_first: false` in wrangler.jsonc. There is no
+	 * `_routes.json` in this Workers + Static Assets architecture.
+	 */
+	/*
+	 * No sessions. The adapter turns them on by default and expects a KV
+	 * binding called SESSION to exist to hold them — storage this project was
+	 * asked not to add, for a feature nothing here uses. Saying so explicitly
+	 * both silences the build note and means a future `Astro.session` call
+	 * fails loudly at build rather than quietly at the edge against a binding
+	 * nobody created.
+	 */
+	session: false,
+
+	adapter: cloudflare({
+		/*
+		 * Images are transformed by sharp at BUILD time and passed through
+		 * untouched at runtime — which is what already happened before the
+		 * adapter, since every page carrying an image is prerendered.
+		 *
+		 * Set explicitly because the adapter's default is 'cloudflare-binding',
+		 * which would hand image delivery to Cloudflare Images and change both
+		 * the URLs and the billing for something that currently costs nothing.
+		 * There is no image on the one route that runs on the server.
+		 */
+		imageService: 'compile',
+	}),
 
 	vite: {
 		plugins: [tailwindcss()],

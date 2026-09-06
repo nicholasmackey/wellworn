@@ -1,0 +1,39 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+
+	// Cloudflare Workers deployment for wellworncreative.com.
+	//
+	// Deliberately small. `main`, the assets binding and the assets directory
+	// are all supplied by the Astro adapter's Vite plugin, which writes the
+	// complete config to dist/server/wrangler.json at build time — this file is
+	// read BEFORE that build exists, so naming a `main` here fails outright.
+	//
+	// What is left is the set of decisions that should not be made by whatever
+	// day the build runs on, or left to a default nobody wrote down.
+	//
+	// Deploy with `wrangler deploy` from dist/server, or point the Cloudflare
+	// Workers build on this repo at `pnpm build`. Note that the build output is
+	// now dist/client + dist/server rather than a flat dist/ — a Pages project
+	// configured with `dist` as its output directory will publish nothing.
+	"name": "wellworn",
+
+	// The runtime semantics this Worker is built against. Bump on purpose,
+	// having read what changes; never incidentally. Left unset, the adapter
+	// stamps today's date and two builds of one commit differ.
+	"compatibility_date": "2026-09-03",
+
+	"assets": {
+		// Serve Astro's own prerendered 404 page for an unmatched path, rather
+		// than Cloudflare's bare one.
+		"not_found_handling": "404-page",
+
+		// Static assets win over the Worker. This is already the default; it is
+		// written down because it is the single setting that decides whether
+		// this site is "static, with one endpoint" or "a Worker that renders
+		// everything". Every page here is prerendered, so the Worker should be
+		// reached only by /api/questionnaire.
+		"run_worker_first": false
+	},
+
+	"observability": { "enabled": true }
+}

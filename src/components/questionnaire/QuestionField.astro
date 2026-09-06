@@ -1,0 +1,259 @@
+---
+/**
+ * One answerable question, drawn as whatever control its type calls for.
+ *
+ * This is the only component that knows what a field looks like, and it is the
+ * reason there is no Avioric form and no Sweet Gems form. It dispatches on
+ * `control` from the field registry rather than on the question type, so the
+ * eight controls here cover twelve types — `text`, `email` and `phone` are one
+ * control with three sets of HTML hints, and `radio` and `boolean` are one
+ * control with two ways of building the list.
+ *
+ * Adding a field type does not add a branch here unless it needs a genuinely
+ * new control. When it does, `KNOWN_CONTROLS` below fails to compile until this
+ * file has been updated — which is the point of listing them.
+ *
+ * Hidden questions are rendered, not omitted. They are `hidden` on the wrapper
+ * and `disabled` on every control inside it, and that pairing does three jobs
+ * at once: a disabled control is not submitted, is not validated by the
+ * browser, and is out of the tab order. So conditional visibility needs no
+ * parallel bookkeeping — the DOM already agrees with itself.
+ */
+import type { AnswerableQuestion } from '../../lib/questionnaire/schema';
+import { FIELD, type Control } from '../../lib/questionnaire/registry';
+import { controlId, describedBy } from '../../lib/questionnaire/dom';
+import FieldShell from './FieldShell.astro';
+
+interface Props {
+	question: AnswerableQuestion;
+	isHidden: boolean;
+}
+
+const { question, isHidden }: Props = Astro.props;
+
+const spec = FIELD[question.type];
+const control: Control = spec.control;
+const id = controlId(question.id);
+const described = describedBy(question);
+
+/* Exhaustiveness. Add a Control in the registry and this stops compiling until
+   a branch for it exists below — the alternative being a control that silently
+   renders nothing at all, which looks like a styling bug for a week. */
+const KNOWN_CONTROLS: Record<Control, true> = {
+	text: true,
+	textarea: true,
+	number: true,
+	radio: true,
+	select: true,
+	checkbox: true,
+	confirm: true,
+	date: true,
+};
+void KNOWN_CONTROLS;
+
+/* How the question is announced. Driven by the control, so the decision is
+   made once here rather than guessed at per type. A confirmation names itself
+   inline — see FieldShell. */
+const isGroup = control === 'radio' || control === 'checkbox';
+const naming: 'label' | 'legend' | 'none' = isGroup
+	? 'legend'
+	: control === 'confirm'
+		? 'none'
+		: 'label';
+
+/** One row in a radio or checkbox group, with its prefilled state resolved. */
+interface Choice {
+	readonly value: string;
+	readonly label: string;
+	readonly checked: boolean;
+}
+
+let choices: readonly Choice[] = [];
+if (question.type === 'boolean') {
+	/* A yes/no pair rather than a lone checkbox, so "no" and "not answered"
+	   stay different answers. The values are the strings HTML can carry; the
+	   client script and the endpoint turn them back into booleans. */
+	choices = [
+		{ value: 'true', label: question.yesLabel, checked: question.default === true },
+		{ value: 'false', label: question.noLabel, checked: question.default === false },
+	];
+} else if (question.type === 'radio') {
+	choices = question.options.map((o) => ({ ...o, checked: question.default === o.value }));
+} else if (question.type === 'checkbox') {
+	choices = question.options.map((o) => ({
+		...o,
+		checked: question.default?.includes(o.value) ?? false,
+	}));
+}
+
+/* Prefilled values. Everything Wellworn already knows arrives as a `default`
+   in the definition, so the client corrects rather than retypes. */
+const textValue =
+	(question.type === 'text' ||
+		question.type === 'textarea' ||
+		question.type === 'email' ||
+		question.type === 'phone' ||
+		question.type === 'date') &&
+	question.default !== undefined
+		? question.default
+		: '';
+
+const placeholder =
+	'placeholder' in question && question.type !== 'select' ? question.placeholder : undefined;
+---
+
+<FieldShell question={question} naming={naming} isHidden={isHidden}>
+	{
+		control === 'text' && question.type !== 'textarea' && (
+			<input
+				id={id}
+				name={question.id}
+				type={spec.html?.type ?? 'text'}
+				inputmode={spec.html?.inputMode}
+				autocomplete={
+					question.type === 'text' ? question.autocomplete : spec.html?.autocomplete
+				}
+				value={textValue}
+				placeholder={placeholder}
+				maxlength={question.type === 'text' ? question.maxLength : undefined}
+				required={question.required}
+				disabled={isHidden}
+				aria-describedby={described}
+				class="q-input q-input--text"
+			/>
+		)
+	}
+
+	{
+		question.type === 'textarea' && (
+			<textarea
+				id={id}
+				name={question.id}
+				rows={question.rows}
+				placeholder={placeholder}
+				maxlength={question.maxLength}
+				required={question.required}
+				disabled={isHidden}
+				aria-describedby={described}
+				class="q-input q-textarea"
+				set:text={textValue}
+			/>
+		)
+	}
+
+	{
+		question.type === 'number' && (
+			<div class="flex items-center gap-3">
+				<input
+					id={id}
+					name={question.id}
+					type="number"
+					inputmode="decimal"
+					value={question.default ?? ''}
+					min={question.min}
+					max={question.max}
+					step={question.step}
+					required={question.required}
+					disabled={isHidden}
+					aria-describedby={described}
+					class="q-input q-input--narrow"
+				/>
+				{/* The unit sits beside the box rather than inside the label, so the
+				    label stays the question and the box stays the answer. */}
+				{question.unit && (
+					<span class="shrink-0 text-[0.9375rem] text-charcoal/60">{question.unit}</span>
+				)}
+			</div>
+		)
+	}
+
+	{
+		question.type === 'date' && (
+			<input
+				id={id}
+				name={question.id}
+				type="date"
+				value={textValue}
+				min={question.min}
+				max={question.max}
+				required={question.required}
+				disabled={isHidden}
+				aria-describedby={described}
+				class="q-input q-input--narrow"
+			/>
+		)
+	}
+
+	{
+		question.type === 'select' && (
+			<select
+				id={id}
+				name={question.id}
+				required={question.required}
+				disabled={isHidden}
+				aria-describedby={described}
+				class="q-input q-input--text q-select"
+			>
+				{/* An empty first option rather than a preselected one, so an
+				    untouched select reads as unanswered rather than as agreeing
+				    with whatever happened to be first. */}
+				<option value="" selected={question.default === undefined}>
+					{question.placeholder}
+				</option>
+				{question.options.map((o) => (
+					<option value={o.value} selected={question.default === o.value}>
+						{o.label}
+					</option>
+				))}
+			</select>
+		)
+	}
+
+	{
+		isGroup && (
+			<div class="q-controls border-t border-charcoal/10">
+				{choices.map((choice) => (
+					<label class="q-choice">
+						<input
+							id={`${id}-${choice.value}`}
+							name={question.id}
+							type={control === 'radio' ? 'radio' : 'checkbox'}
+							value={choice.value}
+							checked={choice.checked}
+							required={control === 'radio' && question.required}
+							disabled={isHidden}
+							class="q-box"
+						/>
+						<span>{choice.label}</span>
+					</label>
+				))}
+			</div>
+		)
+	}
+
+	{
+		question.type === 'confirm' && (
+			<label class="q-confirm q-controls">
+				<input
+					id={id}
+					name={question.id}
+					type="checkbox"
+					value="true"
+					required
+					disabled={isHidden}
+					aria-describedby={described}
+					class="q-box"
+				/>
+				{/* The statement is the label. FieldShell renders no naming element
+				    for a confirmation precisely so this can be the one copy of it,
+				    sitting beside the box where it is clickable. The marker rides
+				    along at the end of the sentence, since there is no separate
+				    label above for it to sit against. */}
+				<span>
+					{question.label}
+					<span class="q-required">Required</span>
+				</span>
+			</label>
+		)
+	}
+</FieldShell>

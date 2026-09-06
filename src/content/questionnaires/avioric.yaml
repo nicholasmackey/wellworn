@@ -1,0 +1,655 @@
+# yaml-language-server: $schema=../../../schema/questionnaire.schema.json
+#
+# Avioric — precision firearm laser engraving and porting, Texas.
+#
+# Everything Wellworn already knows is prefilled as a `default` or asked as a
+# confirmation. Mark and Julia's job here is to correct facts and supply
+# context. They are never asked to write website copy — Wellworn writes the
+# copy from these answers. See schema/README.md.
+#
+# Options are written in block style, one key per line. Flow style
+# (`{ value: x, label: y }`) is a trap here: an unquoted label containing a
+# comma silently splits into a second key, which surfaces as a confusing
+# "Unrecognized key" against a line that looks fine.
+#
+# Bump `version` when a question is added, removed, retyped, or has its option
+# values changed. Do NOT bump it for wording — drafts are namespaced by
+# version, and a typo fix must not throw away a half-finished answer.
+
+schemaVersion: 1
+id: avioric-website
+version: 2
+token: 5a468912-b9f9-45f1-babc-c5774180b72b
+client: Avioric
+title: Website Questionnaire
+
+intro:
+  - >-
+    This is everything we need to build the Avioric site around how the shop
+    actually works. We have filled in what we already know. Correct anything
+    that is wrong, and skip anything you would rather talk through.
+  - >-
+    You are not writing the website. We only need the facts and the context;
+    the wording is our job. Short answers are genuinely fine, and most
+    questions are optional.
+  - >-
+    Your answers save as you go, so you can close this page and come back to
+    it later on the same device.
+
+submitLabel: Send to Wellworn
+
+confirmation:
+  - >-
+    Thanks, that is everything we needed. We will read through it and come
+    back to you with a first pass at the site structure.
+  - >-
+    If something occurs to you afterwards, just email it over. Nothing here is
+    locked in.
+
+sections:
+  # ---------------------------------------------------------------------
+  - id: business-basics
+    title: Business basics
+    description: The details that end up on nearly every page of the site.
+    questions:
+      - id: business-name
+        type: text
+        label: Business name
+        required: true
+        default: Avioric
+        autocomplete: organization
+        help: Exactly as you want it written on the site.
+
+      - id: owners
+        type: text
+        label: Who should the site name as the people behind Avioric?
+        default: Mark and Julia
+        help: >-
+          First names are fine. Leave it blank if you would rather the site
+          named nobody.
+
+      - id: veteran-owned
+        type: boolean
+        label: Is Avioric marine veteran owned?
+        default: true
+        help: We have this as yes. Correct it if we have it wrong.
+
+      - id: family-business
+        type: boolean
+        label: Is Avioric a family business?
+        default: true
+
+      - id: years-in-business
+        type: number
+        label: How long has Avioric been doing this work?
+        unit: years
+        min: 1
+        max: 80
+        help: Round it however you like. Leave blank if you would rather not say.
+
+      - id: public-email
+        type: email
+        label: Public email address
+        required: true
+        default: hello@avioric.com
+        help: The address customers should use. Change it if this is not the one.
+
+      - id: public-phone
+        type: phone
+        label: Public phone number
+        placeholder: (555) 555-0142
+        help: >-
+          Leave blank if you would rather customers only reached you by email
+          or through the site's form.
+
+  # ---------------------------------------------------------------------
+  - id: where-you-work
+    title: Where you work
+    description: What the site can say about the shop, and who it is speaking to.
+    questions:
+      - id: location-visibility
+        type: radio
+        label: How much of your location should the site show?
+        options:
+          - value: full-address
+            label: The full street address
+          - value: city-and-state
+            label: City and state only
+          - value: general-area
+            label: A general area, no city
+          - value: none
+            label: Nothing about location
+        help: >-
+          Some shops want to be found on a map, others would rather not have
+          people turning up. Either is fine.
+
+      - id: location-detail
+        type: textarea
+        label: What should it show?
+        rows: 3
+        showIf:
+          question: location-visibility
+          in: [full-address, city-and-state, general-area]
+        help: >-
+          Write it the way it should appear, or just give us the details and
+          we will format it.
+
+      - id: hours
+        type: textarea
+        label: When are you open, or reachable?
+        rows: 3
+        help: >-
+          Days and times, however they actually run. "Evenings and weekends"
+          or "by appointment" is a real answer.
+
+      - id: reach
+        type: radio
+        label: Who is the site mainly speaking to?
+        options:
+          - value: local
+            label: Our local area in Texas
+          - value: texas
+            label: Texas statewide
+          - value: nationwide
+            label: Anywhere in the country, since work can be shipped
+          - value: mix
+            label: A mix of local walk-ins and shipped work from further out
+        help: This sets how much of the site leans on being a Texas shop.
+
+      - id: service-area
+        type: textarea
+        label: Anything specific about the area you serve?
+        rows: 3
+        help: >-
+          Towns you draw from, how far people usually travel, anywhere you
+          will not ship to.
+
+  # ---------------------------------------------------------------------
+  - id: the-work
+    title: The work you do
+    description: The services themselves, and which of them the site should push hardest.
+    questions:
+      - id: services-note
+        type: info
+        body:
+          - >-
+            We have ticked everything we know Avioric offers. Untick anything
+            you have stopped doing, and add anything missing in the notes at
+            the end.
+
+      - id: services-offered
+        type: checkbox
+        label: Which services should the site list?
+        required: true
+        min: 1
+        default:
+          - slide-engraving
+          - barrel-engraving
+          - magazine-engraving
+          - grip-engraving
+          - porting
+          - slide-barrel-packages
+          - bundles
+          - custom-orders
+        options:
+          - value: slide-engraving
+            label: Slide engraving
+          - value: barrel-engraving
+            label: Barrel engraving
+          - value: magazine-engraving
+            label: Magazine engraving and PMAG work
+          - value: grip-engraving
+            label: Grip engraving
+          - value: porting
+            label: Porting
+          - value: slide-barrel-packages
+            label: Slide and barrel packages
+          - value: bundles
+            label: Bundles
+          - value: custom-orders
+            label: Custom orders
+
+      - id: promote-most
+        type: checkbox
+        label: Which of those do you most want the site to promote?
+        max: 3
+        help: >-
+          Pick up to three. These are the ones that get the most room, not the
+          only ones we list.
+        options:
+          - value: slide-engraving
+            label: Slide engraving
+          - value: barrel-engraving
+            label: Barrel engraving
+          - value: magazine-engraving
+            label: Magazine engraving and PMAG work
+          - value: grip-engraving
+            label: Grip engraving
+          - value: porting
+            label: Porting
+          - value: slide-barrel-packages
+            label: Slide and barrel packages
+          - value: bundles
+            label: Bundles
+          - value: custom-orders
+            label: Custom orders
+
+      - id: typical-turnaround
+        type: number
+        label: Typical turnaround on a standard job
+        unit: business days
+        min: 1
+        max: 120
+        help: >-
+          A normal figure is fine. We will word it as a range. If it varies a
+          lot by service, say so in the notes at the end.
+
+      - id: best-work
+        type: textarea
+        label: Which jobs are your best examples of what you can do?
+        rows: 4
+        help: >-
+          Describe them, name them, or tell us where the photos are. These are
+          the ones we will build the gallery around.
+
+  # ---------------------------------------------------------------------
+  - id: pricing
+    title: Pricing
+    description: Confirm what we have rather than retyping it.
+    questions:
+      - id: pricing-note
+        type: info
+        heading: The prices we have on file
+        body:
+          - >-
+            Slide engraving: simple text $50, artwork $125, full coverage $175.
+            Barrel engraving: text $50, artwork $75, full coverage $175.
+            Magazine engraving: simple text $25, full custom $30.
+          - >-
+            Grip engraving: text one side $30, text both sides $60, custom
+            artwork $110. Slide and barrel package: simple $135, artwork $175,
+            full custom $250.
+          - >-
+            Porting: pistol $125, custom $200, barrel and slide $300.
+            Bundles: slide and 2 magazines $150, slide, grip and 2 magazines $240.
+          - >-
+            You do not need to retype any of this. Tell us below whether it is
+            still right, and list only what has changed.
+
+      - id: pricing-current
+        type: radio
+        label: Is that price list still accurate?
+        required: true
+        options:
+          - value: all-current
+            label: Yes, all of it is current
+          - value: mostly-current
+            label: Mostly, a few things have changed
+          - value: needs-rework
+            label: No, it needs a proper rework
+
+      - id: pricing-corrections
+        type: textarea
+        label: What has changed?
+        rows: 5
+        showIf:
+          question: pricing-current
+          in: [mostly-current, needs-rework]
+        help: >-
+          Only the lines that are wrong. Anything you do not mention, we will
+          leave exactly as it is above.
+
+      - id: pricing-display
+        type: radio
+        label: How should prices appear on the site?
+        options:
+          - value: exact
+            label: Exact prices, as listed
+          - value: starting-from
+            label: Starting-from prices
+          - value: ranges
+            label: Ranges
+          - value: on-request
+            label: 'No prices: quote on request'
+        help: >-
+          Exact prices answer the question before someone has to ask. Quote on
+          request keeps room to price a job on its difficulty.
+
+  # ---------------------------------------------------------------------
+  - id: how-a-job-works
+    title: How a job works
+    description: >-
+      Start to finish, so the site can explain it instead of leaving people to
+      guess and email you.
+    questions:
+      - id: how-arranged
+        type: radio
+        label: How do customers arrange work?
+        options:
+          - value: appointment
+            label: By appointment only
+          - value: walk-in
+            label: Walk-ins welcome
+          - value: both
+            label: Both
+          - value: shipping-only
+            label: Shipped work only
+
+      - id: appointment-detail
+        type: textarea
+        label: How should someone book an appointment?
+        rows: 3
+        showIf:
+          question: how-arranged
+          in: [appointment, both]
+        help: >-
+          Phone, email, a form, a particular day of the week. Tell us how it
+          actually works.
+
+      - id: delivery-methods
+        type: checkbox
+        label: How do customers get firearms and items to you?
+        options:
+          - value: in-person
+            label: They bring them in themselves
+          - value: shipped-to-us
+            label: They ship them to us
+          - value: ffl-transfer
+            label: Through an FFL transfer
+          - value: local-meetup
+            label: We meet them locally
+          - value: we-collect
+            label: We collect from them
+
+      - id: return-methods
+        type: checkbox
+        label: How does finished work get back to them?
+        options:
+          - value: in-person-pickup
+            label: They collect it
+          - value: shipped-back
+            label: We ship it back
+          - value: ffl-transfer
+            label: Through an FFL transfer
+          - value: we-deliver
+            label: We deliver it locally
+
+      - id: customer-requirements
+        type: textarea
+        label: >-
+          Is there anything a customer has to do, provide, or agree to before
+          you can take a job?
+        rows: 4
+        help: >-
+          Paperwork, ID or age, how a firearm has to arrive, anything you
+          cannot legally or practically accept. Facts only. We will find the
+          right way to say it.
+
+      - id: payment-methods
+        type: checkbox
+        label: How can customers pay?
+        options:
+          - value: cash
+            label: Cash
+          - value: card-in-person
+            label: Card in person
+          - value: card-online
+            label: Card online or by invoice link
+          - value: venmo
+            label: Venmo
+          - value: cash-app
+            label: Cash App
+          - value: zelle
+            label: Zelle
+          - value: check
+            label: Check
+
+      - id: deposit-policy
+        type: radio
+        label: When do they pay?
+        options:
+          - value: on-collection
+            label: In full when the work is finished
+          - value: deposit-always
+            label: A deposit up front on every job
+          - value: deposit-larger
+            label: A deposit up front on larger jobs only
+          - value: full-upfront
+            label: In full up front
+
+      - id: quote-response
+        type: select
+        label: How quickly do you usually reply to a quote request?
+        options:
+          - value: same-day
+            label: Same day
+          - value: next-day
+            label: Within one business day
+          - value: two-three-days
+            label: Within two or three business days
+          - value: within-week
+            label: Within a week
+          - value: varies
+            label: It varies
+        help: >-
+          We will only put this on the site if you are comfortable being held
+          to it.
+
+  # ---------------------------------------------------------------------
+  - id: your-customers
+    title: Your customers
+    description: What you know about them that we could not work out from the outside.
+    questions:
+      - id: story-note
+        type: info
+        heading: How we understand Avioric today
+        body:
+          - >-
+            Avioric is a marine veteran owned family business in Texas doing
+            precision firearm laser engraving and porting on slides, barrels,
+            magazines and grips, plus packages, bundles and custom work. Mark
+            and Julia are the people a customer deals with.
+
+      - id: story-accurate
+        type: radio
+        label: Is that right?
+        required: true
+        options:
+          - value: accurate
+            label: Yes, that is us
+          - value: mostly
+            label: Close, but something is off
+          - value: wrong
+            label: No, that is not how we would put it
+
+      - id: story-corrections
+        type: textarea
+        label: What should we change?
+        rows: 4
+        showIf:
+          question: story-accurate
+          in: [mostly, wrong]
+
+      - id: why-chosen
+        type: textarea
+        label: When someone picks Avioric over another shop, what is usually the reason?
+        rows: 4
+        help: >-
+          What they actually say, not what you wish they said. One line is
+          plenty.
+
+      - id: trust-signals
+        type: checkbox
+        label: What makes a first-time customer decide you are the real thing?
+        options:
+          - value: ffl-licensed
+            label: We are licensed
+          - value: insured
+            label: We are insured
+          - value: veteran-owned
+            label: Veteran owned
+          - value: family-run
+            label: Family run
+          - value: years-experience
+            label: Years of experience
+          - value: guarantee
+            label: We stand behind the work if something is wrong
+          - value: published-reviews
+            label: Reviews people can read
+          - value: word-of-mouth
+            label: Referrals and word of mouth
+          - value: training
+            label: Training, certification, or an association we belong to
+
+      - id: reviews
+        type: textarea
+        label: Where do people leave reviews for you today?
+        rows: 3
+        help: >-
+          Google, Facebook, forums, or nowhere yet. If there are particular
+          ones you would want on the site, point us at them.
+
+      - id: common-questions
+        type: textarea
+        label: What do customers ask you most often before booking?
+        rows: 4
+        help: >-
+          The questions you answer over and over. Every one of them is a
+          question the site should be answering for you.
+
+      - id: before-contacting
+        type: textarea
+        label: What do people usually misunderstand before they get in touch?
+        rows: 4
+        help: >-
+          What the work involves, what it costs, how long it takes, what you
+          can and cannot do.
+
+      - id: never-say
+        type: textarea
+        label: Is there anything the site must never say, promise, or imply?
+        rows: 4
+        help: >-
+          Claims you do not want made on your behalf, comparisons you would
+          rather avoid, wording that would cause you a problem.
+
+  # ---------------------------------------------------------------------
+  - id: the-website
+    title: The website itself
+    description: What it needs to do, and what we have to work with.
+    questions:
+      - id: primary-cta
+        type: radio
+        label: What is the one thing you most want a visitor to do?
+        required: true
+        options:
+          - value: request-quote
+            label: Request a quote through the site
+          - value: call
+            label: Call you
+          - value: text
+            label: Text you
+          - value: email
+            label: Email you
+          - value: book
+            label: Book an appointment
+          - value: visit
+            label: Come to the shop
+          - value: message-social
+            label: Message you on social
+
+      - id: quote-form-fields
+        type: checkbox
+        label: What does a quote request need to tell you?
+        help: >-
+          Ticked is what we would ask for by default. Every extra field loses
+          a few enquiries, so keep it to what you genuinely need.
+        default:
+          - name
+          - email
+          - phone
+          - service-wanted
+          - firearm-details
+          - artwork-description
+        options:
+          - value: name
+            label: Name
+          - value: email
+            label: Email
+          - value: phone
+            label: Phone
+          - value: preferred-contact
+            label: How they would rather be contacted
+          - value: service-wanted
+            label: Which service they want
+          - value: firearm-details
+            label: Make and model of the firearm
+          - value: artwork-description
+            label: What they want engraved
+          - value: reference-photos
+            label: Reference photos
+          - value: budget
+            label: Budget
+          - value: deadline
+            label: When they need it by
+          - value: how-heard
+            label: How they heard about you
+
+      - id: existing-media
+        type: radio
+        label: What should we do with the photos and video you already have?
+        options:
+          - value: use-everything
+            label: Use anything we have
+          - value: some-off-limits
+            label: Use most of it, but some is off limits
+          - value: replace-everything
+            label: Start fresh, none of it should be reused
+          - value: none-yet
+            label: There is nothing to reuse yet
+
+      - id: media-off-limits
+        type: textarea
+        label: Which photos or videos should we not reuse?
+        rows: 3
+        showIf:
+          question: existing-media
+          equals: some-off-limits
+        help: >-
+          Describe them or point us at where they are. A customer's firearm you
+          no longer have permission to show counts here.
+
+      - id: social-profiles
+        type: textarea
+        label: Which social profiles should the site link to?
+        rows: 3
+        help: >-
+          Paste the links. Tell us if any of them are dormant and should be
+          left off.
+
+      - id: launch-deadline
+        type: date
+        label: Is there a date the site needs to be live by?
+        min: '2026-09-06'
+        help: An event, a season, a show. Leave blank if there is no fixed deadline.
+
+  # ---------------------------------------------------------------------
+  - id: anything-else
+    title: Anything else
+    questions:
+      - id: final-notes
+        type: textarea
+        label: Anything we have not asked about?
+        rows: 6
+        maxLength: 3000
+        help: >-
+          Anything that would change how we build the site, however small, and
+          in whatever order it comes to you.
+
+      - id: use-as-basis
+        type: confirm
+        label: >-
+          The answers above are accurate, and Wellworn can write the site from
+          them.
+        help: >-
+          We'll mock everything up and confirm that you're good with how the website looks. This is simply to confirm and make sure that we're on the same page.

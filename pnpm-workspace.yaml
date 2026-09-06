@@ -1,3 +1,7 @@
 allowBuilds:
   esbuild: true
   sharp: true
+  # workerd is the Cloudflare Workers runtime. Needed only to run the built
+  # worker locally (astro preview / wrangler dev); the production build does
+  # not execute it.
+  workerd: true

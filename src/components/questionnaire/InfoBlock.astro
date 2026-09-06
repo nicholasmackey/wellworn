@@ -1,0 +1,48 @@
+---
+/**
+ * An `info` question: prose in the middle of the form, answering nothing.
+ *
+ * It exists so a questionnaire can explain something — what we already have on
+ * file, why a section is short, what a client does not need to prepare — at the
+ * point it becomes relevant, rather than in an introduction nobody rereads.
+ *
+ * Set apart from the questions around it by a hairline down its left edge and
+ * a tint too faint to read as a status. Deliberately not a card and not one of
+ * the state colours: this is the page talking, not the page reporting
+ * something, and every colour on a portal page means a status.
+ */
+import type { OfType } from '../../lib/questionnaire/schema';
+import { DATA, questionId, showIfAttr } from '../../lib/questionnaire/dom';
+
+interface Props {
+	question: OfType<'info'>;
+	isHidden: boolean;
+}
+
+const { question, isHidden }: Props = Astro.props;
+
+const attrs = {
+	[DATA.question]: question.id,
+	[DATA.type]: 'info',
+	...(question.showIf ? { [DATA.showIf]: showIfAttr(question.showIf) } : {}),
+};
+---
+
+<div
+	id={questionId(question.id)}
+	class="q-question border-l-2 border-charcoal/15 bg-charcoal/[0.02] py-4 pr-4 pl-5"
+	hidden={isHidden}
+	{...attrs}
+>
+	{question.heading && <p class="eyebrow text-charcoal/70">{question.heading}</p>}
+
+	<div class:list={['flex flex-col gap-3', question.heading && 'mt-3']}>
+		{
+			question.body.map((paragraph) => (
+				<p class="max-w-[68ch] text-[0.9375rem] leading-relaxed text-charcoal/70">
+					{paragraph}
+				</p>
+			))
+		}
+	</div>
+</div>
