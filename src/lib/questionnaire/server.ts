@@ -6,7 +6,6 @@ import { validateAnswers } from './answers'
 import { HONEYPOT_FIELD } from './config'
 import { deliverSubmission } from './delivery'
 import { SCHEMA_VERSION, type Questionnaire } from './schema'
-import { verifyTurnstile } from './security'
 import { normalizeSubmission } from './submission'
 import type { AnswerBag } from './visibility'
 
@@ -44,8 +43,6 @@ export interface QuestionnaireRequestContext {
 export interface QuestionnaireServerDependencies {
 	readonly loadQuestionnaire: (token: string, id: string) => Promise<Questionnaire | null>
 	readonly getSecret: (name: string) => string | undefined
-	/** Enabled only by the local Astro endpoint; production remains strict. */
-	readonly allowTurnstileTestResponse?: boolean
 	readonly fetcher?: typeof fetch
 	readonly now?: () => Date
 	readonly logger?: Pick<Console, 'log' | 'warn' | 'error'>
@@ -68,7 +65,6 @@ interface Envelope {
 	readonly token: string
 	readonly answers: AnswerBag
 	readonly honeypot: string
-	readonly turnstileToken: string
 }
 
 /** Shape-check the envelope before anything touches a questionnaire. */
@@ -87,9 +83,6 @@ function readEnvelope(body: unknown): Envelope | null {
 	const honeypot = value[HONEYPOT_FIELD]
 	if (honeypot !== undefined && typeof honeypot !== 'string') return null
 
-	const turnstileToken = value.turnstileToken
-	if (turnstileToken !== undefined && typeof turnstileToken !== 'string') return null
-
 	return {
 		questionnaireId: value.questionnaireId,
 		token: value.token,
@@ -97,7 +90,6 @@ function readEnvelope(body: unknown): Envelope | null {
 		schemaVersion: value.schemaVersion as number,
 		answers: value.answers as AnswerBag,
 		honeypot: honeypot ?? '',
-		turnstileToken: turnstileToken ?? '',
 	}
 }
 
@@ -146,10 +138,14 @@ export async function handleQuestionnairePost(
 		return fail(400, { error: 'That submission was not in the expected format.' })
 	}
 
-	/* Do not teach automated fillers which field caught them, and never imply
-	   that an email was delivered when it was not. */
+	/* The honeypot, checked before the questionnaire is loaded and long before
+	   Resend is called. A filled one is answered with the same body a real
+	   delivery gets: an automated filler learns nothing about which field
+	   caught it, or that anything caught it at all. The value itself is never
+	   logged, so a bot cannot use this endpoint to write into our logs. */
 	if (envelope.honeypot.trim()) {
-		return fail(400, { error: 'We could not submit that form. Refresh the page and try again.' })
+		logger.warn('[questionnaire] Honeypot filled; submission dropped without delivery.')
+		return succeed()
 	}
 
 	if (envelope.schemaVersion !== SCHEMA_VERSION) {
@@ -184,30 +180,6 @@ export async function handleQuestionnairePost(
 		visible: result.visible,
 		submittedAt: dependencies.now?.() ?? new Date(),
 	})
-
-	const turnstileSecret = dependencies.getSecret('TURNSTILE_SECRET_KEY') ?? ''
-	if (!turnstileSecret) {
-		logger.error('[questionnaire] TURNSTILE_SECRET_KEY is not configured.')
-		return fail(503, { error: 'This form is temporarily unavailable. Your answers are still saved.' })
-	}
-
-	const turnstile = await verifyTurnstile({
-		token: envelope.turnstileToken,
-		secret: turnstileSecret,
-		hostname: context.url.hostname,
-		remoteIp: request.headers.get('cf-connecting-ip') ?? undefined,
-		fetcher,
-		allowTestResponse: dependencies.allowTurnstileTestResponse,
-	})
-	if (!turnstile.ok) {
-		logger.warn(`[questionnaire] Turnstile verification ${turnstile.kind}.`)
-		return fail(turnstile.kind === 'unavailable' ? 503 : 422, {
-			error:
-				turnstile.kind === 'unavailable'
-					? 'We could not run the security check. Your answers are still saved; please try again.'
-					: 'Complete the security check and try again.',
-		})
-	}
 
 	const delivery = await deliverSubmission(
 		submission,

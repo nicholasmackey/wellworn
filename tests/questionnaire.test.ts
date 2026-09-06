@@ -11,14 +11,13 @@ import {
 	deliverSubmission,
 } from '../src/lib/questionnaire/delivery'
 import {
-	TURNSTILE_DEVELOPMENT_SECRET_KEY,
-	verifyTurnstile,
-} from '../src/lib/questionnaire/security'
-import {
-	isTurnstileTestSiteKey,
-	resolveTurnstileSiteKey,
-	TURNSTILE_DEVELOPMENT_SITE_KEY,
-} from '../src/lib/questionnaire/turnstile'
+	clearDrafts,
+	draftKey,
+	readReceipt,
+	receiptKey,
+	writeDraft,
+	writeReceipt,
+} from '../src/lib/questionnaire/draft'
 import {
 	handleQuestionnairePost,
 	MAX_BODY_BYTES,
@@ -193,132 +192,19 @@ test('Resend delivery reports request, response, configuration, and success stat
 	)
 })
 
-test('Turnstile validates token, hostname, and action and distinguishes outages', async () => {
-	let called = 0
-	const validFetch: typeof fetch = async () => {
-		called++
-		return Response.json({
-			success: true,
-			hostname: 'wellworncreative.com',
-			action: 'questionnaire',
-		})
-	}
-
-	assert.deepEqual(
-		await verifyTurnstile({ token: '', secret: 'secret', hostname: SITE.hostname, fetcher: validFetch }),
-		{ ok: false, kind: 'invalid' },
-	)
-	assert.equal(called, 0)
-	assert.deepEqual(
-		await verifyTurnstile({ token: 'valid', secret: 'secret', hostname: SITE.hostname, fetcher: validFetch }),
-		{ ok: true },
-	)
-	assert.equal(called, 1)
-	assert.deepEqual(
-		await verifyTurnstile({
-			token: 'valid',
-			secret: 'secret',
-			hostname: 'www.wellworncreative.com',
-			fetcher: validFetch,
-		}),
-		{ ok: false, kind: 'invalid' },
-	)
-	assert.deepEqual(
-		await verifyTurnstile({
-			token: 'valid',
-			secret: 'secret',
-			hostname: SITE.hostname,
-			fetcher: async () => {
-				throw new Error('offline')
-			},
-		}),
-		{ ok: false, kind: 'unavailable' },
-	)
-
-	const testResponseFetch: typeof fetch = async () =>
-		Response.json({
-			success: true,
-			hostname: 'example.com',
-			metadata: { result_with_testing_key: true },
-		})
-	assert.deepEqual(
-		await verifyTurnstile({
-			token: 'dummy-token',
-			secret: TURNSTILE_DEVELOPMENT_SECRET_KEY,
-			hostname: 'localhost',
-			fetcher: testResponseFetch,
-		}),
-		{ ok: false, kind: 'invalid' },
-	)
-	assert.deepEqual(
-		await verifyTurnstile({
-			token: 'dummy-token',
-			secret: TURNSTILE_DEVELOPMENT_SECRET_KEY,
-			hostname: 'localhost',
-			fetcher: testResponseFetch,
-			allowTestResponse: true,
-		}),
-		{ ok: true },
-	)
-	assert.deepEqual(
-		await verifyTurnstile({
-			token: 'dummy-token',
-			secret: 'production-secret',
-			hostname: 'localhost',
-			fetcher: testResponseFetch,
-			allowTestResponse: true,
-		}),
-		{ ok: false, kind: 'invalid' },
-	)
-})
-
-test('Turnstile site keys use a test key only outside production', () => {
-	assert.equal(
-		resolveTurnstileSiteKey({ configuredSiteKey: '', production: false }),
-		TURNSTILE_DEVELOPMENT_SITE_KEY,
-	)
-	assert.equal(isTurnstileTestSiteKey(TURNSTILE_DEVELOPMENT_SITE_KEY), true)
-	assert.equal(
-		resolveTurnstileSiteKey({ configuredSiteKey: ' local-override ', production: false }),
-		'local-override',
-	)
-
-	assert.throws(
-		() => resolveTurnstileSiteKey({ configuredSiteKey: '', production: true }),
-		/PUBLIC_TURNSTILE_SITE_KEY is required for production/,
-	)
-	assert.throws(
-		() =>
-			resolveTurnstileSiteKey({
-				configuredSiteKey: TURNSTILE_DEVELOPMENT_SITE_KEY,
-				production: true,
-			}),
-		/Cloudflare test key/,
-	)
-	assert.equal(
-		resolveTurnstileSiteKey({
-			configuredSiteKey: ' 0x4AAAAAA-production-site-key ',
-			production: true,
-		}),
-		'0x4AAAAAA-production-site-key',
-	)
-})
-
 interface Harness {
 	readonly dependencies: QuestionnaireServerDependencies
-	readonly calls: { turnstile: number; resend: number; loads: number }
+	readonly calls: { resend: number; loads: number }
 	readonly sent: unknown[]
 }
 
 function harness(options: {
-	turnstile?: 'pass' | 'fail' | 'throw'
 	resend?: 'pass' | 'fail' | 'throw'
 	secrets?: Partial<Record<string, string>>
 } = {}): Harness {
-	const calls = { turnstile: 0, resend: 0, loads: 0 }
+	const calls = { resend: 0, loads: 0 }
 	const sent: unknown[] = []
 	const secrets: Record<string, string> = {
-		TURNSTILE_SECRET_KEY: 'turnstile-secret',
 		RESEND_API_KEY: 're_test',
 		SUBMISSION_TO: 'nicholas@wellworncreative.com',
 		RESEND_FROM: 'Wellworn <forms@wellworncreative.com>',
@@ -337,15 +223,11 @@ function harness(options: {
 				return token === TOKEN && id === questionnaire.id ? questionnaire : null
 			},
 			fetcher: async (input, init) => {
+				/* Nothing but Resend should ever be reached from the request path
+				   now. A call to anything else is a regression, not a stub. */
 				const url = String(input)
-				if (url.includes('/siteverify')) {
-					calls.turnstile++
-					if (options.turnstile === 'throw') throw new Error('Turnstile unavailable')
-					return Response.json(
-						options.turnstile === 'fail'
-							? { success: false, 'error-codes': ['invalid-input-response'] }
-							: { success: true, hostname: SITE.hostname, action: 'questionnaire' },
-					)
+				if (!url.startsWith('https://api.resend.com/')) {
+					throw new Error(`Unexpected outbound request to ${url}`)
 				}
 
 				calls.resend++
@@ -367,7 +249,6 @@ function request(
 		token: TOKEN,
 		answers: validAnswers,
 		_gotcha: '',
-		turnstileToken: 'valid-token',
 	},
 	options: { origin?: string | null; contentType?: string; contentLength?: number; raw?: string } = {},
 ): Request {
@@ -390,7 +271,6 @@ const bodyWith = (changes: Record<string, unknown>) => ({
 	token: TOKEN,
 	answers: validAnswers,
 	_gotcha: '',
-	turnstileToken: 'valid-token',
 	...changes,
 })
 
@@ -426,7 +306,6 @@ test('request gates reject origin, media type, size, JSON, and envelope errors b
 			const result = await post(req)
 			assert.equal(result.response.status, status)
 			assert.equal(result.h.calls.loads, 0)
-			assert.equal(result.h.calls.turnstile, 0)
 			assert.equal(result.h.calls.resend, 0)
 		})
 	}
@@ -450,7 +329,6 @@ test('identity and version gates retain the Phase 5 behavior', async (t) => {
 		await t.test(name, async () => {
 			const result = await post(request(body))
 			assert.equal(result.response.status, status)
-			assert.equal(result.h.calls.turnstile, 0)
 			assert.equal(result.h.calls.resend, 0)
 		})
 	}
@@ -478,7 +356,6 @@ test('answer validation rejects missing, injected, hidden, and malformed answers
 		await t.test(name, async () => {
 			const result = await post(request(bodyWith({ answers })))
 			assert.equal(result.response.status, 422)
-			assert.equal(result.h.calls.turnstile, 0)
 			assert.equal(result.h.calls.resend, 0)
 		})
 	}
@@ -487,37 +364,96 @@ test('answer validation rejects missing, injected, hidden, and malformed answers
 test('a conditional answer is accepted when its condition is true', async () => {
 	const result = await post(request())
 	assert.equal(result.response.status, 200)
-	assert.equal(result.h.calls.turnstile, 1)
 	assert.equal(result.h.calls.resend, 1)
 })
 
-test('honeypot and Turnstile failures never call Resend', async (t) => {
-	await t.test('filled honeypot', async () => {
+test('a filled honeypot is dropped before Resend and tells the bot nothing', async (t) => {
+	await t.test('no email is sent', async () => {
 		const result = await post(request(bodyWith({ _gotcha: 'bot' })))
-		assert.equal(result.response.status, 400)
-		assert.equal(result.h.calls.turnstile, 0)
 		assert.equal(result.h.calls.resend, 0)
+		assert.equal(result.h.sent.length, 0)
 	})
 
-	await t.test('missing Turnstile token', async () => {
-		const result = await post(request(bodyWith({ turnstileToken: '' })))
-		assert.equal(result.response.status, 422)
-		assert.equal(result.h.calls.turnstile, 0)
-		assert.equal(result.h.calls.resend, 0)
+	await t.test('the questionnaire is never even loaded', async () => {
+		const result = await post(request(bodyWith({ _gotcha: 'bot' })))
+		assert.equal(result.h.calls.loads, 0)
 	})
 
-	await t.test('invalid Turnstile token', async () => {
-		const result = await post(request(), harness({ turnstile: 'fail' }))
-		assert.equal(result.response.status, 422)
-		assert.equal(result.h.calls.turnstile, 1)
-		assert.equal(result.h.calls.resend, 0)
+	await t.test('the response is indistinguishable from a real delivery', async () => {
+		const trapped = await post(request(bodyWith({ _gotcha: 'bot' })))
+		const delivered = await post(request())
+
+		assert.equal(trapped.response.status, delivered.response.status)
+		assert.deepEqual(trapped.json, delivered.json)
+		assert.equal(
+			trapped.response.headers.get('content-type'),
+			delivered.response.headers.get('content-type'),
+		)
+		/* The point of the whole exercise: the bot cannot tell it was caught. */
+		assert.equal(delivered.h.calls.resend, 1)
 	})
 
-	await t.test('Turnstile verification outage', async () => {
-		const result = await post(request(), harness({ turnstile: 'throw' }))
-		assert.equal(result.response.status, 503)
-		assert.equal(result.h.calls.turnstile, 1)
-		assert.equal(result.h.calls.resend, 0)
+	await t.test('whitespace alone is not a filled honeypot', async () => {
+		const result = await post(request(bodyWith({ _gotcha: '   ' })))
+		assert.equal(result.response.status, 200)
+		assert.equal(result.h.calls.resend, 1)
+	})
+
+	await t.test('the honeypot value is never logged', async () => {
+		const secret = 'buy-cheap-watches-dot-biz'
+		const lines: string[] = []
+		const h = harness()
+		const logger = {
+			log: (message: string) => lines.push(message),
+			warn: (message: string) => lines.push(message),
+			error: (message: string) => lines.push(message),
+		}
+
+		const response = await handleQuestionnairePost(
+			{ request: request(bodyWith({ _gotcha: secret })), url: ENDPOINT, site: SITE },
+			{ ...h.dependencies, logger },
+		)
+
+		assert.equal(response.status, 200)
+		assert.ok(lines.length > 0, 'the drop should still be recorded')
+		for (const line of lines) assert.ok(!line.includes(secret), `logged: ${line}`)
+	})
+})
+
+test('nothing on the request path depends on Turnstile any more', async (t) => {
+	await t.test('a body carrying no token is delivered', async () => {
+		const body = bodyWith({})
+		assert.ok(!('turnstileToken' in body))
+		const result = await post(request(body))
+		assert.equal(result.response.status, 200)
+		assert.equal(result.h.calls.resend, 1)
+	})
+
+	await t.test('a leftover token field is ignored, not required', async () => {
+		const result = await post(request(bodyWith({ turnstileToken: 'stale-widget-token' })))
+		assert.equal(result.response.status, 200)
+		assert.equal(result.h.calls.resend, 1)
+	})
+
+	await t.test('no Turnstile secret is read and no Siteverify call is made', async () => {
+		const read: string[] = []
+		const h = harness()
+		const response = await handleQuestionnairePost(
+			{ request: request(), url: ENDPOINT, site: SITE },
+			{
+				...h.dependencies,
+				getSecret: (name) => {
+					read.push(name)
+					return h.dependencies.getSecret(name)
+				},
+			},
+		)
+
+		assert.equal(response.status, 200)
+		assert.ok(!read.some((name) => name.toUpperCase().includes('TURNSTILE')))
+		/* The harness fetcher throws on any host but Resend, so reaching a 200
+		   at all proves Siteverify was never called. */
+		assert.equal(h.calls.resend, 1)
 	})
 })
 
@@ -544,4 +480,136 @@ test('Resend failures are retryable and only a confirmed delivery succeeds', asy
 		assert.equal(payload.subject, 'Avioric: Website Questionnaire')
 		assert.ok(!String(payload.subject).includes(safeValue))
 	})
+})
+
+/* ---------------------------------------------------------------------------
+   The local receipt, and its one hard requirement: a successful send must not
+   leave this device looking like nothing ever happened.
+   --------------------------------------------------------------------------- */
+
+/**
+ * A minimal in-memory Storage.
+ *
+ * Entries are own enumerable properties and the methods are not, because that
+ * is how the real thing behaves and because clearDrafts() enumerates the store
+ * with Object.keys(). A stub that hid its entries behind a Map would pass while
+ * the code under test swept nothing.
+ */
+function memoryStorage(): Storage {
+	const store: Record<string, string> = {}
+	const methods = {
+		getItem: (key: string) => (key in store ? store[key] : null),
+		setItem: (key: string, value: string) => {
+			store[key] = String(value)
+		},
+		removeItem: (key: string) => {
+			delete store[key]
+		},
+		clear: () => {
+			for (const key of Object.keys(store)) delete store[key]
+		},
+		key: (index: number) => Object.keys(store)[index] ?? null,
+		get length() {
+			return Object.keys(store).length
+		},
+	}
+
+	for (const [name, value] of Object.entries(Object.getOwnPropertyDescriptors(methods))) {
+		Object.defineProperty(store, name, { ...value, enumerable: false })
+	}
+
+	return store as unknown as Storage
+}
+
+const RECEIPT_ID = 'avioric-website'
+
+test('a successful submission produces a receipt that survives clearing the draft', () => {
+	const storage = memoryStorage()
+
+	writeDraft(storage, {
+		id: RECEIPT_ID,
+		version: 3,
+		schemaVersion: SCHEMA_VERSION,
+		answers: { 'business-name': 'Avioric' },
+		types: { 'business-name': 'text' },
+	})
+	assert.ok(storage.getItem(draftKey(RECEIPT_ID, 3)))
+	assert.equal(readReceipt(storage, { id: RECEIPT_ID, version: 3 }), null)
+
+	/* The order the client uses: receipt, then sweep the answers. */
+	assert.equal(writeReceipt(storage, { id: RECEIPT_ID, version: 3, submittedAt: NOW }), true)
+	clearDrafts(storage, RECEIPT_ID)
+
+	assert.equal(storage.getItem(draftKey(RECEIPT_ID, 3)), null)
+	const receipt = readReceipt(storage, { id: RECEIPT_ID, version: 3 })
+	assert.equal(receipt?.id, RECEIPT_ID)
+	assert.equal(receipt?.version, 3)
+	assert.equal(receipt?.submittedAt, NOW.toISOString())
+})
+
+test('a receipt is honored only for the version that was sent', async (t) => {
+	await t.test('a newer questionnaire discards it and asks again', () => {
+		const storage = memoryStorage()
+		writeReceipt(storage, { id: RECEIPT_ID, version: 3, submittedAt: NOW })
+
+		assert.equal(readReceipt(storage, { id: RECEIPT_ID, version: 4 }), null)
+		/* Discarded outright, so the next visit is not re-tested against it. */
+		assert.equal(storage.getItem(receiptKey(RECEIPT_ID)), null)
+	})
+
+	await t.test('a malformed receipt is treated as none', () => {
+		const storage = memoryStorage()
+		storage.setItem(receiptKey(RECEIPT_ID), '{not json')
+		assert.equal(readReceipt(storage, { id: RECEIPT_ID, version: 3 }), null)
+
+		storage.setItem(receiptKey(RECEIPT_ID), JSON.stringify({ id: RECEIPT_ID }))
+		assert.equal(readReceipt(storage, { id: RECEIPT_ID, version: 3 }), null)
+	})
+
+	await t.test('storage that throws degrades to no receipt rather than an error', () => {
+		const hostile = {
+			getItem() {
+				throw new Error('blocked')
+			},
+			setItem() {
+				throw new Error('blocked')
+			},
+			removeItem() {
+				throw new Error('blocked')
+			},
+		} as unknown as Storage
+
+		assert.equal(writeReceipt(hostile, { id: RECEIPT_ID, version: 3 }), false)
+		assert.equal(readReceipt(hostile, { id: RECEIPT_ID, version: 3 }), null)
+	})
+})
+
+test('the receipt key sits outside the draft namespace clearDrafts sweeps', () => {
+	assert.ok(!receiptKey(RECEIPT_ID).startsWith(`wellworn:q:${RECEIPT_ID}:v`))
+	assert.equal(receiptKey(RECEIPT_ID), `wellworn:q:${RECEIPT_ID}:submitted`)
+})
+
+test('no Turnstile dependency remains anywhere in the source tree', async () => {
+	const { readdir, readFile } = await import('node:fs/promises')
+	const { join } = await import('node:path')
+
+	const offenders: string[] = []
+	const walk = async (dir: string): Promise<void> => {
+		for (const entry of await readdir(dir, { withFileTypes: true })) {
+			const path = join(dir, entry.name)
+			if (entry.isDirectory()) {
+				await walk(path)
+			} else if (/\.(ts|tsx|js|mjs|astro|css|yaml|json|jsonc)$/.test(entry.name)) {
+				const text = await readFile(path, 'utf8')
+				if (/turnstile/i.test(text)) offenders.push(path)
+			}
+		}
+	}
+
+	for (const dir of ['src', 'schema', 'scripts']) await walk(dir)
+	assert.deepEqual(offenders, [])
+
+	const example = await readFile('.env.example', 'utf8')
+	assert.ok(!/TURNSTILE/i.test(example))
+	assert.ok(/RESEND_API_KEY/.test(example))
 })

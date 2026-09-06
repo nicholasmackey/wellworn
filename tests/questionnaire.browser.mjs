@@ -10,7 +10,8 @@ const PAGE =
 const DEBUG_PORT = 9400 + (process.pid % 400)
 const PROFILE = mkdtempSync(join(tmpdir(), 'wellworn-chrome-'))
 const SCREENSHOT = join(tmpdir(), 'wellworn-questionnaire-mobile.png')
-const DRAFT_KEY = 'wellworn:q:avioric-website:v2'
+const DRAFT_KEY = 'wellworn:q:avioric-website:v3'
+const RECEIPT_KEY = 'wellworn:q:avioric-website:submitted'
 const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds))
 
 class DevTools {
@@ -127,9 +128,13 @@ try {
 		answerable: document.querySelectorAll('[data-question]:not([data-question-type="info"])').length,
 		business: document.querySelector('#q-business-name').value,
 		email: document.querySelector('#q-public-email').value,
-		turnstileSiteKey: document.querySelector('.cf-turnstile')?.dataset.sitekey,
-		turnstileAppearance: document.querySelector('.cf-turnstile')?.dataset.appearance,
-		turnstileLabel: document.querySelector('[data-turnstile-widget]')?.getAttribute('aria-label'),
+		turnstileWidgets: document.querySelectorAll('.cf-turnstile, [data-turnstile-widget]').length,
+		turnstileScripts: [...document.querySelectorAll('script[src]')]
+			.filter((element) => element.src.includes('challenges.cloudflare.com')).length,
+		turnstileGlobal: typeof window.turnstile,
+		tokenFields: document.querySelectorAll('[name="cf-turnstile-response"]').length,
+		honeypot: document.querySelector('[name="_gotcha"]')?.value,
+		honeypotHidden: !document.querySelector('[name="_gotcha"]')?.getClientRects().length,
 		securitySectionHeading: [...document.querySelectorAll('[data-questionnaire] .eyebrow')]
 			.some((element) => element.textContent.trim().toLowerCase() === 'security check')
 	}))()`)
@@ -137,43 +142,16 @@ try {
 	assert.equal(loaded.answerable, 43)
 	assert.equal(loaded.business, 'Avioric')
 	assert.equal(loaded.email, 'hello@avioric.com')
-	assert.ok(loaded.turnstileSiteKey)
-	assert.equal(loaded.turnstileAppearance, 'interaction-only')
-	assert.equal(loaded.turnstileLabel, 'Security verification by Cloudflare')
+	/* No widget, no loader script, no global, no token field: the page must
+	   carry nothing of Turnstile at all. */
+	assert.equal(loaded.turnstileWidgets, 0)
+	assert.equal(loaded.turnstileScripts, 0)
+	assert.equal(loaded.turnstileGlobal, 'undefined')
+	assert.equal(loaded.tokenFields, 0)
 	assert.equal(loaded.securitySectionHeading, false)
-
-	let turnstileVerified = false
-	if (process.env.VERIFY_TURNSTILE === '1') {
-		await waitFor(
-			devtools,
-			`document.querySelector('[name="cf-turnstile-response"]')?.value?.length > 0`,
-			20_000,
-		)
-		const responseToken = await devtools.evaluate(
-			`document.querySelector('[name="cf-turnstile-response"]').value`,
-		)
-		const verification = await fetch(
-			'https://challenges.cloudflare.com/turnstile/v0/siteverify',
-			{
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({
-					secret: '1x0000000000000000000000000000000AA',
-					response: responseToken,
-				}),
-			},
-		)
-		const result = await verification.json()
-		assert.equal(result.success, true)
-		/* Cloudflare's dummy keys currently return example.com rather than the
-		   browser hostname. Production tokens are checked against the request host
-		   by security.ts; this assertion only confirms the live test service replied. */
-		assert.equal(typeof result.hostname, 'string')
-		/* Dummy validation responses omit action metadata. The generated widget
-		   markup and the unit-level Siteverify contract cover the action assertion. */
-		assert.ok(result.action === undefined || result.action === 'questionnaire')
-		turnstileVerified = true
-	}
+	/* The honeypot is still there, still empty, and still invisible. */
+	assert.equal(loaded.honeypot, '')
+	assert.equal(loaded.honeypotHidden, true)
 
 	const visibility = await devtools.evaluate(`(() => {
 		const detail = document.querySelector('#question-location-detail')
@@ -278,18 +256,7 @@ try {
 	})()`)
 	await sleep(650)
 
-	const installToken = `(() => {
-		let input = document.querySelector('input[name="cf-turnstile-response"]')
-		if (!input) {
-			input = document.createElement('input')
-			input.type = 'hidden'
-			input.name = 'cf-turnstile-response'
-			document.querySelector('[data-questionnaire]').append(input)
-		}
-		input.value = 'browser-test-token'
-	})()`
-
-	await devtools.evaluate(`${installToken}; window.fetch = async () => new Response(JSON.stringify({
+	await devtools.evaluate(`window.fetch = async () => new Response(JSON.stringify({
 		ok: false,
 		error: 'Some answers still need attention.',
 		issues: [{ questionId: 'business-name', message: 'Server validation test.' }]
@@ -310,10 +277,10 @@ try {
 	assert.equal(serverValidation.focused, 'questionnaire-errors')
 
 	for (const failure of [
-		{ status: 422, error: 'Complete the security check and try again.' },
 		{ status: 502, error: 'We could not deliver your questionnaire. Your answers are still saved; please try again.' },
+		{ status: 503, error: 'This form is temporarily unavailable. Your answers are still saved.' },
 	]) {
-		await devtools.evaluate(`${installToken}; window.fetch = async () => new Response(JSON.stringify({
+		await devtools.evaluate(`window.fetch = async () => new Response(JSON.stringify({
 			ok: false,
 			error: ${JSON.stringify(failure.error)}
 		}), { status: ${failure.status}, headers: { 'content-type': 'application/json' } })`)
@@ -331,7 +298,7 @@ try {
 		assert.equal(await devtools.evaluate(`localStorage.getItem('${DRAFT_KEY}') !== null`), true)
 	}
 
-	await devtools.evaluate(`${installToken}; (() => {
+	await devtools.evaluate(`(() => {
 		window.__fetchCalls = 0
 		window.fetch = () => {
 			window.__fetchCalls++
@@ -366,10 +333,16 @@ try {
 	assert.ok(mobile.scrollWidth <= mobile.viewport + 1)
 	assert.ok(mobile.buttonWidth >= 150)
 
-	await devtools.evaluate(`${installToken}; window.fetch = async () => new Response(JSON.stringify({ ok: true }), {
-		status: 200,
-		headers: { 'content-type': 'application/json' }
-	})`)
+	await devtools.evaluate(`(() => {
+		window.__posted = null
+		window.fetch = async (url, init) => {
+			window.__posted = JSON.parse(init.body)
+			return new Response(JSON.stringify({ ok: true }), {
+				status: 200,
+				headers: { 'content-type': 'application/json' }
+			})
+		}
+	})()`)
 	await devtools.evaluate(
 		`document.querySelector('[data-questionnaire]').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))`,
 	)
@@ -379,13 +352,51 @@ try {
 		successVisible: !document.querySelector('#questionnaire-success').hidden,
 		heading: document.querySelector('#questionnaire-success h2').textContent.trim(),
 		focused: document.activeElement.id,
-		draft: localStorage.getItem('${DRAFT_KEY}')
+		draft: localStorage.getItem('${DRAFT_KEY}'),
+		receipt: localStorage.getItem('${RECEIPT_KEY}'),
+		posted: window.__posted
 	}))()`)
 	assert.equal(success.formHidden, true)
 	assert.equal(success.successVisible, true)
 	assert.equal(success.heading, 'Questionnaire received.')
 	assert.equal(success.focused, 'questionnaire-success')
 	assert.equal(success.draft, null)
+
+	/* The posted envelope carries the honeypot and nothing of Turnstile. */
+	assert.equal(success.posted._gotcha, '')
+	assert.equal('turnstileToken' in success.posted, false)
+	assert.equal(success.posted.questionnaireId, 'avioric-website')
+	assert.equal(success.posted.token, '5a468912-b9f9-45f1-babc-c5774180b72b')
+
+	/* The receipt outlives the draft it replaced. */
+	assert.ok(success.receipt)
+	const receipt = JSON.parse(success.receipt)
+	assert.equal(receipt.id, 'avioric-website')
+	assert.equal(receipt.version, 3)
+	assert.ok(!Number.isNaN(Date.parse(receipt.submittedAt)))
+
+	/* A return visit: the completed state, not a blank form. */
+	await devtools.command('Page.reload', { ignoreCache: true })
+	await waitFor(
+		devtools,
+		`document.readyState === 'complete' && document.querySelector('[data-questionnaire]')?.hidden === true`,
+	)
+	const returning = await devtools.evaluate(`(() => ({
+		formHidden: document.querySelector('[data-questionnaire]').hidden,
+		successVisible: !document.querySelector('#questionnaire-success').hidden,
+		heading: document.querySelector('#questionnaire-success h2').textContent.trim(),
+		note: document.querySelector('[data-submitted-note]')?.textContent ?? '',
+		noteVisible: !document.querySelector('[data-submitted-note]')?.hidden,
+		draft: localStorage.getItem('${DRAFT_KEY}')
+	}))()`)
+	assert.equal(returning.formHidden, true)
+	assert.equal(returning.successVisible, true)
+	assert.equal(returning.heading, 'Questionnaire received.')
+	assert.equal(returning.noteVisible, true)
+	assert.match(returning.note, /You sent this questionnaire/)
+	assert.equal(returning.draft, null)
+	/* House style, and this line is client-facing. */
+	assert.equal(returning.note.includes('\u2014'), false)
 
 	const screenshot = await devtools.command('Page.captureScreenshot', {
 		format: 'png',
@@ -397,9 +408,8 @@ try {
 		JSON.stringify(
 			{
 				ok: true,
-				assertions: 39,
+				assertions: 52,
 				screenshot: SCREENSHOT,
-				turnstileVerified,
 			},
 			null,
 			2,

@@ -18,16 +18,16 @@
 
 schemaVersion: 1
 id: avioric-website
-version: 2
+version: 3
 token: 5a468912-b9f9-45f1-babc-c5774180b72b
 client: Avioric
 title: Website Questionnaire
 
 intro:
   - >-
-    This is everything we need to build the Avioric site around how the shop
-    actually works. We have filled in what we already know. Correct anything
-    that is wrong, and skip anything you would rather talk through.
+    This is everything we need to build the Avioric site around how the
+    business actually works. We have filled in what we already know. Correct
+    anything that is wrong, and skip anything you would rather talk through.
   - >-
     You are not writing the website. We only need the facts and the context;
     the wording is our job. Short answers are genuinely fine, and most
@@ -104,24 +104,26 @@ sections:
 
   # ---------------------------------------------------------------------
   - id: where-you-work
-    title: Where you work
-    description: What the site can say about the shop, and who it is speaking to.
+    title: Location and availability
+    description: >-
+      What the site can say about where you serve customers, and who it is
+      speaking to.
     questions:
       - id: location-visibility
         type: radio
         label: How much of your location should the site show?
         options:
-          - value: full-address
-            label: The full street address
           - value: city-and-state
-            label: City and state only
+            label: City and state
           - value: general-area
             label: A general area, no city
+          - value: texas-only
+            label: Texas only
           - value: none
             label: Nothing about location
         help: >-
-          Some shops want to be found on a map, others would rather not have
-          people turning up. Either is fine.
+          How specific should we be about where Avioric is based? We do not
+          need to publish a street address.
 
       - id: location-detail
         type: textarea
@@ -129,14 +131,14 @@ sections:
         rows: 3
         showIf:
           question: location-visibility
-          in: [full-address, city-and-state, general-area]
+          in: [city-and-state, general-area]
         help: >-
           Write it the way it should appear, or just give us the details and
           we will format it.
 
       - id: hours
         type: textarea
-        label: When are you open, or reachable?
+        label: When are you usually available?
         rows: 3
         help: >-
           Days and times, however they actually run. "Evenings and weekends"
@@ -153,8 +155,8 @@ sections:
           - value: nationwide
             label: Anywhere in the country, since work can be shipped
           - value: mix
-            label: A mix of local walk-ins and shipped work from further out
-        help: This sets how much of the site leans on being a Texas shop.
+            label: A mix of local appointments and shipped work from further out
+        help: This sets how much of the site leans on being a Texas business.
 
       - id: service-area
         type: textarea
@@ -327,13 +329,11 @@ sections:
         label: How do customers arrange work?
         options:
           - value: appointment
-            label: By appointment only
-          - value: walk-in
-            label: Walk-ins welcome
-          - value: both
-            label: Both
+            label: By appointment
           - value: shipping-only
-            label: Shipped work only
+            label: Shipped work
+          - value: both
+            label: Both appointments and shipped work
 
       - id: appointment-detail
         type: textarea
@@ -351,7 +351,7 @@ sections:
         label: How do customers get firearms and items to you?
         options:
           - value: in-person
-            label: They bring them in themselves
+            label: Drop off by appointment
           - value: shipped-to-us
             label: They ship them to us
           - value: ffl-transfer
@@ -366,7 +366,7 @@ sections:
         label: How does finished work get back to them?
         options:
           - value: in-person-pickup
-            label: They collect it
+            label: Pick up by appointment
           - value: shipped-back
             label: We ship it back
           - value: ffl-transfer
@@ -472,7 +472,9 @@ sections:
 
       - id: why-chosen
         type: textarea
-        label: When someone picks Avioric over another shop, what is usually the reason?
+        label: >-
+          When someone picks Avioric over another engraver, what is usually the
+          reason?
         rows: 4
         help: >-
           What they actually say, not what you wish they said. One line is
@@ -553,8 +555,6 @@ sections:
             label: Email you
           - value: book
             label: Book an appointment
-          - value: visit
-            label: Come to the shop
           - value: message-social
             label: Message you on social
 

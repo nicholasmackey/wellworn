@@ -227,6 +227,84 @@ export function clearDrafts(storage: Storage, id: string): void {
 	}
 }
 
+/* ---------------------------------------------------------------------------
+   The receipt: proof, on this device, that a submission was actually delivered.
+
+   Written only on a confirmed 2xx, and deliberately NOT under the `:v` prefix
+   the draft keys use, so clearDrafts() sweeps the answers on a successful send
+   without also erasing the record that the send happened. That separation is
+   the whole point: drafts are working state and are meant to be cleared, while
+   the receipt is what stops a returning client from seeing an empty form and
+   reasonably concluding their afternoon of answers went nowhere.
+   --------------------------------------------------------------------------- */
+
+/** What one stored receipt holds. Versioned so a reissued questionnaire asks again. */
+export interface SubmissionReceipt {
+	readonly id: string
+	/** The questionnaire version that was sent. */
+	readonly version: number
+	/** ISO 8601, UTC. */
+	readonly submittedAt: string
+}
+
+export const receiptKey = (id: string): string => `${PREFIX}${id}:submitted`
+
+/** Returns false if storage refused it — a lost receipt must never fail a send. */
+export function writeReceipt(
+	storage: Storage,
+	options: { readonly id: string; readonly version: number; readonly submittedAt?: Date },
+): boolean {
+	const receipt: SubmissionReceipt = {
+		id: options.id,
+		version: options.version,
+		submittedAt: (options.submittedAt ?? new Date()).toISOString(),
+	}
+
+	return safeSet(storage, receiptKey(options.id), JSON.stringify(receipt))
+}
+
+/**
+ * The receipt for this questionnaire AT THIS VERSION, or null.
+ *
+ * A receipt left by an older version is removed rather than honored. If we
+ * reissue the questionnaire we are asking for answers again, and showing the
+ * old "received" panel would silently swallow that request.
+ */
+export function readReceipt(
+	storage: Storage,
+	options: { readonly id: string; readonly version: number },
+): SubmissionReceipt | null {
+	const raw = safeGet(storage, receiptKey(options.id))
+	if (!raw) return null
+
+	let receipt: SubmissionReceipt
+	try {
+		const value = JSON.parse(raw) as unknown
+		if (!value || typeof value !== 'object') return null
+		const candidate = value as Partial<SubmissionReceipt>
+		if (typeof candidate.id !== 'string') return null
+		if (typeof candidate.version !== 'number') return null
+		if (typeof candidate.submittedAt !== 'string') return null
+		receipt = candidate as SubmissionReceipt
+	} catch {
+		return null
+	}
+
+	if (receipt.version !== options.version) {
+		safeRemove(storage, receiptKey(options.id))
+		return null
+	}
+
+	return receipt
+}
+
+/** "on 6 September" — the one line the completed panel adds on a return visit. */
+export function formatSubmittedAt(iso: string): string {
+	const submitted = new Date(iso)
+	if (Number.isNaN(submitted.getTime())) return ''
+	return `on ${submitted.toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}`
+}
+
 /**
  * "3 September" — how a saved-at stamp is shown to the client.
  *

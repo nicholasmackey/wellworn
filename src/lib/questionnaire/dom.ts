@@ -49,8 +49,6 @@ export const DATA = {
 	token: 'data-questionnaire-token',
 	/** The engine format the page was rendered by. A bump discards drafts. */
 	schemaVersion: 'data-schema-version',
-	/** True once an environment-valid Turnstile site key has been rendered. */
-	turnstileConfigured: 'data-turnstile-configured',
 	/** On a question wrapper. */
 	question: 'data-question',
 	type: 'data-question-type',

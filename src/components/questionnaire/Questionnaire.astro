@@ -33,10 +33,8 @@ import { DATA } from '../../lib/questionnaire/dom';
 import {
 	HONEYPOT_FIELD,
 	SUBMIT_ENDPOINT,
-	TURNSTILE_ACTION,
 	submissionsEnabled,
 } from '../../lib/questionnaire/config';
-import { resolveTurnstileSiteKey } from '../../lib/questionnaire/turnstile';
 import ConfirmDialog from './ConfirmDialog.astro';
 import ErrorSummary from './ErrorSummary.astro';
 import InfoBlock from './InfoBlock.astro';
@@ -63,12 +61,6 @@ for (const { question } of eachQuestion(questionnaire)) {
 const visible = computeVisibility(questionnaire, defaults);
 
 const sectionCount = questionnaire.sections.length;
-const turnstileSiteKey = resolveTurnstileSiteKey({
-	configuredSiteKey: import.meta.env.PUBLIC_TURNSTILE_SITE_KEY,
-	production: import.meta.env.PROD,
-});
-const turnstileConfigured = turnstileSiteKey.length > 0;
-const submissionAvailable = submissionsEnabled && turnstileConfigured;
 
 /*
  * Said on the console rather than on the page, and for the same reason the
@@ -91,7 +83,6 @@ if (!submissionsEnabled) {
 	{...{ [DATA.version]: String(questionnaire.version) }}
 	{...{ [DATA.token]: questionnaire.token }}
 	{...{ [DATA.schemaVersion]: String(questionnaire.schemaVersion) }}
-	{...{ [DATA.turnstileConfigured]: String(turnstileConfigured) }}
 >
 	{/* Both start hidden. The script unhides whichever the situation calls for:
 	    the notice when a draft came back, the summary when a submission failed. */}
@@ -155,7 +146,7 @@ if (!submissionsEnabled) {
 		<div class="flex flex-wrap items-center gap-x-8 gap-y-5">
 			<button
 				type="submit"
-				disabled={!submissionAvailable}
+				disabled={!submissionsEnabled}
 				class="btn btn-primary w-full sm:w-auto disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-charcoal disabled:hover:bg-charcoal"
 			>
 				{questionnaire.submitLabel}
@@ -165,21 +156,6 @@ if (!submissionsEnabled) {
 				Your answers save on this device as you go, so you can close the page and come
 				back to it.
 			</p>
-
-			<div
-				class="basis-full"
-				role="group"
-				aria-label="Security verification by Cloudflare"
-				data-turnstile-widget
-			>
-				<div
-					class="cf-turnstile"
-					data-sitekey={turnstileSiteKey}
-					data-action={TURNSTILE_ACTION}
-					data-theme="light"
-					data-appearance="interaction-only"
-				/>
-			</div>
 		</div>
 	</div>
 
@@ -206,6 +182,15 @@ if (!submissionsEnabled) {
 	<div class="mt-5 flex max-w-[62ch] flex-col gap-4 text-[1.0625rem] leading-relaxed text-charcoal/75">
 		{questionnaire.confirmation.map((paragraph) => <p>{paragraph}</p>)}
 	</div>
+
+	{/* Filled by the client script from the stored receipt, and only on a
+	    return visit. Empty and hidden immediately after a send, where the
+	    panel above has already said what just happened. */}
+	<p
+		data-submitted-note
+		hidden
+		class="mt-6 text-[0.9375rem] leading-relaxed text-charcoal/60"
+	/>
 </section>
 
 {/*
@@ -228,10 +213,3 @@ if (!submissionsEnabled) {
 <script>
 	import './questionnaire.client';
 </script>
-
-<script
-	is:inline
-	src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-	async
-	defer
-/>

@@ -20,9 +20,17 @@
 import type { ShowIf } from '../../lib/questionnaire/schema'
 import { matches } from '../../lib/questionnaire/visibility'
 import { askConfirm } from '../../lib/questionnaire/dialog'
-import { clearDrafts, formatSavedAt, readDraft, writeDraft } from '../../lib/questionnaire/draft'
+import {
+	clearDrafts,
+	formatSavedAt,
+	formatSubmittedAt,
+	readDraft,
+	readReceipt,
+	writeDraft,
+	writeReceipt,
+} from '../../lib/questionnaire/draft'
 import { DATA } from '../../lib/questionnaire/dom'
-import { HONEYPOT_FIELD, TURNSTILE_RESPONSE_FIELD } from '../../lib/questionnaire/config'
+import { HONEYPOT_FIELD } from '../../lib/questionnaire/config'
 
 type Control = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
 
@@ -56,10 +64,6 @@ interface ApiResponse {
 	readonly issues?: unknown
 }
 
-interface TurnstileApi {
-	reset(widget?: string | HTMLElement): void
-}
-
 /** How long to wait after the last keystroke before writing a draft. */
 const SAVE_DEBOUNCE_MS = 400
 
@@ -75,7 +79,6 @@ function init(): void {
 	const token = form.getAttribute(DATA.token)
 	const version = Number(form.getAttribute(DATA.version))
 	const schemaVersion = Number(form.getAttribute(DATA.schemaVersion))
-	const turnstileConfigured = form.getAttribute(DATA.turnstileConfigured) === 'true'
 	if (!id || !token || !Number.isFinite(version) || !Number.isFinite(schemaVersion)) return
 
 	/* ------------------------------------------------------------------
@@ -128,7 +131,7 @@ function init(): void {
 	const submitButton = form.querySelector<HTMLButtonElement>('button[type="submit"]')
 	const submitStatus = document.getElementById('questionnaire-submit-status')
 	const success = document.getElementById('questionnaire-success')
-	const turnstileWidget = form.querySelector<HTMLElement>('[data-turnstile-widget]')
+	const submittedNote = success?.querySelector<HTMLElement>('[data-submitted-note]') ?? null
 
 	const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
 
@@ -593,16 +596,6 @@ function init(): void {
 		submitStatus.hidden = true
 	}
 
-	function resetTurnstile(): void {
-		if (!turnstileWidget) return
-		const api = (window as Window & { turnstile?: TurnstileApi }).turnstile
-		try {
-			api?.reset(turnstileWidget)
-		} catch {
-			/* The API may still be loading. Its own widget remains available. */
-		}
-	}
-
 	function readApiIssue(value: unknown): ApiIssue | null {
 		if (!value || typeof value !== 'object') return null
 		return value as ApiIssue
@@ -717,14 +710,6 @@ function init(): void {
 			return
 		}
 
-		const turnstileInput = form.elements.namedItem(TURNSTILE_RESPONSE_FIELD)
-		const turnstileToken =
-			turnstileInput instanceof HTMLInputElement ? turnstileInput.value.trim() : ''
-		if (!turnstileToken) {
-			showSubmissionError('Complete the security check, then send the questionnaire again.')
-			return
-		}
-
 		const honeypot = form.elements.namedItem(HONEYPOT_FIELD)
 		const honeypotValue = honeypot instanceof HTMLInputElement ? honeypot.value : ''
 
@@ -741,7 +726,6 @@ function init(): void {
 					token,
 					answers: collectVisible(),
 					[HONEYPOT_FIELD]: honeypotValue,
-					turnstileToken,
 				}),
 			})
 
@@ -764,13 +748,15 @@ function init(): void {
 							: 'We could not deliver your questionnaire. Your answers are still saved; please try again.',
 					)
 				}
-				resetTurnstile()
 				return
 			}
 
 			/* This is the only draft-clearing path: a 2xx response whose body says
-			   delivery succeeded. A network error, invalid response, Turnstile refusal,
-			   or Resend failure leaves both the controls and localStorage untouched. */
+			   delivery succeeded. A network error, an invalid response, or a Resend
+			   failure leaves both the controls and localStorage untouched. */
+			/* Receipt first, then the answers. Written before the draft is swept
+			   so a storage failure cannot leave this device with neither. */
+			writeReceipt(window.localStorage, { id, version })
 			clearDrafts(window.localStorage, id)
 			window.clearTimeout(saveTimer)
 			saveTimer = undefined
@@ -787,7 +773,6 @@ function init(): void {
 			showSubmissionError(
 				'We could not reach Wellworn. Your answers are still saved; check your connection and try again.',
 			)
-			resetTurnstile()
 		} finally {
 			if (!finished) setSubmitting(false)
 		}
@@ -797,13 +782,31 @@ function init(): void {
 	   Go.
 	   ------------------------------------------------------------------ */
 
+	/* A return visit after a confirmed delivery. The form is not offered again:
+	   the answers are gone from this device, and a blank questionnaire under a
+	   heading that says "received" is the most alarming thing we could show
+	   someone who already spent an afternoon on it. */
+	const receipt = readReceipt(window.localStorage, { id, version })
+	if (receipt && success) {
+		form.hidden = true
+		success.hidden = false
+		if (submittedNote) {
+			const when = formatSubmittedAt(receipt.submittedAt)
+			submittedNote.textContent = when
+				? `You sent this questionnaire ${when}. If you need to change an answer, reply to us and we will reopen it.`
+				: 'You have already sent this questionnaire. If you need to change an answer, reply to us and we will reopen it.'
+			submittedNote.hidden = false
+		}
+		return
+	}
+
 	restoreDraft()
 	updateVisibility()
 
 	/* Last, and only now: the button is live because the handlers above exist.
 	   If this file failed to load, the client is never offered a control that
 	   would post their answers into nothing. */
-	if (submitButton && turnstileConfigured && turnstileWidget) submitButton.disabled = false
+	if (submitButton) submitButton.disabled = false
 }
 
 init()
