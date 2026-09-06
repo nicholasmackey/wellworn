@@ -12,6 +12,13 @@
  * currently stand", and a restored draft is exactly that. The treatment matches
  * the error summary so the two read as the same kind of object.
  *
+ * Two tones, and the client script picks between them by setting `data-tone`. A
+ * draft that came back whole is information. One the script had to migrate —
+ * which means answers to changed questions were dropped — is a warning, and the
+ * band says so in colour as well as in words rather than reporting a loss in
+ * the same voice as a restoration. Both come from the semantic variables, so
+ * the script never names a colour and a theme can recolour both.
+ *
  * role="status" rather than "alert": this is worth announcing when the page
  * settles, but it must not interrupt or take focus the way a failed submission
  * does.
@@ -22,17 +29,18 @@
 	id="questionnaire-restored"
 	role="status"
 	hidden
-	class="mb-10 border-l-2 border-state-current bg-state-current/[0.04] py-4 pr-5 pl-6"
+	data-tone="info"
+	class="q-restore q-tone-info mb-10 border-l-2 py-4 pr-5 pl-6"
 >
 	<div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-		<p class="max-w-[58ch] text-[0.9375rem] leading-relaxed text-charcoal/75" data-restore-message></p>
+		<p class="max-w-[58ch] text-[0.9375rem] leading-relaxed text-(--q-text)/75" data-restore-message></p>
 
 		{/* A real button, not a link: it changes state rather than going
 		    anywhere, and it is the only destructive control on the page — so it
 		    confirms before it clears. */}
 		<button
 			type="button"
-			class="shrink-0 font-display text-[0.6875rem] font-semibold uppercase tracking-label text-charcoal underline decoration-charcoal/30 underline-offset-4 transition-colors duration-200 hover:decoration-charcoal"
+			class="shrink-0 font-display text-[0.6875rem] font-semibold uppercase tracking-label text-(--q-text) underline decoration-(--q-text)/30 underline-offset-4 transition-colors duration-200 hover:decoration-(--q-text)"
 			data-start-fresh
 		>
 			Start fresh

@@ -23,6 +23,32 @@ token: 5a468912-b9f9-45f1-babc-c5774180b72b
 client: Avioric
 title: Website Questionnaire
 
+# Avioric's own black and orange, and nothing else. Every key here is optional
+# and every one of them is a colour or a trusted local path — there is no class
+# name, no font, no spacing and no layout in a theme, so this file cannot change
+# how the questionnaire behaves, only what it is painted in.
+#
+# `surface` and `border` are deliberately absent. Left out they are derived from
+# the two values above them: fields lift a few percent off the ground, and rules
+# take the type colour. Naming them here would be inventing a palette where a
+# shade will do.
+#
+# `logo` is absent too, and stays absent until Avioric's artwork is actually in
+# the repository. The masthead falls back to the client's name in the display
+# face under the Wellworn wordmark, which is what an unthemed questionnaire does.
+#
+# Adding this block changed no question, so `version` does not move — see the
+# versioning rule in schema/README.md. A theme is wording, not an instrument.
+theme:
+  background: '#050505'
+  text: '#FFFFFF'
+  accent: '#E6532F'
+  semantic:
+    info: '#3B82F6'
+    success: '#22C55E'
+    warning: '#F59E0B'
+    error: '#EF4444'
+
 intro:
   - >-
     This is everything we need to build the Avioric site around how the

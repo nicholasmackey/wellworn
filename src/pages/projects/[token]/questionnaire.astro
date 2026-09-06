@@ -22,6 +22,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import PortalFooter from '../../../components/portal/PortalFooter.astro';
 import Questionnaire from '../../../components/questionnaire/Questionnaire.astro';
 import QuestionnaireMasthead from '../../../components/questionnaire/QuestionnaireMasthead.astro';
+import { resolveTheme, themeStyle } from '../../../lib/questionnaire/theme';
 
 export async function getStaticPaths() {
 	const entries = await getCollection('questionnaires');
@@ -33,16 +34,36 @@ export async function getStaticPaths() {
 }
 
 const { questionnaire } = Astro.props;
+
+/*
+  The client's theme, resolved once for the page and handed down as custom
+  properties on <body>. `null` when the definition carries no `theme` block, in
+  which case nothing at all is set and every component reads the defaults on
+  :root — which are the Wellworn questionnaire.
+
+  Whatever the resolver had to override to keep the page readable is said on the
+  console rather than on the page, for the same reason an unwired endpoint is: a
+  note about our colour choices printed under a client's form is a message to us
+  being shown to them.
+*/
+const theme = resolveTheme(questionnaire.theme);
+
+if (theme && theme.notes.length > 0) {
+	console.warn(
+		`[wellworn] ${questionnaire.id} theme adjusted for contrast: ${theme.notes.join('; ')}`,
+	);
+}
 ---
 
 <BaseLayout
 	title={`${questionnaire.client} ${questionnaire.title}`}
 	description={`Questionnaire for ${questionnaire.client}.`}
 	noindex
-	bodyClass="portal"
-	themeColor="#FFFFFF"
+	bodyClass="portal q-page"
+	bodyStyle={themeStyle(theme)}
+	themeColor={theme?.background ?? '#FFFFFF'}
 >
-	<QuestionnaireMasthead questionnaire={questionnaire} slot="header" />
+	<QuestionnaireMasthead questionnaire={questionnaire} theme={theme} slot="header" />
 	<PortalFooter slot="footer" />
 
 	<div class="portal-shell">
@@ -50,7 +71,7 @@ const { questionnaire } = Astro.props;
 			questionnaire.intro.length > 0 && (
 				<div class="portal-enter portal-enter-delay-3 mb-12 flex flex-col gap-4 sm:mb-14">
 					{questionnaire.intro.map((paragraph) => (
-						<p class="max-w-[64ch] text-[1.0625rem] leading-relaxed text-charcoal/75">
+						<p class="max-w-[64ch] text-[1.0625rem] leading-relaxed text-(--q-text)/75">
 							{paragraph}
 						</p>
 					))}

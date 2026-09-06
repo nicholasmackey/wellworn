@@ -161,7 +161,7 @@ const placeholder =
 				{/* The unit sits beside the box rather than inside the label, so the
 				    label stays the question and the box stays the answer. */}
 				{question.unit && (
-					<span class="shrink-0 text-[0.9375rem] text-charcoal/60">{question.unit}</span>
+					<span class="shrink-0 text-[0.9375rem] text-(--q-text)/60">{question.unit}</span>
 				)}
 			</div>
 		)
@@ -211,7 +211,7 @@ const placeholder =
 
 	{
 		isGroup && (
-			<div class="q-controls border-t border-charcoal/10">
+			<div class="q-controls border-t border-(--q-border)/10">
 				{choices.map((choice) => (
 					<label class="q-choice">
 						<input

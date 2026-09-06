@@ -5,25 +5,30 @@
  * The site footer is a charcoal band asking whether you have a project. She has
  * one — it is the page above. What a client wants at the bottom of a status
  * page is the address of a human being, so that is what is here.
+ *
+ * Drawn from the questionnaire's semantic variables rather than from charcoal
+ * directly, so the one line of Wellworn attribution on the page survives a
+ * client theme putting a dark ground under it. On a project portal, which sets
+ * no theme, every one of them resolves to the charcoal this was written in.
  */
 import { SITE } from '../../config/site';
 
 const year = new Date().getFullYear();
 ---
 
-<footer class="mt-16 border-t border-charcoal/15 sm:mt-20">
+<footer class="mt-16 border-t border-(--q-border)/15 sm:mt-20">
 	<div
 		class="portal-shell flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-7 sm:py-8"
 	>
-		<p class="text-[0.9375rem] text-charcoal/70">
+		<p class="text-[0.9375rem] text-(--q-text)/70">
 			Questions about anything here? Email{' '}
 			<a
 				href={`mailto:${SITE.email}`}
-				class="text-charcoal underline decoration-charcoal/30 underline-offset-4 transition-colors duration-200 hover:decoration-charcoal"
+				class="text-(--q-text) underline decoration-(--q-text)/30 underline-offset-4 transition-colors duration-200 hover:decoration-(--q-text)"
 				>{SITE.email}</a
 			>.
 		</p>
 
-		<p class="eyebrow text-charcoal/55">&copy; {year} {SITE.name}</p>
+		<p class="eyebrow text-(--q-text)/55">&copy; {year} {SITE.name}</p>
 	</div>
 </footer>

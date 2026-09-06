@@ -59,16 +59,16 @@ const bodyId = `${id}-body`;
 	id={id}
 	aria-labelledby={headingId}
 	aria-describedby={bodyId}
-	class="m-auto w-[calc(100%-2rem)] max-w-[26rem] bg-transparent p-0 backdrop:bg-charcoal/50"
+	class="m-auto w-[calc(100%-2rem)] max-w-[26rem] bg-transparent p-0 backdrop:bg-(--q-text)/50"
 >
 	{/* The portal's own device opens this the way it opens a section: a 2px
 	    charcoal rule across the top, and the heading in the display face under
 	    it. No shadow and no rounded corners — the backdrop is what lifts the
 	    card off the page, and every other object on this page is square. */}
-	<form method="dialog" class="border-t-2 border-charcoal bg-portal-paper px-6 py-7 sm:px-8">
+	<form method="dialog" class="border-t-2 border-(--q-border) bg-(--q-surface) px-6 py-7 sm:px-8">
 		<h2 id={headingId} class="display text-[1.25rem] leading-[1.15]">{heading}</h2>
 
-		<p id={bodyId} class="mt-3 text-[0.9375rem] leading-relaxed text-charcoal/75">{body}</p>
+		<p id={bodyId} class="mt-3 text-[0.9375rem] leading-relaxed text-(--q-text)/75">{body}</p>
 
 		{/*
 		  Cancel first, in the markup and on the screen. It takes `autofocus` so

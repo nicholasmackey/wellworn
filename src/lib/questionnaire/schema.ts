@@ -60,6 +60,78 @@ const showIf = z
 		message: 'showIf needs exactly one of `equals` or `in`.',
 	})
 
+/*
+ * Optional client theming.
+ *
+ * Deliberately tiny, and deliberately not CSS. A theme is a logo and a handful
+ * of colours; there is no room in it for a class name, a font, a spacing value,
+ * a layout or a rule of any kind, because every one of those would be a way for
+ * a definition to change how the engine behaves rather than what it is painted
+ * in. The renderer, the field types, the validation and the accessibility are
+ * the same on every questionnaire, themed or not.
+ *
+ * Colours are six- or three-digit hex and nothing else. That is what makes them
+ * safe to put in a style attribute: a value that has been through this regex
+ * cannot carry a `url()`, a second declaration, a quote or a paren, so there is
+ * no path from a YAML file to arbitrary CSS.
+ *
+ * The values here are requests. What actually renders is decided in
+ * lib/questionnaire/theme.ts, which measures every one of them against the
+ * ground it will be drawn on and replaces anything that would be unreadable.
+ */
+const hexColor = z
+	.string()
+	.regex(/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'Must be a hex colour, e.g. "#1F211F".')
+
+/**
+ * The four status colours, shared by every alert, notice and validation state.
+ *
+ * All optional, and a questionnaire that omits the block gets the portal's own
+ * five-state palette. They are held apart from the brand colours above because
+ * they mean something rather than look like something: an error is red because
+ * it is an error, and a client rebranding their error colour is choosing a
+ * different red, not choosing where red is used.
+ */
+const themeSemantic = z.strictObject({
+	info: hexColor.optional(),
+	success: hexColor.optional(),
+	warning: hexColor.optional(),
+	error: hexColor.optional(),
+})
+
+export const themeSchema = z.strictObject({
+	/*
+	 * A logo already served by Wellworn, under /public/images — the same trusted
+	 * root the co-brand masthead uses. Not a URL: a remote reference would let a
+	 * definition pull an image from anywhere, hand a third party the referrer of
+	 * every client who opens their questionnaire, and break the page the day
+	 * that host went away. `..` is rejected outright so the prefix cannot be
+	 * walked back out of.
+	 */
+	logo: z
+		.string()
+		.max(200)
+		.regex(
+			/^\/images\/[A-Za-z0-9][A-Za-z0-9._/-]*\.(?:svg|png|jpe?g|webp|avif)$/,
+			'Must be an image under /images/, e.g. "/images/brand/acme.svg".',
+		)
+		.refine((path) => !path.includes('..'), 'Must not contain "..".')
+		.optional(),
+	/** The page ground. */
+	background: hexColor.optional(),
+	/** Body copy, headings, and everything derived from them at an alpha. */
+	text: hexColor.optional(),
+	/** The submit button's fill, the focus ring, and the native controls. */
+	accent: hexColor.optional(),
+	/** Type on the accent. Derived from `accent` when omitted. */
+	accentText: hexColor.optional(),
+	/** The ground a form field sits on. Derived from `background` when omitted. */
+	surface: hexColor.optional(),
+	/** Section rules and field borders. Derived from `text` when omitted. */
+	border: hexColor.optional(),
+	semantic: themeSemantic.optional(),
+})
+
 /**
  * What every question that collects an answer has in common.
  *
@@ -245,6 +317,8 @@ export const questionnaireDocument = z.strictObject({
 			ratio: z.string().max(20).optional(),
 		})
 		.optional(),
+	/** Optional brand values. Omit it and the questionnaire is Wellworn's own. */
+	theme: themeSchema.optional(),
 	submitLabel: z.string().max(40).default('Send to Wellworn'),
 	/** Paragraphs on the thank-you screen. */
 	confirmation: z.array(z.string().max(1200)).max(6).default([]),
@@ -407,6 +481,7 @@ export type Question = z.infer<typeof questionSchema>
 export type QuestionType = Question['type']
 export type Option = z.infer<typeof option>
 export type ShowIf = NonNullable<Question['showIf']>
+export type Theme = z.infer<typeof themeSchema>
 
 /** Narrow the union to one member, e.g. `OfType<'radio'>`. */
 export type OfType<T extends QuestionType> = Extract<Question, { type: T }>

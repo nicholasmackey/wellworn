@@ -158,6 +158,59 @@
 @layer base {
 	:root {
 		color-scheme: light;
+
+		/* --------------------------------------------------------------------
+		   THE QUESTIONNAIRE'S SEMANTIC SURFACE.
+
+		   Nineteen names, and every questionnaire component reads one of them
+		   rather than a palette token. That is what makes a themed questionnaire
+		   possible without a themed component: a client's colours are set once,
+		   as custom properties on the questionnaire's root element, and the same
+		   generic renderer picks them up.
+
+		   The values here ARE the Wellworn questionnaire. A definition with no
+		   `theme` block sets no properties at all and renders from this list, so
+		   an unthemed questionnaire is not merely close to what it was before
+		   theming existed — it is the same page.
+
+		   This block and THEME_DEFAULTS in lib/questionnaire/theme.ts describe
+		   the same thing in two languages, so they have to agree. The resolver
+		   emits only what DIFFERS from its copy, which means a value that drifts
+		   out of step here shows up as a property being set on a page that never
+		   asked for one. A unit test pins the pair.
+
+		   Status colours come in twos. The bare name is the fill, the 2px rule
+		   and the field border, and needs 3:1. The -ink value is what small text
+		   is allowed to use, and needs 4.5:1. info and error keep the plain
+		   state fills, which clear 3:1 on white; success and warning take their
+		   -deep values in both roles, because state-complete (2.43:1) and
+		   state-action (2.47:1) do not.
+		   -------------------------------------------------------------------- */
+		--q-background: var(--color-portal-paper);
+		--q-text: var(--color-charcoal);
+		--q-surface: var(--color-portal-paper);
+		--q-border: var(--color-charcoal);
+		--q-accent: var(--color-charcoal);
+		--q-accent-text: var(--color-cream);
+		--q-accent-hover: var(--color-forest);
+		--q-focus: var(--color-state-current);
+		--q-control: var(--color-state-current);
+
+		--q-info: var(--color-state-current);
+		--q-info-ink: var(--color-state-current-deep);
+		--q-success: var(--color-state-complete-deep);
+		--q-success-ink: var(--color-state-complete-deep);
+		--q-warning: var(--color-state-action-deep);
+		--q-warning-ink: var(--color-state-action-deep);
+		--q-error: var(--color-state-blocked);
+		--q-error-ink: var(--color-state-blocked-deep);
+		--q-error-on: var(--color-portal-paper);
+
+		/* The select's chevron, drawn in the type colour. A url() cannot
+		   interpolate a custom property, so the whole url() is one — see
+		   `chevron()` in lib/questionnaire/theme.ts, which builds the themed
+		   version of this from a hex the schema has already constrained. */
+		--q-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%231f211f' stroke-width='1.5' stroke-linecap='square'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E");
 	}
 
 	html {
@@ -424,6 +477,57 @@
 		@apply outline-state-current;
 	}
 
+	/* ------------------------------------------------------------------------
+	   THE QUESTIONNAIRE'S ROOT — where an optional client theme lands.
+
+	   Set on <body> beside .portal, and written after it in this layer so it
+	   wins: the portal supplies the ground and the focus ring for a page with no
+	   theme, and every property below resolves to exactly those values when
+	   nothing has overridden them on the element itself.
+
+	   Nothing here knows which client is being rendered, and nothing can. The
+	   only input is the custom properties, and the only thing that sets them is
+	   lib/questionnaire/theme.ts.
+	   ------------------------------------------------------------------------ */
+	.q-page {
+		background-color: var(--q-background);
+		color: var(--q-text);
+	}
+
+	.q-page :focus-visible {
+		outline-color: var(--q-focus);
+	}
+
+	/* The section rule, the same device the portal opens a band with, in the
+	   theme's own border colour. */
+	.q-page .portal-rule {
+		background-color: var(--q-border);
+	}
+
+	/* The three buttons this page uses, re-pointed at the semantic variables.
+	   Same geometry, same weights, same hover behaviour — only the source of the
+	   colour changes, and unthemed every one of these resolves to the value it
+	   already had.
+
+	   The destructive button's hover is the page inverted rather than a fourth
+	   colour to check: ground on type is 4.5:1 by construction, because the
+	   resolver has already guaranteed type on ground. Unthemed that is white on
+	   charcoal, which is what it was. */
+	.q-page .btn-primary {
+		@apply border-(--q-accent) bg-(--q-accent) text-(--q-accent-text)
+			hover:border-(--q-accent-hover) hover:bg-(--q-accent-hover);
+	}
+
+	.q-page .btn-outline {
+		@apply border-(--q-border)/25 text-(--q-text) hover:border-(--q-accent-hover)
+			hover:bg-(--q-accent-hover) hover:text-(--q-accent-text);
+	}
+
+	.q-page .btn-destructive {
+		@apply border-(--q-error-ink) bg-(--q-error-ink) text-(--q-error-on)
+			hover:border-(--q-text) hover:bg-(--q-text) hover:text-(--q-background);
+	}
+
 	/* Narrower than the marketing wrapper's 80rem, and tighter at the gutters.
 	   This is read the way a document is rather than the way a page is toured:
 	   64rem keeps a line of project copy near 90 characters at the widest and
@@ -568,7 +672,7 @@
 	/* The question's own name. Sentence case, and the one piece of type on the
 	   page sized between body copy and a heading. */
 	.q-label {
-		@apply block text-[1.0625rem] leading-snug font-semibold text-charcoal;
+		@apply block text-[1.0625rem] leading-snug font-semibold text-(--q-text);
 	}
 
 	/* "Required", beside the label. A word rather than an asterisk, which means
@@ -577,24 +681,24 @@
 	   the rule that colour on a portal page always means something. */
 	.q-required {
 		@apply ml-2 align-middle font-display text-[0.625rem] font-semibold uppercase
-			tracking-label text-charcoal/45;
+			tracking-label text-(--q-text)/45;
 	}
 
 	/* The hint under a label. Never inside the <label> — see FieldShell. */
 	.q-help {
-		@apply mt-1.5 max-w-[62ch] text-[0.9375rem] leading-relaxed text-charcoal/60;
+		@apply mt-1.5 max-w-[62ch] text-[0.9375rem] leading-relaxed text-(--q-text)/60;
 	}
 
 	/* Every single-line control, the textarea and the select. One class, so a
 	   row of mixed field types lines up on the same edges and heights. */
 	.q-input {
-		@apply w-full rounded-xs border border-charcoal/25 bg-portal-paper px-3.5 py-2.5
-			text-[1.0625rem] leading-normal text-charcoal transition-colors duration-200
-			placeholder:text-charcoal/35 hover:border-charcoal/40 focus:border-charcoal;
+		@apply w-full rounded-xs border border-(--q-border)/25 bg-(--q-surface) px-3.5 py-2.5
+			text-[1.0625rem] leading-normal text-(--q-text) transition-colors duration-200
+			placeholder:text-(--q-text)/35 hover:border-(--q-border)/40 focus:border-(--q-border);
 	}
 
 	.q-input:disabled {
-		@apply cursor-not-allowed border-charcoal/12 text-charcoal/40;
+		@apply cursor-not-allowed border-(--q-border)/12 text-(--q-text)/40;
 	}
 
 	/* Width is set per kind of answer rather than left at the shell's full
@@ -627,7 +731,7 @@
 	   padding as it wraps. */
 	.q-select {
 		@apply appearance-none bg-no-repeat pr-10;
-		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%231f211f' stroke-width='1.5' stroke-linecap='square'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E");
+		background-image: var(--q-chevron);
 		background-position: right 0.875rem center;
 		background-size: 0.75rem;
 	}
@@ -645,9 +749,9 @@
 	   timeline's checklist is built from — rather than an inline pill. The whole
 	   row is the label, so the tap target is the width of the page. */
 	.q-choice {
-		@apply flex cursor-pointer items-start gap-3 border-b border-charcoal/10 py-3
-			text-[1.0625rem] leading-snug text-charcoal transition-colors duration-200
-			hover:bg-charcoal/[0.025];
+		@apply flex cursor-pointer items-start gap-3 border-b border-(--q-border)/10 py-3
+			text-[1.0625rem] leading-snug text-(--q-text) transition-colors duration-200
+			hover:bg-(--q-text)/[0.025];
 	}
 
 	/* Native controls, given the portal's blue. accent-color is the whole
@@ -656,27 +760,62 @@
 	   wrong. */
 	.q-box {
 		@apply mt-0.5 h-[1.125rem] w-[1.125rem] shrink-0 cursor-pointer;
-		accent-color: var(--color-state-current);
+		accent-color: var(--q-control);
 	}
 
 	/* The standalone acknowledgement. Rules above and below rather than a list
 	   row, because it is one statement and not a choice among several. */
 	.q-confirm {
-		@apply flex cursor-pointer items-start gap-3 border-y border-charcoal/15 py-4
-			text-[1.0625rem] leading-snug text-charcoal;
+		@apply flex cursor-pointer items-start gap-3 border-y border-(--q-border)/15 py-4
+			text-[1.0625rem] leading-snug text-(--q-text);
 	}
 
-	/* An error under a field. state-blocked-deep is the palette's one red that
-	   clears 4.5:1 on white, which is what small type needs. */
+	/* An error under a field. --q-error-ink is the status red the resolver has
+	   already held to 4.5:1 against this page's own ground, which is what small
+	   type needs; unthemed it is state-blocked-deep, the palette's one red that
+	   clears 4.5:1 on white. */
 	.q-error {
 		@apply mt-2 flex items-start gap-2 text-[0.9375rem] leading-snug font-semibold
-			text-state-blocked-deep;
+			text-(--q-error-ink);
 	}
 
 	/* An invalid control. The border carries it; the message underneath says
 	   what is wrong. Never colour alone. */
 	.q-input[aria-invalid='true'] {
-		@apply border-state-blocked;
+		@apply border-(--q-error);
+	}
+
+	/* ------------------------------------------------------------------------
+	   The three alert bands: the restore notice, the error summary, and the
+	   status line above the submit button.
+
+	   One shape — a 2px rule down the left edge and a 4% wash of the same colour
+	   — and the tone is the only thing that varies. The wash is a color-mix with
+	   transparent, so it lands as a tint of the semantic colour over whatever
+	   ground the page has, light or dark, with no second value to supply.
+
+	   The padding stays in the markup: the three bands are not the same size,
+	   and making them so would be a redesign rather than a refactor.
+	   ------------------------------------------------------------------------ */
+	.q-tone-info {
+		@apply border-(--q-info) bg-(--q-info)/[0.04];
+	}
+
+	.q-tone-warning {
+		@apply border-(--q-warning) bg-(--q-warning)/[0.04];
+	}
+
+	.q-tone-error {
+		@apply border-(--q-error) bg-(--q-error)/[0.04];
+	}
+
+	/* The restore notice speaks in two of them. A draft that came back whole is
+	   information; one the script had to migrate — dropping the answers to
+	   questions that changed — is a warning, and says so in colour as well as in
+	   words. The client script sets the attribute; the tone follows from it, so
+	   nothing in the script knows a colour. */
+	.q-restore[data-tone='warning'] {
+		@apply border-(--q-warning) bg-(--q-warning)/[0.04];
 	}
 
 	/* Space for the eye above a question the page has just scrolled to. The

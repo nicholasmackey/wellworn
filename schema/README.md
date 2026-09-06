@@ -66,3 +66,47 @@ restructuring instead.
 
 **Use `help`, not longer labels.** The label is the question. The help line is
 the permission to skip it, the example format, or the reassurance.
+
+## Theming (optional)
+
+Omit `theme` entirely and the questionnaire is Wellworn's own. That is the
+normal case and the one every existing file takes.
+
+A client with a brand can supply some of it. Every key is optional, and one key
+is a complete theme:
+
+```yaml
+theme:
+  logo: /images/brand/acme.svg   # a file already in /public/images. Never a URL.
+  background: '#050505'
+  text: '#FFFFFF'
+  accent: '#E6532F'              # the submit button, the focus ring, the controls
+  accentText: '#000000'          # derived from `accent` if omitted
+  surface: '#141414'             # derived from `background` if omitted
+  border: '#FFFFFF'              # derived from `text` if omitted
+  semantic:
+    info: '#3B82F6'
+    success: '#22C55E'
+    warning: '#F59E0B'
+    error: '#EF4444'
+```
+
+What a theme cannot say is the point of it. There is no class name, no font, no
+spacing, no layout and no component override, and colours are hex or nothing —
+so a definition can change what the page is painted in and can never change how
+it behaves. The renderer, the field types, the validation, the autosave and the
+accessibility are identical on every questionnaire.
+
+Values are requests rather than instructions. `src/lib/questionnaire/theme.ts`
+measures each one against the ground it will be drawn on and holds it to the
+ratio its role needs: 4.5:1 for anything read as text, 3:1 for a rule, a field
+border or a focus ring. A colour that falls short is deepened until it passes,
+and one that cannot pass is replaced by a safe default. Whatever it had to
+override is printed on the build console.
+
+Prefer supplying two or three values and letting the rest derive. `surface` and
+`border` exist for the case a brand genuinely specifies them; naming them
+otherwise is inventing a palette where a shade will do.
+
+**Adding or changing a theme is not a reason to bump `version`.** It changes no
+question, so it must not cost anyone a half-finished draft.

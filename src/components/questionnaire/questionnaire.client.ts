@@ -360,8 +360,14 @@ function init(): void {
 		if (!restored || !restoredMessage) return
 
 		if (load.status === 'restored') {
+			restored.dataset.tone = 'info'
 			restoredMessage.textContent = `We filled these in from your answers ${formatSavedAt(load.savedAt)}. Everything is still editable.`
 		} else {
+			/* A migration dropped answers to questions that changed, so the band
+			   changes tone with the news. The attribute is the whole of it: the
+			   colour lives in the stylesheet, keyed off the semantic variables, so
+			   nothing here knows what a warning looks like. */
+			restored.dataset.tone = 'warning'
 			const kept = load.kept === 1 ? '1 answer' : `${load.kept} answers`
 			const dropped =
 				load.dropped === 0
@@ -553,7 +559,7 @@ function init(): void {
 			const link = document.createElement('a')
 			link.href = `#question-${issue.id}`
 			link.className =
-				'text-[0.9375rem] leading-snug text-state-blocked-deep underline decoration-state-blocked/40 underline-offset-4 hover:decoration-state-blocked-deep'
+				'text-[0.9375rem] leading-snug text-(--q-error-ink) underline decoration-(--q-error)/40 underline-offset-4 hover:decoration-(--q-error-ink)'
 			link.textContent = `${issue.label}: ${issue.message}`
 			link.addEventListener('click', (event) => {
 				event.preventDefault()

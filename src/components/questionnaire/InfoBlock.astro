@@ -30,16 +30,16 @@ const attrs = {
 
 <div
 	id={questionId(question.id)}
-	class="q-question border-l-2 border-charcoal/15 bg-charcoal/[0.02] py-4 pr-4 pl-5"
+	class="q-question border-l-2 border-(--q-border)/15 bg-(--q-text)/[0.02] py-4 pr-4 pl-5"
 	hidden={isHidden}
 	{...attrs}
 >
-	{question.heading && <p class="eyebrow text-charcoal/70">{question.heading}</p>}
+	{question.heading && <p class="eyebrow text-(--q-text)/70">{question.heading}</p>}
 
 	<div class:list={['flex flex-col gap-3', question.heading && 'mt-3']}>
 		{
 			question.body.map((paragraph) => (
-				<p class="max-w-[68ch] text-[0.9375rem] leading-relaxed text-charcoal/70">
+				<p class="max-w-[68ch] text-[0.9375rem] leading-relaxed text-(--q-text)/70">
 					{paragraph}
 				</p>
 			))

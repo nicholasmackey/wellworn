@@ -72,6 +72,63 @@
 			],
 			"additionalProperties": false
 		},
+		"theme": {
+			"type": "object",
+			"properties": {
+				"logo": {
+					"type": "string",
+					"maxLength": 200,
+					"pattern": "^\\/images\\/[A-Za-z0-9][A-Za-z0-9._/-]*\\.(?:svg|png|jpe?g|webp|avif)$"
+				},
+				"background": {
+					"type": "string",
+					"pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+				},
+				"text": {
+					"type": "string",
+					"pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+				},
+				"accent": {
+					"type": "string",
+					"pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+				},
+				"accentText": {
+					"type": "string",
+					"pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+				},
+				"surface": {
+					"type": "string",
+					"pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+				},
+				"border": {
+					"type": "string",
+					"pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+				},
+				"semantic": {
+					"type": "object",
+					"properties": {
+						"info": {
+							"type": "string",
+							"pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+						},
+						"success": {
+							"type": "string",
+							"pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+						},
+						"warning": {
+							"type": "string",
+							"pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+						},
+						"error": {
+							"type": "string",
+							"pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+						}
+					},
+					"additionalProperties": false
+				}
+			},
+			"additionalProperties": false
+		},
 		"submitLabel": {
 			"default": "Send to Wellworn",
 			"type": "string",

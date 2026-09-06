@@ -18,6 +18,15 @@ import {
 	writeDraft,
 	writeReceipt,
 } from '../src/lib/questionnaire/draft'
+import { readFile } from 'node:fs/promises'
+import {
+	chevron,
+	contrast,
+	defaultVars,
+	resolveTheme,
+	THEME_DEFAULTS,
+	themeStyle,
+} from '../src/lib/questionnaire/theme'
 import {
 	handleQuestionnairePost,
 	MAX_BODY_BYTES,
@@ -612,4 +621,287 @@ test('no Turnstile dependency remains anywhere in the source tree', async () => 
 	const example = await readFile('.env.example', 'utf8')
 	assert.ok(!/TURNSTILE/i.test(example))
 	assert.ok(/RESEND_API_KEY/.test(example))
+})
+
+
+/* ==========================================================================
+   OPTIONAL CLIENT THEMING
+
+   Two questionnaires are tested against each other throughout: the themed one,
+   which is Avioric's, and an unthemed one, which is every other client and is
+   the Wellworn questionnaire itself. The claim being pinned is that the second
+   is not merely close to what it was before theming existed but identical to
+   it, and that the first cannot be made unreadable by anything a definition is
+   allowed to say.
+   ========================================================================== */
+
+const base = {
+	schemaVersion: SCHEMA_VERSION,
+	id: 'themed',
+	version: 1,
+	token: TOKEN,
+	client: 'Themed Co',
+	title: 'Website Questionnaire',
+	sections: [
+		{
+			id: 'basics',
+			title: 'Basics',
+			questions: [{ id: 'business-name', type: 'text', label: 'Business name' }],
+		},
+	],
+}
+
+/** Parse a document with the given theme, the way the content collection does. */
+const withTheme = (theme: unknown): Questionnaire =>
+	questionnaireSchema.parse(theme === undefined ? base : { ...base, theme })
+
+/** Avioric's, as written in src/content/questionnaires/avioric.yaml. */
+const AVIORIC_THEME = {
+	background: '#050505',
+	text: '#FFFFFF',
+	accent: '#E6532F',
+	semantic: {
+		info: '#3B82F6',
+		success: '#22C55E',
+		warning: '#F59E0B',
+		error: '#EF4444',
+	},
+}
+
+test('an unthemed questionnaire sets no custom properties at all', () => {
+	const questionnaire = withTheme(undefined)
+
+	assert.equal(questionnaire.theme, undefined)
+	assert.equal(resolveTheme(questionnaire.theme), null)
+	assert.equal(themeStyle(resolveTheme(questionnaire.theme)), undefined)
+})
+
+test('the resolver defaults and the :root block in global.css describe the same page', async () => {
+	/* The drift guard. global.css declares each --q-* default as a palette token
+	   and this file declares it as a hex; if the two ever disagree, an unthemed
+	   page renders one thing and the resolver believes it renders another —
+	   which would show up as properties being emitted on a page that asked for
+	   no theme. Resolving the tokens here is what makes that impossible to miss. */
+	const css = await readFile('src/styles/global.css', 'utf8')
+
+	const tokens = new Map<string, string>()
+	for (const [, name, value] of css.matchAll(/--color-([a-z0-9-]+):\s*(#[0-9a-fA-F]{3,8});/g)) {
+		tokens.set(`--color-${name}`, value.toLowerCase())
+	}
+
+	const declared = new Map<string, string>()
+	for (const [, name, reference] of css.matchAll(/(--q-[a-z-]+):\s*var\((--color-[a-z0-9-]+)\);/g)) {
+		const hex = tokens.get(reference)
+		assert.ok(hex, `${name} points at ${reference}, which global.css does not define`)
+		declared.set(name, hex)
+	}
+
+	const expected = defaultVars()
+	/* Every colour property, but not the chevron: it is a url(), declared
+	   literally in the stylesheet rather than as a token reference. */
+	for (const [property, hex] of declared) {
+		assert.equal(hex, expected[property], `${property} disagrees with THEME_DEFAULTS`)
+	}
+	assert.equal(declared.size, Object.keys(expected).length - 1)
+	assert.ok(css.includes(`--q-chevron: ${chevron(THEME_DEFAULTS.text)};`))
+})
+
+test('the Avioric theme resolves to its black and orange, and derives the rest', () => {
+	const theme = resolveTheme(withTheme(AVIORIC_THEME).theme)
+	assert.ok(theme)
+
+	/* What the definition asked for, carried through unchanged. */
+	assert.equal(theme.vars['--q-background'], '#050505')
+	assert.equal(theme.vars['--q-text'], '#ffffff')
+	assert.equal(theme.vars['--q-accent'], '#e6532f')
+	assert.equal(theme.vars['--q-info'], '#3b82f6')
+	assert.equal(theme.vars['--q-success'], '#22c55e')
+	assert.equal(theme.vars['--q-warning'], '#f59e0b')
+	assert.equal(theme.vars['--q-error'], '#ef4444')
+
+	/* All four clear 4.5:1 on this ground already, so the ink values are the
+	   supplied colours rather than deepened copies of them. */
+	assert.equal(theme.vars['--q-info-ink'], '#3b82f6')
+	assert.equal(theme.vars['--q-error-ink'], '#ef4444')
+
+	/* What the definition left out. surface lifts off the ground, border and
+	   the chevron take the type colour, and the accent's label is chosen for
+	   contrast rather than named — cream (3.27:1) and charcoal (4.36:1) both
+	   fail on this orange, so it lands on black at 5.64:1. */
+	assert.equal(theme.vars['--q-surface'], '#141414')
+	assert.equal(theme.vars['--q-border'], '#ffffff')
+	assert.equal(theme.vars['--q-accent-text'], '#000000')
+	assert.equal(theme.vars['--q-accent-hover'], '#e96848')
+	assert.equal(theme.vars['--q-chevron'], chevron('#ffffff'))
+
+	/* The accent is visible on this ground, so it takes the focus ring and the
+	   native controls from the portal's blue. */
+	assert.equal(theme.vars['--q-focus'], '#e6532f')
+	assert.equal(theme.vars['--q-control'], '#e6532f')
+
+	/* A dark ground, so the browser's own controls are told about it and the
+	   Wellworn attribution switches to the wordmark that can be seen on it. */
+	assert.equal(theme.scheme, 'dark')
+	assert.equal(theme.wordmark, 'light')
+	assert.equal(theme.background, '#050505')
+	assert.deepEqual(theme.notes, [])
+
+	/* Nothing was invented: no logo is claimed, because none is in the repo. */
+	assert.equal(theme.logo, undefined)
+})
+
+test('every resolved Avioric colour clears the ratio its role needs', () => {
+	const theme = resolveTheme(withTheme(AVIORIC_THEME).theme)
+	assert.ok(theme)
+	const v = theme.vars
+	const atLeast = (ratio: number, a: string, b: string, what: string) =>
+		assert.ok(contrast(a, b) >= ratio, `${what}: ${contrast(a, b).toFixed(2)}:1 < ${ratio}:1`)
+
+	/* Text, at 4.5:1. */
+	atLeast(4.5, v['--q-text'], v['--q-background'], 'body copy on the page')
+	atLeast(4.5, v['--q-text'], v['--q-surface'], 'body copy in a field')
+	atLeast(4.5, v['--q-accent-text'], v['--q-accent'], 'the submit label')
+	atLeast(4.5, v['--q-accent-text'], v['--q-accent-hover'], 'the submit label on hover')
+	atLeast(4.5, v['--q-error-on'], v['--q-error-ink'], 'the destructive button label')
+	for (const name of ['info', 'success', 'warning', 'error']) {
+		atLeast(4.5, v[`--q-${name}-ink`], v['--q-background'], `${name} as small text`)
+	}
+
+	/* Rules, borders, focus rings and control fills, at 3:1. */
+	atLeast(3, v['--q-border'], v['--q-background'], 'the section rule')
+	atLeast(3, v['--q-focus'], v['--q-background'], 'the focus ring')
+	atLeast(3, v['--q-control'], v['--q-surface'], 'a checkbox against its field')
+	for (const name of ['info', 'success', 'warning', 'error']) {
+		atLeast(3, v[`--q-${name}`], v['--q-background'], `the ${name} band's rule`)
+	}
+})
+
+test('a theme that supplies only a logo changes no colour', () => {
+	const theme = resolveTheme(withTheme({ logo: '/images/brand/acme.svg' }).theme)
+	assert.ok(theme)
+
+	assert.equal(theme.logo, '/images/brand/acme.svg')
+	assert.deepEqual(theme.vars, {})
+	assert.equal(themeStyle(theme), undefined)
+	assert.equal(theme.wordmark, 'dark')
+	assert.equal(theme.scheme, 'light')
+})
+
+test('unreadable colours are corrected rather than rendered', async (t) => {
+	await t.test('type that cannot be read on the ground is replaced', () => {
+		const theme = resolveTheme(withTheme({ background: '#101010', text: '#1a1a1a' }).theme)
+		assert.ok(theme)
+		assert.equal(theme.vars['--q-text'], '#ffffff')
+		assert.match(theme.notes.join(' '), /text was unreadable/)
+	})
+
+	await t.test('an accent always ends up with a label that can be read on it', () => {
+		/* Every hex has a legible label: the band where neither white nor black
+		   clears 4.5:1 is empty, so the resolver's last resort — surrendering the
+		   accent to the default — is a guard rather than a path anything reaches.
+		   What matters is that the label is chosen by measurement and never left
+		   at whatever the palette happened to offer. */
+		for (const accent of ['#767676', '#e6532f', '#ffd400', '#0b1d51']) {
+			const theme = resolveTheme(withTheme({ accent }).theme)
+			assert.ok(theme)
+			const fill = theme.vars['--q-accent'] ?? THEME_DEFAULTS.accent
+			const label = theme.vars['--q-accent-text'] ?? THEME_DEFAULTS.accentText
+			assert.ok(
+				contrast(label, fill) >= 4.5,
+				`${label} on ${accent} is only ${contrast(label, fill).toFixed(2)}:1`,
+			)
+		}
+	})
+
+	await t.test('a status colour too pale for its ground is deepened, not dropped', () => {
+		const theme = resolveTheme(withTheme({ semantic: { error: '#ffe4e4' } }).theme)
+		assert.ok(theme)
+		assert.ok(contrast(theme.vars['--q-error'], '#ffffff') >= 3)
+		assert.ok(contrast(theme.vars['--q-error-ink'], '#ffffff') >= 4.5)
+		/* Still red: deepening spends lightness and keeps the hue. */
+		const [r, , b] = [1, 3, 5].map((i) => Number.parseInt(theme.vars['--q-error-ink'].slice(i, i + 2), 16))
+		assert.ok(r > b, 'the deepened error colour is still a red')
+	})
+
+	await t.test('a border invisible on its ground falls back to the type colour', () => {
+		const theme = resolveTheme(withTheme({ border: '#fdfdfd' }).theme)
+		assert.ok(theme)
+		/* It resolves back to the type colour, which on an otherwise unthemed page
+		   IS the default border — so there is nothing left to emit, and the page
+		   renders the rule it always had. */
+		assert.equal(theme.vars['--q-border'] ?? THEME_DEFAULTS.border, THEME_DEFAULTS.text)
+		assert.match(theme.notes.join(' '), /border was invisible/)
+	})
+})
+
+test('the style attribute carries custom properties and nothing else', () => {
+	const style = themeStyle(resolveTheme(withTheme(AVIORIC_THEME).theme))
+	assert.ok(style)
+
+	/* Every declaration is a --q-* property, bar the one color-scheme keyword a
+	   dark ground needs to reach the browser's own controls. */
+	for (const declaration of style.split(';')) {
+		assert.match(declaration, /^(--q-[a-z-]+:|color-scheme:dark$)/)
+	}
+	assert.ok(style.endsWith(';color-scheme:dark'))
+
+	/* A light ground says nothing about the scheme. */
+	const light = themeStyle(resolveTheme(withTheme({ accent: '#005a2b' }).theme))
+	assert.ok(light && !light.includes('color-scheme'))
+})
+
+test('a definition cannot smuggle CSS, markup or a remote asset through a theme', async (t) => {
+	const rejects = (theme: unknown) =>
+		assert.equal(questionnaireSchema.safeParse({ ...base, theme }).success, false)
+
+	await t.test('colours are hex and nothing else', () => {
+		for (const value of [
+			'red',
+			'var(--color-charcoal)',
+			'#fff;background:url(https://evil.test)',
+			'rgb(0 0 0)',
+			'#12345',
+			'url(https://evil.test/x.png)',
+		]) {
+			rejects({ background: value })
+			rejects({ semantic: { error: value } })
+		}
+	})
+
+	await t.test('a logo is a local image path, never a URL or a way out of /images', () => {
+		for (const value of [
+			'https://evil.test/logo.svg',
+			'//evil.test/logo.svg',
+			'/images/../../etc/passwd',
+			'/images/../secret.svg',
+			'/documents/contract.pdf',
+			'/images/logo.js',
+			'javascript:alert(1)',
+		]) {
+			rejects({ logo: value })
+		}
+
+		assert.equal(
+			questionnaireSchema.safeParse({ ...base, theme: { logo: '/images/brand/acme.svg' } })
+				.success,
+			true,
+		)
+	})
+
+	await t.test('there is nowhere to put a class, a font, a size or a layout', () => {
+		for (const key of ['class', 'className', 'css', 'font', 'fontFamily', 'spacing', 'layout', 'radius']) {
+			rejects({ [key]: 'anything' })
+		}
+		rejects({ semantic: { danger: '#ff0000' } })
+	})
+})
+
+test('the Avioric definition on disk is the themed one, and carries no invented logo', async () => {
+	const yaml = await readFile('src/content/questionnaires/avioric.yaml', 'utf8')
+
+	assert.match(yaml, /^theme:$/m)
+	for (const value of ['#050505', '#FFFFFF', '#E6532F', '#3B82F6', '#22C55E', '#F59E0B', '#EF4444']) {
+		assert.ok(yaml.includes(value), `avioric.yaml is missing ${value}`)
+	}
+	assert.ok(!/^\s+logo:/m.test(yaml), 'avioric.yaml names a logo that is not in the repository')
 })

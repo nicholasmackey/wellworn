@@ -10,25 +10,43 @@
  * as its alt text and no heading repeating what the picture already says.
  *
  * Without one, the page falls back to type: the Wellworn wordmark, then the
- * client's name in the display face. Most clients have no lockup, and inventing
- * one out of two logos side by side would look like a placeholder. The name in
- * Russo One over a wide uppercase title is the same lockup the submission email
- * uses for its header, which is a small consistency worth having.
+ * client's name — as their logo if the theme names one, and otherwise in the
+ * display face. Most clients have no lockup, and inventing one out of two logos
+ * side by side would look like a placeholder. The name in Russo One over a wide
+ * uppercase title is the same lockup the submission email uses for its header,
+ * which is a small consistency worth having.
+ *
+ * A theme's logo goes exactly where that name would, under the Wellworn
+ * wordmark rather than instead of it: stacked, in the order the relationship
+ * runs. The attribution is not a thing a theme can spend.
+ *
+ * Which of the two wordmarks is drawn follows from the resolved ground rather
+ * than from an assumption that it is white, so the attribution survives a dark
+ * theme. Nothing here reads a client id — only the resolved theme, which any
+ * questionnaire may or may not have.
  */
 import { BRAND } from '../../config/site';
 import type { Questionnaire } from '../../lib/questionnaire/schema';
+import type { ResolvedTheme } from '../../lib/questionnaire/theme';
 
 interface Props {
 	questionnaire: Questionnaire;
+	theme: ResolvedTheme | null;
 }
 
-const { questionnaire }: Props = Astro.props;
+const { questionnaire, theme }: Props = Astro.props;
 const { masthead, client, title } = questionnaire;
 
 /* The wordmark is 2476×597. Set from a height so the artwork can be swapped
    without anyone recomputing a width by hand. */
 const WORDMARK_HEIGHT = 26;
 const wordmarkWidth = Math.round(WORDMARK_HEIGHT * BRAND.wordmarkRatio);
+const wordmark = theme?.wordmark === 'light' ? BRAND.wordmarkLight : BRAND.wordmarkDark;
+
+/* A client logo is sized by height alone: the definition supplies a path and
+   nothing else, so there is no intrinsic width to advertise. Height is the
+   dimension that would otherwise reflow the page, and it is reserved. */
+const LOGO_HEIGHT = 44;
 ---
 
 <header>
@@ -54,7 +72,7 @@ const wordmarkWidth = Math.round(WORDMARK_HEIGHT * BRAND.wordmarkRatio);
 			) : (
 				<div class="portal-shell text-center">
 					<img
-						src={BRAND.wordmarkDark}
+						src={wordmark}
 						alt="Wellworn"
 						width={wordmarkWidth}
 						height={WORDMARK_HEIGHT}
@@ -64,9 +82,23 @@ const wordmarkWidth = Math.round(WORDMARK_HEIGHT * BRAND.wordmarkRatio);
 						style={`height:${WORDMARK_HEIGHT}px;width:auto`}
 					/>
 
-					<h1 class="display portal-enter portal-enter-delay-1 mt-7 text-[clamp(2rem,1.5rem+2.2vw,3rem)]">
-						{client}
-					</h1>
+					{theme?.logo ? (
+						<h1 class="portal-enter portal-enter-delay-1 mt-7">
+							<img
+								src={theme.logo}
+								alt={client}
+								height={LOGO_HEIGHT}
+								fetchpriority="high"
+								decoding="async"
+								class="mx-auto"
+								style={`height:${LOGO_HEIGHT}px;width:auto`}
+							/>
+						</h1>
+					) : (
+						<h1 class="display portal-enter portal-enter-delay-1 mt-7 text-[clamp(2rem,1.5rem+2.2vw,3rem)]">
+							{client}
+						</h1>
+					)}
 				</div>
 			)
 		}
@@ -75,7 +107,7 @@ const wordmarkWidth = Math.round(WORDMARK_HEIGHT * BRAND.wordmarkRatio);
 		    and the page turns left-aligned the moment the masthead ends — which is
 		    the portal's own behaviour. */}
 		<p
-			class="portal-enter portal-enter-delay-2 eyebrow mt-5 px-5 text-center text-charcoal/55 sm:mt-7 sm:px-8"
+			class="portal-enter portal-enter-delay-2 eyebrow mt-5 px-5 text-center text-(--q-text)/55 sm:mt-7 sm:px-8"
 		>
 			{title}
 		</p>
