@@ -1,0 +1,279 @@
+---
+/**
+ * GET FOUND — a local search that finds the business.
+ *
+ * Four bakeries, none of them real, in a search interface that belongs to
+ * nobody: no Google marks, no borrowed chrome, and no claim that any of this
+ * ranking ever happened. The whole argument is the movement — the featured
+ * bakery starts third and ends first — so everything else is kept quiet
+ * enough to read in two seconds.
+ *
+ * THE SORT IS A FLIP, done in the client script: the rows are measured, the
+ * one line of CSS that reorders them is applied, they are measured again, and
+ * each row is carried from where it was to where it now is. That is what
+ * makes a reorder animate at all — `order` is not a transitionable property,
+ * and nothing else here would move.
+ *
+ * The prominence the winner gains arrives a beat AFTER it lands, not with it.
+ * Two things changing at once reads as one busy thing; arriving, then being
+ * marked, reads as a result being found.
+ */
+interface Props {
+	/** The band's ground, which decides the panel colour. */
+	ground: 'white' | 'cream';
+}
+
+const { ground }: Props = Astro.props;
+
+interface Result {
+	readonly name: string;
+	readonly rating: string;
+	/** Out of five, as a percentage, for the clipped star row. */
+	readonly fill: string;
+	readonly reviews: string;
+	readonly meta: string;
+	readonly featured?: boolean;
+}
+
+/*
+ * Fictional businesses. The names are invented and the numbers with them are
+ * invented; nothing here is a real listing and nothing claims to be.
+ *
+ * DOM order is the starting order, and the featured bakery is third in it.
+ * Below the tablet split the fourth row is dropped rather than squeezed,
+ * which leaves the featured one third of three — the move is the same.
+ */
+const RESULTS: readonly Result[] = [
+	{
+		name: 'Copper Kettle Bakery',
+		rating: '4.5',
+		fill: '90%',
+		reviews: '96',
+		meta: 'Bakery · Open · 1.1 mi',
+	},
+	{
+		name: 'Marlow Street Bread',
+		rating: '4.3',
+		fill: '86%',
+		reviews: '61',
+		meta: 'Bakery · Closed · 1.6 mi',
+	},
+	{
+		name: 'Rise & Rye Bakehouse',
+		rating: '4.9',
+		fill: '98%',
+		reviews: '218',
+		meta: 'Bakery · Open · 0.4 mi',
+		featured: true,
+	},
+	{
+		name: 'Twelve Grain Co.',
+		rating: '4.2',
+		fill: '84%',
+		reviews: '44',
+		meta: 'Bakery · Open · 2.3 mi',
+	},
+];
+---
+
+<div class="wwd wwd-search" data-demo="search" data-ground={ground} data-step="0">
+	{/*
+	  Announced as one picture rather than as a list of businesses with
+	  buttons attached. None of it is operable — there is no search to run and
+	  no bakery to call — so a screen reader gets the outcome in a sentence
+	  instead of a tour of a mock. The replay control below is the only real
+	  control in the frame, and it sits outside this element.
+	*/}
+	<div
+		class="wwd-stage"
+		role="img"
+		aria-label="A local search for “best bakery near me”. Four nearby bakeries are listed, and the featured one, Rise & Rye Bakehouse, has moved to the top result with its rating, hours, distance and contact actions shown."
+	>
+		<div class="wwd-panel wwd-searchbar">
+			<svg class="wwd-glass" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+				<circle cx="7" cy="7" r="4.75" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+				<path d="M10.5 10.5 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+			</svg>
+			<span class="wwd-query">best bakery near me</span>
+		</div>
+
+		<ul class="wwd-results" data-results>
+			{
+				RESULTS.map((result, i) => (
+					<li
+						class:list={['wwd-result', result.featured && 'is-featured']}
+						style={`--i:${i}`}
+						data-result
+						data-featured={result.featured ? '' : undefined}
+					>
+						<div class="wwd-result-top">
+							<span class="wwd-name">{result.name}</span>
+							{result.featured && <span class="wwd-chip wwd-top-chip">Top result</span>}
+						</div>
+
+						<div class="wwd-result-rating">
+							<span class="wwd-strong">{result.rating}</span>
+							<span class="wwd-stars" style={`--wwd-fill:${result.fill}`} aria-hidden="true">
+								★★★★★<span>★★★★★</span>
+							</span>
+							<span class="wwd-meta">({result.reviews})</span>
+						</div>
+
+						<p class="wwd-meta wwd-result-meta">{result.meta}</p>
+
+						{result.featured && (
+							<div class="wwd-reveal" data-reveal>
+								<div>
+									<div class="wwd-result-actions">
+										<span class="wwd-action wwd-action-primary">Website</span>
+										<span class="wwd-action">Call</span>
+										<span class="wwd-action">Directions</span>
+									</div>
+								</div>
+							</div>
+						)}
+					</li>
+				))
+			}
+		</ul>
+	</div>
+</div>
+
+<style>
+	.wwd-stage {
+		display: flex;
+		flex-direction: column;
+		gap: 0.7em;
+	}
+
+	.wwd-searchbar {
+		display: flex;
+		align-items: center;
+		gap: 0.6em;
+		padding: 0.65em 1em;
+		border-radius: var(--radius-pill);
+		color: var(--ww-muted);
+	}
+
+	.wwd-glass {
+		width: 1.1em;
+		height: 1.1em;
+		flex: none;
+	}
+
+	/* The query arrives left to right, which is how a query is written. A
+	   clip rather than a width so the reveal ends exactly on the last letter
+	   whatever the type is doing. */
+	.wwd-query {
+		color: var(--ww-ink);
+		white-space: nowrap;
+		clip-path: inset(0 100% 0 0);
+		transition: clip-path var(--dur-slow) var(--ease-out);
+	}
+
+	.wwd[data-step='1'] .wwd-query,
+	.wwd[data-step='2'] .wwd-query,
+	.wwd[data-step='3'] .wwd-query,
+	.wwd[data-step='4'] .wwd-query {
+		clip-path: inset(0 0 0 0);
+	}
+
+	.wwd-results {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.45em;
+	}
+
+	.wwd-result {
+		background-color: var(--wwd-panel);
+		border: 1px solid var(--wwd-line);
+		border-radius: var(--radius-input);
+		padding: 0.7em 0.9em;
+		opacity: 0;
+		transform: translateY(0.5em);
+		transition:
+			opacity var(--dur-base) var(--ease-out),
+			transform var(--dur-base) var(--ease-out);
+	}
+
+	/* The stagger lives on the populated state, because the delay a
+	   transition uses is read from the style it is moving to. */
+	.wwd[data-step='2'] .wwd-result,
+	.wwd[data-step='3'] .wwd-result,
+	.wwd[data-step='4'] .wwd-result {
+		opacity: 1;
+		transform: none;
+		transition-delay: calc(var(--i) * 70ms);
+	}
+
+	/* The reorder. One property, and the script animates the consequence. */
+	.wwd-results.is-sorted .wwd-result.is-featured {
+		order: -1;
+	}
+
+	.wwd-result-top {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.6em;
+	}
+
+	.wwd-result-rating {
+		display: flex;
+		align-items: baseline;
+		gap: 0.4em;
+		font-size: 0.9em;
+		margin-top: 0.15em;
+	}
+
+	.wwd-result-meta {
+		margin: 0.1em 0 0;
+	}
+
+	.wwd-result-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4em;
+		padding-top: 0.6em;
+	}
+
+	/* The found state. A ring rather than a fill: the blue marks the result,
+	   it does not become the result. */
+	.wwd-result.is-featured {
+		box-shadow: 0 0 0 0 transparent;
+		transition:
+			opacity var(--dur-base) var(--ease-out),
+			transform var(--dur-base) var(--ease-out),
+			box-shadow var(--dur-base) var(--ease-out),
+			border-color var(--dur-base) var(--ease-out);
+	}
+
+	.wwd[data-step='4'] .wwd-result.is-featured {
+		border-color: var(--ww-blue);
+		box-shadow: 0 0 0 1px var(--ww-blue);
+	}
+
+	.wwd-top-chip {
+		opacity: 0;
+		transition: opacity var(--dur-base) var(--ease-out);
+	}
+
+	.wwd[data-step='4'] .wwd-top-chip {
+		opacity: 1;
+	}
+
+	/* A short frame gets three results rather than four squeezed ones. The
+	   featured bakery is still the third of them. */
+	@media (max-width: 767px) {
+		.wwd-result:nth-child(4) {
+			display: none;
+		}
+
+		.wwd-result-actions .wwd-action:nth-child(3) {
+			display: none;
+		}
+	}
+</style>

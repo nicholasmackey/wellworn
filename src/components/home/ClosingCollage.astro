@@ -1,0 +1,237 @@
+---
+/**
+ * THE CLOSING COLLAGE.
+ *
+ * Full-width black, a wall of photographs of real businesses doing real work,
+ * and the three promise lines in the middle of it. The last and loudest moment
+ * on the page.
+ *
+ * What is taken from the reference is the idea — many businesses, many kinds of
+ * work, one statement at the centre — and not its decoration. There are no
+ * doodles, no hand-drawn signs, no smiley faces and no illustration of any
+ * kind. Just photographs and type.
+ *
+ * DESKTOP is a scatter: eight tiles hand-placed around the edges of the section
+ * on percentage coordinates, each turned a couple of degrees, with the middle
+ * of the composition left empty so the statement is never fighting a picture
+ * for the same space.
+ *
+ * MOBILE IS A DIFFERENT COMPOSITION, not the same one scaled down. Eight tilted
+ * tiles on a 390px screen is a mess and the statement disappears into it, so
+ * four of the eight are dropped outright and the rest become two calm bands,
+ * one above the statement and one below. The data carries the `mobile` flag
+ * that decides which four survive.
+ */
+import { Image } from 'astro:assets';
+import { CONTACT_HREF, CTA_LABEL } from '../../config/site';
+import type { CollageTile } from '../../config/home';
+
+interface Props {
+	lines: readonly string[];
+	tiles: readonly CollageTile[];
+	id?: string;
+}
+
+const { lines, tiles, id }: Props = Astro.props;
+
+/* The mobile band is the four tiles flagged for it, split into a row above the
+   statement and a row below it. */
+const mobileTiles = tiles.filter((tile) => tile.mobile);
+const above = mobileTiles.slice(0, 2);
+const below = mobileTiles.slice(2);
+---
+
+<section class="ww-section-dark ww-closing" id={id} aria-labelledby="closing-heading">
+	{/*
+	  DESKTOP SCATTER. Hidden below the lg breakpoint, where the mobile bands
+	  below take over. Decorative throughout: the statement is in the markup as a
+	  real heading, and announcing eight photographs ahead of it would bury the
+	  one thing this section says.
+	*/}
+	<div class="ww-collage-scatter" aria-hidden="true">
+		{
+			tiles.map((tile) => (
+				<div
+					class="ww-media ww-media-tile ww-collage-tile"
+					style={`--top:${tile.top}%;--left:${tile.left}%;--w:${tile.w}%;--ar:${tile.ar};--rotate:${tile.rotate}deg`}
+				>
+					<Image
+						src={tile.src}
+						alt=""
+						width={480}
+						widths={[240, 360, 480]}
+						sizes="16vw"
+						quality={72}
+						loading="lazy"
+						decoding="async"
+					/>
+				</div>
+			))
+		}
+	</div>
+
+	<div class="ww-container ww-closing-body">
+		<div class="ww-collage-band" aria-hidden="true">
+			{
+				above.map((tile) => (
+					<div class="ww-media ww-media-tile">
+						<Image
+							src={tile.src}
+							alt=""
+							width={480}
+							widths={[240, 360, 480]}
+							sizes="45vw"
+							quality={72}
+							loading="lazy"
+							decoding="async"
+						/>
+					</div>
+				))
+			}
+		</div>
+
+		{/*
+		  Three sentences, one heading. They are three separate lines on screen and
+		  one statement in the outline, so they are one <h2> with the lines broken
+		  by block elements inside it rather than three headings — three would put
+		  three peer entries in the page's structure for what is a single claim.
+		*/}
+		<h2 id="closing-heading" class="ww-display-lg ww-closing-heading">
+			{/*
+			  The space between the spans is not cosmetic and must not be tidied
+			  away. Adjacent elements with no whitespace between them are
+			  concatenated without one when the heading's accessible name is
+			  computed, so a screen reader would announce "Get found.Earn
+			  trust.Make it easy to do business." The spans are display: block, so
+			  the space is invisible on screen and audible where it matters.
+			*/}
+			{lines.map((line) => (
+				<>
+					<span>{line}</span>{' '}
+				</>
+			))}
+		</h2>
+
+		{/*
+		  The blue action, and one of only two on the page. This is the last thing
+		  the page asks for, on the darkest ground it has, surrounded by
+		  photographs — the one composition where the accent is worth spending.
+		*/}
+		<a href={CONTACT_HREF} class="ww-btn ww-btn-blue ww-closing-cta">{CTA_LABEL}</a>
+
+		<div class="ww-collage-band" aria-hidden="true">
+			{
+				below.map((tile) => (
+					<div class="ww-media ww-media-tile">
+						<Image
+							src={tile.src}
+							alt=""
+							width={480}
+							widths={[240, 360, 480]}
+							sizes="45vw"
+							quality={72}
+							loading="lazy"
+							decoding="async"
+						/>
+					</div>
+				))
+			}
+		</div>
+	</div>
+</section>
+
+<style>
+	.ww-closing {
+		position: relative;
+		/* `clip`, not `hidden`: `hidden` would make this a scroll container and a
+		   tile whose rotation pushes it a pixel past the edge would give the
+		   section a scrollbar of its own. */
+		overflow: clip;
+		padding-block: var(--space-2xl);
+	}
+
+	.ww-closing-body {
+		position: relative;
+		z-index: 1;
+		text-align: center;
+	}
+
+	/*
+	  The three lines. Each is its own block so they break where the copy breaks
+	  rather than where the measure happens to run out — the statement is three
+	  sentences and it has to read as three.
+	*/
+	.ww-closing-heading span {
+		display: block;
+	}
+
+	.ww-closing-cta {
+		margin-top: var(--space-xl);
+	}
+
+	/* MOBILE BANDS. Two tiles a row, a real gap between them, and enough air
+	   above and below that the statement has the middle of the screen to itself. */
+	.ww-collage-band {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: var(--space-md);
+		margin-block: var(--space-xl);
+	}
+
+	.ww-collage-band .ww-media {
+		aspect-ratio: 4 / 5;
+	}
+
+	.ww-collage-scatter {
+		display: none;
+	}
+
+	@media (min-width: 1024px) {
+		.ww-closing {
+			/* Tall enough that eight tiles placed by percentage have somewhere to
+			   go, and that the middle stays empty. The tile coordinates in
+			   config/home.ts are checked against this height; shortening it puts
+			   pictures through the statement. */
+			min-height: 48rem;
+			display: flex;
+			align-items: center;
+			padding-block: var(--space-3xl);
+		}
+
+		.ww-collage-band {
+			display: none;
+		}
+
+		.ww-collage-scatter {
+			display: block;
+			position: absolute;
+			inset: 0;
+		}
+
+		/*
+		  Placed on percentages of the section box rather than on a grid, because
+		  a scatter is the point. Width is a percentage of the section; height
+		  follows from each photograph's own aspect ratio, so the wall is made of
+		  different shapes rather than of one shape repeated.
+		*/
+		.ww-collage-tile {
+			position: absolute;
+			top: var(--top);
+			left: var(--left);
+			width: var(--w);
+			/* The frame's ratio comes from the data, not from the photograph. That
+			   is what makes the scatter placeable: the tile's height is a knowable
+			   function of its width, so `top` can be checked against it. */
+			aspect-ratio: var(--ar);
+			transform: rotate(var(--rotate));
+			/* Knocked back a little so the statement in front of them is
+			   unambiguously the brightest thing in the section. */
+			opacity: 0.85;
+		}
+
+		.ww-closing-heading {
+			max-width: 20ch;
+			margin-inline: auto;
+		}
+	}
+</style>

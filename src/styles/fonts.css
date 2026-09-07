@@ -1,0 +1,27 @@
+/* ==========================================================================
+   WELLWORN — FONT FACES
+   --------------------------------------------------------------------------
+   The one self-hosted family on the marketing site. Inter and JetBrains Mono
+   still come from Google Fonts via the <link> in BaseLayout.astro; the
+   portal's three Fontsource families are imported by the /projects/* routes
+   that use them.
+
+   WWBlock is the display face — the hero, the four display steps, and nothing
+   below them. It ships one static weight, Regular. There is no bold, no
+   italic and no variable axis, so the site must never ask this family for a
+   weight other than 400: base.css sets `font-synthesis: none` precisely so
+   that asking anyway gets the real face rather than a smeared fake one.
+
+   `swap`, matching the Google link's `display=swap`: the fallback serif shows
+   immediately and the headline swaps in when the file lands, so a slow font
+   never leaves the hero blank. The file is preloaded in BaseLayout, which
+   keeps that swap short enough not to be the thing you notice.
+   ========================================================================== */
+
+@font-face {
+	font-family: 'WWBlock';
+	src: url('/fonts/wwblock-400.woff2') format('woff2');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}

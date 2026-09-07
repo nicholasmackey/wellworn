@@ -1,0 +1,263 @@
+---
+/**
+ * EARN TRUST — a reputation that fills in while you watch.
+ *
+ * A local profile with a 4.2 and a modest count, and then one more five-star
+ * review lands: the count ticks, the score walks up to 4.8, the star row
+ * fills, and the owner replies underneath. The reply is the part that carries
+ * the section — a rating says people came, a reply says somebody is home.
+ *
+ * Every name and every line of review copy here is invented. None of it is a
+ * customer, none of it is quoted from anywhere, and the numbers are not a
+ * claim about any business. Review text is kept to one short line each so the
+ * frame stays a picture of a profile rather than a page of reading.
+ *
+ * The score and the count are counted up by the client script; the star row
+ * is a width transition on the clipped overlay. Everything that changes the
+ * height of the stack animates its own height, so the reviews below the new
+ * one drift down with it rather than jumping.
+ */
+interface Props {
+	ground: 'white' | 'cream';
+}
+
+const { ground }: Props = Astro.props;
+
+interface Review {
+	readonly author: string;
+	readonly fill: string;
+	readonly text: string;
+	readonly when: string;
+}
+
+/* The reviews already on the profile. Fictional, both of them. */
+const REVIEWS: readonly Review[] = [
+	{ author: 'Dana P.', fill: '100%', text: 'Quick, tidy, on time.', when: '2 wk' },
+	{ author: 'Marcus L.', fill: '80%', text: 'Fair price. No surprises.', when: '1 mo' },
+	{ author: 'Ellen R.', fill: '100%', text: 'Explained everything first.', when: '2 mo' },
+];
+---
+
+<div class="wwd wwd-rep" data-demo="reputation" data-ground={ground} data-step="0">
+	<div
+		class="wwd-stage"
+		role="img"
+		aria-label="A business profile for Ridgeline Roofing. A new five-star review has arrived, the review count has risen to 48, the overall rating has gone from 4.2 to 4.8, and the owner has replied to the new review."
+	>
+		<div class="wwd-panel wwd-rep-head">
+			<div class="wwd-rep-id">
+				<span class="wwd-avatar" aria-hidden="true">RR</span>
+				<span>
+					<span class="wwd-name">Ridgeline Roofing</span>
+					<span class="wwd-meta wwd-block">Roofing contractor</span>
+				</span>
+			</div>
+
+			<div class="wwd-rep-score">
+				<span class="wwd-score" data-count data-from="4.2" data-to="4.8" data-decimals="1">4.2</span>
+				<span class="wwd-rep-score-detail">
+					<span class="wwd-stars" style="--wwd-fill:84%" data-stars data-fill="96%" aria-hidden="true"
+						>★★★★★<span>★★★★★</span></span
+					>
+					<span class="wwd-meta">
+						<span data-count data-from="47" data-to="48">47</span> reviews
+					</span>
+				</span>
+			</div>
+		</div>
+
+		<ul class="wwd-reviews">
+			{/* The one that arrives. It is first in the source because that is
+			    where it lands, and it is closed until it does. */}
+			<li>
+				<div class="wwd-reveal" data-reveal>
+					<div>
+						<div class="wwd-review is-new">
+							<div class="wwd-review-top">
+								<span class="wwd-name wwd-review-author">Priya N.</span>
+								<span class="wwd-stars" style="--wwd-fill:100%" aria-hidden="true"
+									>★★★★★<span>★★★★★</span></span
+								>
+								<span class="wwd-meta wwd-when">now</span>
+							</div>
+							<p class="wwd-review-text">Fixed it same day. Great crew.</p>
+
+							<div class="wwd-reveal" data-reveal-late>
+								<div>
+									<div class="wwd-response">
+										<span class="wwd-label wwd-response-label">Owner</span>
+										<p class="wwd-review-text">Thanks, Priya. Glad we could help.</p>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</li>
+
+			{
+				REVIEWS.map((review) => (
+					<li class="wwd-review">
+						<div class="wwd-review-top">
+							<span class="wwd-name wwd-review-author">{review.author}</span>
+							<span class="wwd-stars" style={`--wwd-fill:${review.fill}`} aria-hidden="true">
+								★★★★★<span>★★★★★</span>
+							</span>
+							<span class="wwd-meta wwd-when">{review.when}</span>
+						</div>
+						<p class="wwd-review-text">{review.text}</p>
+					</li>
+				))
+			}
+		</ul>
+	</div>
+</div>
+
+<style>
+	.wwd-stage {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6em;
+	}
+
+	.wwd-block {
+		display: block;
+	}
+
+	.wwd-rep-head {
+		display: flex;
+		flex-direction: column;
+		gap: 0.8em;
+		padding: 0.9em 1em;
+	}
+
+	.wwd-rep-id {
+		display: flex;
+		align-items: center;
+		gap: 0.6em;
+	}
+
+	.wwd-avatar {
+		flex: none;
+		width: 2.2em;
+		height: 2.2em;
+		display: grid;
+		place-items: center;
+		border-radius: var(--radius-tile);
+		background-color: var(--ww-ink);
+		color: var(--ww-white);
+		font-family: var(--font-mono);
+		font-size: 0.7em;
+		letter-spacing: 0.06em;
+	}
+
+	.wwd-rep-score {
+		display: flex;
+		align-items: center;
+		gap: 0.7em;
+		padding-top: 0.8em;
+		border-top: 1px solid var(--wwd-line);
+	}
+
+	/* The one big number in the frame, in the display face — it is the thing
+	   the section is about, and it is the thing that changes. */
+	.wwd-score {
+		font-family: var(--font-display);
+		font-size: 2.1em;
+		line-height: 1;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.wwd-rep-score-detail {
+		display: flex;
+		flex-direction: column;
+		gap: 0.2em;
+	}
+
+	.wwd-reviews {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.wwd-review {
+		padding: 0.65em 0;
+		border-bottom: 1px solid var(--wwd-line);
+	}
+
+	.wwd-reviews > li:last-child .wwd-review,
+	.wwd-reviews > li:last-child {
+		border-bottom: 0;
+	}
+
+	.wwd-review-top {
+		display: flex;
+		align-items: center;
+		gap: 0.5em;
+		font-size: 0.9em;
+	}
+
+	.wwd-review-author {
+		flex: none;
+	}
+
+	.wwd-when {
+		margin-left: auto;
+	}
+
+	.wwd-review-text {
+		margin: 0.15em 0 0;
+		color: var(--ww-ink-medium);
+		font-size: 0.9em;
+	}
+
+	/* The new review is the only thing in the frame allowed a ground of its
+	   own, and it is the palest one available rather than a tint of the blue. */
+	.wwd-review.is-new {
+		margin-top: 0.15em;
+		padding: 0.7em 0.8em;
+		border-bottom: 0;
+		border-radius: var(--radius-input);
+		background-color: var(--ww-light);
+	}
+
+	/* The reply. A blue rule and a mono label, which is the whole of it. */
+	.wwd-response {
+		margin-top: 0.6em;
+		padding-left: 0.7em;
+		border-left: 2px solid var(--ww-blue);
+	}
+
+	.wwd-response-label {
+		color: var(--ww-blue);
+	}
+
+	/* A short frame drops the oldest review rather than compressing three. */
+	@media (max-width: 767px) {
+		.wwd-reviews > li:last-child {
+			display: none;
+		}
+
+		.wwd-reviews > li:nth-last-child(2) {
+			border-bottom: 0;
+		}
+
+		/* The square frame is the tightest the profile is ever drawn in, and
+		   the rows give up the last of their air rather than the type giving
+		   up a size. */
+		.wwd-review {
+			padding: 0.5em 0;
+		}
+
+		.wwd-review.is-new {
+			padding: 0.6em 0.7em;
+		}
+
+		.wwd-rep-head {
+			padding: 0.8em 0.9em;
+			gap: 0.65em;
+		}
+	}
+</style>

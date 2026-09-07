@@ -1,0 +1,352 @@
+---
+/**
+ * THE CLIENT MARQUEE.
+ *
+ * A full-width band of the businesses we have worked with, drifting slowly
+ * left. It is deliberately not a "trusted by" logo wall: no boxes around the
+ * marks, no grid, no card, no shadow, no arrows, no dots. One band and a lot
+ * of air.
+ *
+ * TWO GROUNDS, one component. `tone="dark"` is the band on a white page —
+ * white ground, a hairline top and bottom, marks in their own colour knocked
+ * back with opacity. `tone="light"` is the band composited into the bottom of
+ * the hero, over moving footage: no ground of its own, no hairlines, and the
+ * marks forced to white. The homepage uses the light one, inside the hero,
+ * which is where the reference puts its merchant strip.
+ *
+ * NO CAROUSEL LIBRARY, and none is needed. The whole behaviour is one CSS
+ * animation translating a flex row by exactly half its own width. There is no
+ * JavaScript in this component at all — nothing to hydrate, nothing to run on
+ * the main thread while scrolling, and nothing that can leave the row blank
+ * because a script has not arrived.
+ *
+ * HOW THE SEAMLESS LOOP WORKS
+ * The list is rendered twice into one row. The animation moves that row left by
+ * -50%, which is the width of exactly one copy, and then snaps back to 0. At
+ * the moment it snaps, copy two is sitting precisely where copy one started, so
+ * the frame before and the frame after the snap are pixel-identical and there
+ * is no visible jump. Any number of logos works; the duration is derived from
+ * the count so the speed stays the same as the list grows.
+ *
+ * ACCESSIBILITY
+ * The second copy exists only to fill the gap on the right and is `aria-hidden`
+ * with an empty alt on every image, so a screen reader is told the list of
+ * businesses once rather than twice.
+ */
+import type { ClientLogo } from '../../config/home';
+
+interface Props {
+	logos: readonly ClientLogo[];
+	/** Named for a screen reader, since a band of pictures says nothing on its own. */
+	label?: string;
+	/**
+	 * The ground the band is sitting on, not the colour of the band.
+	 *
+	 *   dark  — a white page. The default, and the standalone section.
+	 *   light — over the hero footage. Loses its ground and its hairlines and
+	 *           paints the marks white.
+	 */
+	tone?: 'dark' | 'light';
+}
+
+const {
+	logos,
+	label = 'Businesses we have worked with',
+	tone = 'dark',
+}: Props = Astro.props;
+
+/*
+ * HOW MANY TIMES THE LIST IS REPEATED INSIDE ONE COPY.
+ *
+ * The seamless loop needs the track to be wider than the screen at every
+ * moment, and five marks are not. Rendering the list once per copy left the
+ * band with a stretch of empty footage drifting past on a wide display, which
+ * is the one thing a marquee must never do.
+ *
+ * So a copy is the list repeated until it is wider than the widest screen we
+ * expect to meet. Both copies are still built from the same array, so they are
+ * still identical and -50% still lands exactly one copy along.
+ *
+ * The width is estimated rather than measured, because there is no browser
+ * here: each mark is drawn in a fixed square slot, so its footprint on
+ * screen is the slot it sits in plus the gap after it. Estimating high is
+ * harmless (one more repeat than needed) and estimating low is not, so the
+ * numbers below are the LARGEST the stylesheet ever renders.
+ */
+const TARGET_COPY_WIDTH = 3600; /* px. Wider than an ultrawide desktop. */
+const SLOT_SIZE = 130; /* px. --marquee-slot at its largest, in the stylesheet. */
+const SLOT_GAP = 80; /* px. --space-2xl, the gap in the tighter light tone. */
+
+/* Every slot is the same square, so a copy's width is just slots plus gaps —
+   no aspect-ratio arithmetic, because the mark inside the slot no longer
+   decides how much room the slot takes. */
+const estimatedCopyWidth = logos.length * (SLOT_SIZE + SLOT_GAP);
+
+const repeats = Math.max(
+	2,
+	Math.ceil(TARGET_COPY_WIDTH / Math.max(estimatedCopyWidth, 1)),
+);
+
+/* One copy of the band: the whole list, end to end, `repeats` times. */
+const copy = Array.from({ length: repeats }, () => logos).flat();
+
+/*
+ * Three seconds a logo: twice the pace of the six it ran at before, which reads
+ * as a band that is moving rather than one that is drifting. Derived from what
+ * a copy actually holds rather than from the client count, so repeating the
+ * list to fill the screen makes the loop longer instead of making it faster.
+ */
+const duration = `${copy.length * 3}s`;
+---
+
+<section class="ww-marquee" data-tone={tone} aria-label={label}>
+	<div class="ww-marquee-track" style={`--marquee-duration:${duration}`}>
+		{/* Copy one: the real list, announced ONCE. Everything past the first pass
+		    through the list is there to fill the screen, so it is marked as filler:
+		    an empty alt keeps it out of the screen reader, and the attribute lets
+		    reduced motion drop it. */}
+		<ul class="ww-marquee-row">
+			{
+				copy.map((logo, i) => (
+					<li data-filler={i >= logos.length ? '' : undefined}>
+						<img
+							src={logo.src}
+							alt={i < logos.length ? logo.alt : ''}
+							width={logo.width}
+							height={logo.height}
+							loading="lazy"
+							decoding="async"
+						/>
+					</li>
+				))
+			}
+		</ul>
+
+		{/* Copy two: the same marks again, purely to fill the right-hand gap while
+		    copy one travels off to the left. Hidden from assistive tech, and every
+		    alt emptied, so nothing here is announced twice. */}
+		<ul class="ww-marquee-row" aria-hidden="true">
+			{
+				copy.map((logo, i) => (
+					<li data-filler={i >= logos.length ? '' : undefined}>
+						<img
+							src={logo.src}
+							alt=""
+							width={logo.width}
+							height={logo.height}
+							loading="lazy"
+							decoding="async"
+						/>
+					</li>
+				))
+			}
+		</ul>
+	</div>
+</section>
+
+<style>
+	.ww-marquee {
+		/* `clip` rather than `hidden`. `hidden` makes the element a scroll
+		   container, which lets a focused element inside the off-screen half be
+		   scrolled into view and shunts the whole band sideways. */
+		overflow: clip;
+	}
+
+	/* THE STANDALONE BAND, on a white page. */
+	.ww-marquee[data-tone='dark'] {
+		background-color: var(--ww-white);
+		border-block: 1px solid var(--ww-hairline-light);
+		padding-block: var(--space-lg);
+	}
+
+	@media (min-width: 768px) {
+		.ww-marquee[data-tone='dark'] {
+			padding-block: var(--space-xl);
+		}
+	}
+
+	/*
+	  THE BAND INSIDE THE HERO. No ground and no rules: it has to read as part
+	  of the footage rather than as a white strip laid across the bottom of it,
+	  which is the whole difference between this and a separate section that
+	  happens to be adjacent. The hero owns the space around it, so the padding
+	  here is only the band's own breathing room.
+	*/
+	.ww-marquee[data-tone='light'] {
+		background-color: transparent;
+		border: 0;
+		/* Top only. The square slot already carries a quarter of its own height
+		   as air above and below a 2:1 mark, and any padding under the band on
+		   top of that reads as the strip floating clear of the bottom edge
+		   rather than sitting on it, which is where the reference puts it. */
+		padding-top: var(--space-sm);
+		padding-bottom: 0;
+	}
+
+	.ww-marquee-track {
+		display: flex;
+		width: max-content;
+		animation: ww-marquee var(--marquee-duration) linear infinite;
+	}
+
+	/* The band does NOT pause on hover. It is a background rhythm rather than a
+	   control, and a strip that halts whenever the pointer crosses it reads as
+	   something that wants to be clicked.
+
+	   It does still pause when the keyboard lands inside. Nothing in the band is
+	   focusable today, so this is insurance for the day these marks become
+	   links: without it a focused logo would walk out from under its own focus
+	   ring while someone is looking at it. */
+	.ww-marquee:focus-within .ww-marquee-track {
+		animation-play-state: paused;
+	}
+
+	.ww-marquee-row {
+		display: flex;
+		align-items: center;
+		/* The gap is part of the loop arithmetic: it sits between every item
+		   INCLUDING across the join, because the two rows are flex children of the
+		   same track with the same gap between them. */
+		gap: var(--space-3xl);
+		/* And so is this: the row must have no padding of its own, or the two
+		   copies are not the same width and -50% lands in the wrong place. */
+		margin: 0;
+		padding: 0 var(--space-3xl) 0 0;
+		list-style: none;
+	}
+
+	/*
+	  THE SLOT. One square per mark, the same square for every mark, so a wide
+	  wordmark and a compact monogram take up the same room and the band reads as
+	  evenly spaced rather than as marks of assorted importance.
+
+	  The mark is CONTAINED in it, never cropped and never stretched: the image
+	  keeps its own aspect and shrinks until both its sides fit, which for these
+	  2:1 files means a full-width mark sitting half the height of its slot.
+	*/
+	.ww-marquee-row li {
+		flex: none;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: var(--marquee-slot);
+		height: var(--marquee-slot);
+	}
+
+	/*
+	  Restrained rather than monochrome-by-force. A real logo arriving in full
+	  colour is knocked back with opacity rather than desaturated, because
+	  greyscale mangles some marks badly and this band is meant to be quiet, not
+	  flat.
+
+	  There is deliberately no `color` here. An SVG referenced through <img> is
+	  its own document and inherits nothing from this page, so a `currentColor`
+	  inside it resolves against the SVG's own colour — which is why each logo
+	  file carries its paint colour on its root element instead.
+	*/
+	.ww-marquee-row img {
+		max-width: 100%;
+		max-height: 100%;
+		width: auto;
+		height: auto;
+		object-fit: contain;
+		opacity: 0.65;
+	}
+
+	/* The standalone band on a white page keeps the smaller slot it always had. */
+	.ww-marquee[data-tone='dark'] .ww-marquee-row {
+		--marquee-slot: 60px;
+	}
+
+	@media (min-width: 768px) {
+		.ww-marquee[data-tone='dark'] .ww-marquee-row {
+			--marquee-slot: 68px;
+		}
+	}
+
+	/*
+	  Over the footage the marks are forced to solid white rather than knocked
+	  back, because there is no fixed ground behind them to be quiet against —
+	  a frame can brighten under any one of them at any moment. `brightness(0)`
+	  crushes whatever colour the file carries to black and `invert(1)` flips
+	  that to white, which gets there for every mark without needing a
+	  white variant of each file.
+
+	  The slot is smaller on a phone than on a desktop: this band is a footnote
+	  inside the hero, not the subject of it.
+	*/
+	.ww-marquee[data-tone='light'] .ww-marquee-row {
+		--marquee-slot: 80px;
+	}
+
+	.ww-marquee[data-tone='light'] .ww-marquee-row img {
+		filter: brightness(0) invert(1);
+		opacity: 0.85;
+	}
+
+	@media (min-width: 768px) {
+		.ww-marquee[data-tone='light'] .ww-marquee-row {
+			--marquee-slot: 108px;
+		}
+	}
+
+	/* The largest slot on the site, and the number SLOT_SIZE in the frontmatter
+	   is pinned to: change one and change the other, or the repeat count stops
+	   matching the width it is meant to fill. */
+	@media (min-width: 1280px) {
+		.ww-marquee[data-tone='light'] .ww-marquee-row {
+			--marquee-slot: 130px;
+		}
+	}
+
+	/* The gap the marks travel through. Tighter than the standalone band's
+	   120px, which inside a hero leaves stretches of empty footage drifting
+	   past with no mark in them. */
+	.ww-marquee[data-tone='light'] .ww-marquee-row {
+		gap: var(--space-2xl);
+		padding-right: var(--space-2xl);
+	}
+
+	@keyframes ww-marquee {
+		to {
+			/* Exactly one copy's width. Both copies are the same width by
+			   construction, so 50% of the track is one of them. */
+			transform: translateX(-50%);
+		}
+	}
+
+	/*
+	  REDUCED MOTION.
+
+	  Nothing moves on its own. The band becomes a plain horizontally scrollable
+	  row the reader drives themselves, and the duplicate copy is removed
+	  outright — with no animation it is the same marks repeated on screen for no
+	  reason.
+	*/
+	@media (prefers-reduced-motion: reduce) {
+		.ww-marquee {
+			overflow-x: auto;
+			/* The track is wider than the band, so it needs a gutter or the first
+			   and last marks sit against the viewport edge. */
+			padding-inline: var(--gutter);
+		}
+
+		.ww-marquee-track {
+			animation: none;
+			width: auto;
+		}
+
+		.ww-marquee-row[aria-hidden='true'],
+		/* The repeats exist only to keep a moving band full. With nothing moving
+		   they are the same five marks over and over in a row nobody asked to
+		   scroll. */
+		.ww-marquee-row li[data-filler] {
+			display: none;
+		}
+
+		.ww-marquee-row,
+		.ww-marquee[data-tone='light'] .ww-marquee-row {
+			padding-right: 0;
+		}
+	}
+</style>

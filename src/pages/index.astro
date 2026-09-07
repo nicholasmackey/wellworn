@@ -1,847 +1,112 @@
 ---
-import { Image } from 'astro:assets';
+/**
+ * THE HOMEPAGE.
+ *
+ * Thirteen sections in a fixed order, and this file composes them. It holds no
+ * copy of its own: every word on the page comes from config/home.ts or
+ * config/site.ts, and every piece of layout comes from a component under
+ * components/home/. If something on the page needs changing, one of those two
+ * places is where to change it.
+ *
+ * THE ARGUMENT, in order:
+ *   promise (the hero, with the client marquee composited on its bottom
+ *   edge) → proof (testimonials) → the three things a website owes a business
+ *   → how we build → what it costs → what else we do → why any of it matters →
+ *   the ask.
+ *
+ * THE GROUNDS alternate down the page and are most of what gives it depth,
+ * since there are no shadows anywhere: white, white, white, cream, white, cream
+ * for the services, then black through pricing and the extra services, back to
+ * white for the philosophy statement, and black again for the close and the
+ * footer. Two black runs, and both of them are where the page is asking for
+ * something.
+ */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import ProjectHeading from '../components/ProjectHeading.astro';
-import ProjectStack from '../components/ProjectStack.astro';
+import Header from '../components/Header.astro';
+import Hero from '../components/home/Hero.astro';
+import VideoTestimonials from '../components/home/VideoTestimonials.astro';
+import PromiseSection from '../components/home/PromiseSection.astro';
+import ServicesAccordion from '../components/home/ServicesAccordion.astro';
+import PricingSection from '../components/home/PricingSection.astro';
+import AdditionalServices from '../components/home/AdditionalServices.astro';
+import PhilosophySection from '../components/home/PhilosophySection.astro';
+import ClosingCollage from '../components/home/ClosingCollage.astro';
 import {
-	BRANDING,
-	CAPABILITIES,
-	CONTACT_HREF,
-	FORM_ENDPOINT,
-	PROCESS,
-	PROJECTS,
-	PROJECT_TYPES,
-	WHY_WELLWORN,
-} from '../config/site';
-// The hero video's opening frame, pulled from hero.mp4 itself. Being frame one
-// is the point: it is what the video paints anyway, so there is no cut when
-// playback starts, and reduced-motion visitors get the same scene everyone
-// else does rather than an unrelated photograph.
-import heroImage from '../assets/hero-poster.jpg';
-// One photograph per section, each carrying the argument its section is making
-// rather than decorating it: the shopkeeper serving a customer for the trust
-// case, the baker at work for the claim that we build around the business, the
-// two of them over a laptop for the process.
-import customerImage from '../assets/customer.jpg';
-import bakeryImage from '../assets/bakery.jpg';
-import figureItOutImage from '../assets/figure-it-out.jpg';
-
-/**
- * With no endpoint the form would post to the page itself, which a static host
- * answers with a 404 and the visitor's message is gone. Better to render the
- * form and hold the button than to swallow a lead.
- */
-const formConfigured = FORM_ENDPOINT.length > 0;
-
-/*
- * Said on the console rather than on the page. An unconfigured endpoint is a
- * launch checklist item, and a note about one printed under the form is a
- * message to us being shown to a customer. This runs at build and on every dev
- * request, which is where the person who can fix it is looking.
- */
-if (!formConfigured) {
-	console.warn('[wellworn] No FORM_ENDPOINT set — the contact form’s submit button is disabled.');
-}
-
-/** 01, 02, 03 rather than 1, 2, 3: the numbers read as a set that way. */
-const ordinal = (index: number): string => String(index + 1).padStart(2, '0');
-
-/**
- * Named rather than mapped. The selected-work section lays each of these out
- * differently on purpose, so the page has to be able to reach for them one at a
- * time. Order still matters — it is the order they appear in, and the first is
- * the one the section is built around.
- */
-const [cadence, davis, veil] = PROJECTS;
-
-/**
- * The width a stack renders at: the wrapper's 80rem cap less its 3rem gutters,
- * and the viewport less the gutters below that. One expression rather than a
- * media-query list because every card in a stack is a fixed fraction of the
- * stack, so this is all ProjectStack needs to size the srcset of every shot in
- * it. It rounds up by an inch at sm and lg, where the gutters are narrower than
- * the 3rem assumed here, which costs a slightly larger candidate and nothing
- * else.
- */
-const STACK_WIDTH = 'min(74rem, 100vw - 3rem)';
+	ADDITIONAL,
+	ADDITIONAL_SERVICES,
+	CLOSING,
+	COLLAGE,
+	PLANS,
+	PRICING,
+	PROMISES,
+	SERVICES,
+	SERVICES_INTRO,
+	TESTIMONIALS,
+} from '../config/home';
 ---
 
-{/*
-  The page in order: promise, proof, value, capability, difference, process,
-  push, form. The work sits second because it is the strongest evidence for the
-  claim the hero makes, and no amount of explanation ahead of it does the same
-  job — a visitor deciding whether this studio is any good wants to see
-  something we built, not read about how we build.
-
-  Ground alternates from there. Cream is the page; the two charcoal panels are
-  where it makes its flattest claims — what we do, and what we would like you to
-  do next — and the photograph in the hero is the only place a third ground
-  appears.
-*/}
 <BaseLayout
 	schemaOrg
-	description="Wellworn designs and builds websites, online stores, and custom functionality for businesses that want to look established and easy to say yes to."
+	description="Wellworn builds websites for small businesses that want to get found, earn trust, and make it easy for customers to do business with them."
 >
-	{/* min-h, not a fixed h: the hero has to be free to grow past 78vh on short
-	    laptop viewports, or overflow-hidden crops the CTA off the bottom. */}
-	<section
-		class="relative flex min-h-[26rem] items-end overflow-hidden sm:min-h-[32rem] lg:min-h-[min(78vh,50rem)]"
-	>
-		{/*
-		  The still sits under the video rather than in the video's poster
-		  attribute, which buys two things a poster cannot: a responsive srcset,
-		  and a real element for the browser to treat as the LCP candidate while
-		  the (large) video is still arriving. It is also the whole picture for
-		  reduced-motion visitors, so it keeps its alt text.
-		*/}
-		<Image
-			src={heroImage}
-			alt="Two shopkeepers at a work table in a sunlit clothing store, sorting stock beside a laptop and a rail of garments."
-			widths={[640, 960, 1280, 1600, 1920, 2560]}
-			sizes="100vw"
-			quality={80}
-			loading="eager"
-			fetchpriority="high"
-			class="absolute inset-0 h-full w-full object-cover"
-		/>
+	{/*
+	  The header overlays the hero on this page and on no other. It is the only
+	  page that opens on full-bleed media tall enough to carry a bar, and a
+	  white band between the navigation and that media is what stops the first
+	  screen reading as one composition. Every internal page gets the plain
+	  white bar from BaseLayout's default.
+	*/}
+	<Header slot="header" overlay />
 
-		{/*
-		  Decorative, so it is hidden from assistive tech and taken out of the tab
-		  order. The media attribute on the source is the reduced-motion fallback:
-		  when the query does not match, resource selection finds no playable
-		  source and the still above is simply never covered, so the file is not
-		  fetched at all. global.css hides the element under the same query as a
-		  second line of defence, for engines that ignore source media.
-
-		  The clip is 1920x1012 (1.9:1) and the hero box crosses that ratio, so the
-		  crop changes direction with the viewport: a 1440x900 desktop makes the
-		  box 2.05:1 and trims about 8% off the top and bottom, while a tablet
-		  trims ~15% off the sides and a 390px phone keeps only the middle ~39% of
-		  the frame. Centre is the one anchor that stays sensible through all
-		  three, since the subject sits mid-frame. If the footage is ever recut
-		  with the subject off-centre, this is the knob to turn.
-
-		  The file is served from R2 at assets.wellworncreative.com rather than out
-		  of public/, which keeps 8.5MB of video out of the repo and out of every
-		  deploy. It costs a DNS lookup and TLS handshake to a second origin
-		  before the first byte arrives. No crossorigin attribute: nothing here
-		  reads pixels back, so the request stays a plain no-CORS media fetch.
-
-		  It is encoded H.264 High@4.0 (avc1.640028), and the level is
-		  load-bearing. x264 derives it from the DPB, and at 1920x1012 (7680
-		  macroblocks) a fifth reference frame needs a DPB of 38400 — past the
-		  34816 that Level 4.2 allows — so it stamps the stream Level 5.0. iPhone
-		  hardware decoders top out at High@4.2 and refuse such a file outright,
-		  which is why this hero once played on every desktop and silently stayed
-		  a still on iOS. Capping refs at 4 keeps it inside Level 4.0. Anything
-		  re-uploaded to that bucket wants -profile:v high -level:v 4.0 -refs 4,
-		  and `ffprobe` should report level=40 before it ships.
-
-		  preload is auto rather than metadata: this element is meant to play the
-		  moment it can, and metadata-only tells the browser to fetch the header
-		  and stop, which just buys a second round trip before playback starts.
-		*/}
-		<video
-			class="hero-video absolute inset-0 h-full w-full object-cover object-center"
-			autoplay
-			muted
-			loop
-			playsinline
-			preload="auto"
-			aria-hidden="true"
-			tabindex="-1"
-			disablepictureinpicture
-		>
-			<source
-				src="https://assets.wellworncreative.com/hero.mp4"
-				type="video/mp4"
-				media="(prefers-reduced-motion: no-preference)"
-			/>
-		</video>
-
-		{/*
-		  Two scrim layers rather than one. A flat tint first, because a moving
-		  frame can go bright anywhere and a purely bottom-weighted gradient
-		  leaves the upper half unprotected; then the gradient on top of it to
-		  bank the density where the copy actually sits. Together they land at
-		  roughly 92% charcoal behind the text, which holds cream above 10:1
-		  against even a blown-out frame, and stay light enough at the top that
-		  the footage still reads.
-		*/}
-		<div aria-hidden="true" class="absolute inset-0 bg-charcoal/25"></div>
-		<div
-			aria-hidden="true"
-			class="absolute inset-0 bg-gradient-to-t from-charcoal/90 via-charcoal/50 to-charcoal/10"
-		>
-		</div>
-
-		<div class="wrapper relative pt-28 pb-12 lg:pb-20">
-			{/*
-			  Russo One, regular, 88px/80px at full width, stepping down to 40px on
-			  phones. The 0.9091 ratio holds the same tight block at every size.
-			  The .display class carries the weight and tracking resets that Russo
-			  One needs; the size ladder stays here because the hero is the one
-			  place on the page that runs past the section scale.
-
-			  The three outer spans are the designed line breaks. They only go block
-			  from lg up, where the longest of them (868px at 72px, 1060px at 88px)
-			  fits the wrapper's inner width (928px, then 1184px); below that the
-			  line wraps on its own rather than being forced into an overflow.
-
-			  The five inner spans are the animation units, and they are five
-			  because the headline sets as three lines at lg and four below it:
-
-			      Websites for | people ‖ who | take business ‖ seriously.
-
-			  Split at both sets of breaks and each rendered line is a whole number
-			  of pieces, so the pieces that share a line can share a delay and what
-			  reads is one line at a time.
-
-			  The four-line grouping is what the text does on its own, not a shape
-			  imposed on it: at 390px the column is 8.55em of Russo One, and
-			  "Websites for" (7.72em), "people who" (6.78em), "take business"
-			  (8.20em) and "seriously." (6.12em) are the only four-line wrap that
-			  fits it. Splitting there makes the breaks deterministic rather than
-			  left to a balancer, which matters once a delay is pinned to each one.
-
-			  The ladder switches at lg, which is where the layout already switches.
-			  Between the two there are two windows — about 690-767px, and 836px up
-			  to lg — where the headline is wide enough to set as three lines while
-			  the four-line ladder is still in force, and the two pieces sharing a
-			  line arrive 120ms apart rather than together. That is a wave along the
-			  line rather than a break in it. The alternative was pinning the switch
-			  to the width at which one string in one face stops fitting, which is a
-			  number that goes quietly wrong the first time the copy changes.
-
-			  inline-block because a transform does nothing to an inline box. It
-			  also means a piece is never broken across lines while it fits, which
-			  is the point; on a phone too narrow for one of them (375px and under,
-			  where "take business" runs past the column) it wraps inside itself and
-			  animates as a unit, which is the graceful end of this rather than an
-			  overflow.
-			*/}
-			<h1
-				class="display text-[2.5rem] leading-[0.9091] text-cream sm:text-[3.25rem] md:text-[4rem] lg:text-[4.5rem] xl:text-[5.5rem]"
-			>
-				<span class="lg:block">
-					<span class="hero-rise inline-block" style="--m:0ms">Websites for</span>{' '}
-					<span class="hero-rise inline-block" style="--m:120ms;--d:0ms">people</span>
-				</span>{' '}
-				<span class="lg:block">
-					<span class="hero-rise inline-block" style="--m:120ms">who</span>{' '}
-					<span class="hero-rise inline-block" style="--m:240ms;--d:120ms">take business</span>
-				</span>{' '}
-				<span class="lg:block">
-					<span class="hero-rise inline-block" style="--m:360ms;--d:240ms">seriously.</span>
-				</span>
-			</h1>
-
-			{/* Montserrat medium, topping out at 24px/33.6px (1.4). Uppercased in
-			    CSS, like the headings, so the sentence stays sentence-case for
-			    screen readers and search engines. The ladder stops at md: the
-			    headline should land first and this should resolve a beat later,
-			    which it does not do if it keeps growing alongside it.
-
-			    Two short sentences and nothing else. No service list, no
-			    explanation of what we do — the work is one screen down and makes
-			    that case far better than a line of nouns here would.
-
-			    Its entrance holds at 480ms whether the headline above it is three
-			    lines or four. The headline is the part that changes shape between
-			    the two, and pegging this to the last of its lines would drag the
-			    end of the sequence around with it; keeping the number still means
-			    the hero finishes the same way at every width. */}
-			<p
-				class="hero-rise mt-6 max-w-3xl font-display text-lg leading-[1.4] font-medium tracking-heading text-cream/80 uppercase sm:text-xl md:text-2xl lg:mt-8"
-				style="--m:480ms"
-			>
-				Your business has grown up. Your website should look like it.
-			</p>
-
-			{/* Held a step further off the copy than the copy is off the headline,
-			    so the call to action reads as its own beat rather than the end of
-			    the paragraph. One of them, asking for the project. A second button
-			    to the work used to sit beside it, and it was the weaker of the two
-			    asks on a page whose next full section is the work: anyone not ready
-			    to be asked scrolls and finds it anyway.
-
-			    It rises on the row rather than on the button, so the hero ends on
-			    one arrival rather than trailing off, and so the timing survives
-			    anything else landing on this row later. The 140ms after the
-			    supporting line is wider than the 120ms between headline lines,
-			    which is what makes it land as its own moment. */}
-			<div
-				class="hero-rise mt-12 flex flex-wrap items-center gap-4 lg:mt-14"
-				style="--m:620ms"
-			>
-				<a href={CONTACT_HREF} class="btn btn-cream">Start a project</a>
-			</div>
-		</div>
-	</section>
+	{/* 1, 2, 3. The client marquee is INSIDE the hero now, on the bottom edge of
+	    the footage, rather than being a band of its own beneath it. */}
+	<Hero />
 
 	{/*
-	  Selected work — the proof, and the first thing after the promise. It used
-	  to sit at the foot of the page behind the whole argument, which is the
-	  wrong way round: the screenshots are what make the hero believable, so
-	  nothing should be able to bounce a visitor off the page before reaching
-	  them.
-
-	  Each project is a preview rather than a card: a name, the claim the work
-	  makes, a sentence of context, what we did, and the live domain, over an
-	  oversized pile of screenshots. There is still no case-study prose — that
-	  would be a different page — but a screenshot alone never said what the job
-	  actually was, and the businesses reading this are trying to work out
-	  whether we have solved a problem shaped like theirs.
-
-	  Every project is a pile of prints rather than a grid of screenshots: the
-	  lead on top and square to the page, the rest behind it showing an edge
-	  each. Pointing at one opens it; pressing it deals the next shot to the
-	  front. One component told which way to open, which is what makes a fourth
-	  project a line of markup rather than a fourth layout — see
-	  ProjectStack.astro for the geometry.
-
-	  The three still do not read alike, because what is in them differs. Cadence
-	  is three deep and opens to the right; Davis is two deep and opens to the
-	  left, so the mass and the void swap sides between them; Veil is a landing
-	  page with the phone capture laid on its left edge, which parts rather than
-	  fans because both of its shots are already in view. Read down the section
-	  the weight still swings, and the section is still not a stack of
-	  screenshots — it is three stacks of them, which is a different thing.
+	  4. This carries the #work fragment the header points at. The testimonials
+	  are the closest thing on the page to a body of work — real clients saying
+	  what the work did — and sending "Work" to the client marquee in the hero
+	  would land a visitor on a strip of marks with nothing to read.
 	*/}
-	<section id="work" class="wrapper py-24 lg:py-36" aria-labelledby="work-heading">
-		{/* The same opening as the section under it: a rust rule, because on cream
-		    there is no change of ground to start one, then the eyebrow, the
-		    heading, and the single line that supports it. */}
-		<div class="border-t border-rust pt-10 lg:pt-14">
-			<p class="eyebrow text-charcoal/70">Selected work</p>
-
-			<h2 id="work-heading" class="display display-section mt-5">
-				Built to do more than sit there.
-			</h2>
-
-			<p class="mt-6 max-w-2xl text-lg leading-relaxed text-charcoal/70 sm:text-xl">
-				A website should make the business clearer, stronger, and easier to choose. Here
-				are a few we've put to work.
-			</p>
-		</div>
-
-		<div class="mt-16 space-y-24 lg:mt-24 lg:space-y-40">
-			{/*
-			  Cadence, the lead, and the deepest pile here: three shots, opening to
-			  the right, the hero capture on top and the darker paperwork section
-			  and the product panels behind it. That is how the section says which
-			  piece of work matters most — there is simply more of it to look
-			  through than the other two, and it takes two turns rather than one to
-			  come back to the top.
-			*/}
-			<article>
-				<ProjectHeading project={cadence} />
-
-				<ProjectStack project={cadence} width={STACK_WIDTH} class="mt-10 lg:mt-14" />
-			</article>
-
-			{/*
-			  Davis, and the mirror of the pile above it: two shots, the homepage
-			  hero over the estimate section, opening left, so the mass sits to the
-			  right and the air it opens into is on the left. Read one after the
-			  other, the two swing the composition across the page.
-			*/}
-			<article>
-				<ProjectHeading project={davis} />
-
-				<ProjectStack project={davis} width={STACK_WIDTH} fan="left" class="mt-10 lg:mt-14" />
-			</article>
-
-			{/*
-			  Veil, the odd one, and the reason the component knows about portrait
-			  shots at all. A phone capture cannot be a card in a deck of landscape
-			  ones — cropped to their frame there would be nothing left of it — so
-			  it is laid on the pile instead, tucked under the landing page's left
-			  edge and hanging below it, and the two part rather than fan. Nothing
-			  is hidden in a pile of two prints of different shapes, so this is the
-			  one project with no control and no count on it.
-			*/}
-			<article>
-				<ProjectHeading project={veil} />
-
-				<ProjectStack project={veil} width={STACK_WIDTH} class="mt-10 lg:mt-14" />
-			</article>
-		</div>
-	</section>
+	<VideoTestimonials testimonials={TESTIMONIALS} id="work" />
 
 	{/*
-	  Why the website matters. Not four equal columns: the heading and its line
-	  hold a column of their own and stay put while the four points scroll past
-	  them. The points are a single stack on hairlines, numbered in rust, so the
-	  section reads as an argument being made rather than a set of tiles.
+	  5, 6, 7. Get found. Earn trust. Make it easy to do business.
+
+	  One component, three bands, alternating side and ground — see the data in
+	  config/home.ts, which is where the alternation is decided rather than here.
 	*/}
-	<section id="why" class="wrapper py-24 lg:py-36" aria-labelledby="why-heading">
-		<div
-			class="grid gap-y-14 border-t border-rust pt-10 lg:grid-cols-12 lg:gap-x-12 lg:pt-14"
-		>
-			{/* self-start keeps the grid item from stretching, which is what lets
-			    sticky have anywhere to travel. top-32 clears the 5rem header. */}
-			<div class="lg:sticky lg:top-32 lg:col-span-5 lg:self-start">
-				<p class="eyebrow text-charcoal/70">More than a pretty website</p>
+	{PROMISES.map((promise) => <PromiseSection promise={promise} />)}
 
-				<h2 id="why-heading" class="display display-section mt-5">
-					<span class="lg:block">Your website</span>{' '}
-					<span class="lg:block">has a job</span>{' '}
-					<span class="lg:block">to do.</span>
-				</h2>
+	{/* 8 */}
+	<ServicesAccordion
+		heading={SERVICES_INTRO.heading}
+		body={SERVICES_INTRO.body}
+		services={SERVICES}
+		id="services"
+	/>
 
-				<p class="mt-8 max-w-md text-lg leading-relaxed text-charcoal/70 sm:text-xl">
-					Looking good is part of it. So is earning trust, making your business easy to
-					understand, and giving people a reason to choose you.
-				</p>
+	{/* 9 */}
+	<PricingSection
+		eyebrow={PRICING.eyebrow}
+		heading={PRICING.heading}
+		body={PRICING.body}
+		plans={PLANS}
+		id="pricing"
+	/>
 
-				{/* The section argues that a website has to earn trust, so the picture
-				    under it is trust being earned in person. Native 3:2, so nothing
-				    is cropped away. max-w-md ties it to the measure of the paragraph
-				    above rather than letting it run the full column.
+	{/* 10 */}
+	<AdditionalServices
+		heading={ADDITIONAL.heading}
+		body={ADDITIONAL.body}
+		services={ADDITIONAL_SERVICES}
+	/>
 
-				    The frame is a wrapper rather than the image itself, because the
-				    image moves inside it: see .scroll-settle in global.css. The
-				    aspect and the rounding move with it, so the box the layout sees
-				    is identical either way. */}
-				<div
-					class="scroll-settle mt-10 aspect-[3/2] w-full max-w-md overflow-clip rounded-sm"
-				>
-					<Image
-						src={customerImage}
-						alt="A shop owner in an apron talking a customer through the shelves of her gift shop."
-						widths={[400, 600, 800, 1200]}
-						sizes="(min-width: 1024px) 28rem, 100vw"
-						width={1200}
-						height={800}
-						quality={80}
-						class="h-full w-full object-cover"
-					/>
-				</div>
-			</div>
+	{/* 11 */}
+	<PhilosophySection />
 
-			<ol class="border-b border-charcoal/20 lg:col-span-6 lg:col-start-7">
-				{
-					WHY_WELLWORN.map((point, index) => (
-						<li class="grid grid-cols-[2.75rem_1fr] gap-x-5 border-t border-charcoal/20 py-8 lg:grid-cols-[4rem_1fr] lg:gap-x-8 lg:py-10">
-							{/* The numbers are the page's clearest run of the accent. Rust
-							    clears contrast as large text, which this is at both sizes,
-							    and never has to carry anything smaller. */}
-							<p class="display text-[1.75rem] text-rust lg:text-[2.25rem]">{ordinal(index)}</p>
+	{/* 12 */}
+	<ClosingCollage lines={CLOSING.lines} tiles={COLLAGE} />
 
-							<div>
-								<h3 class="text-xl leading-snug sm:text-2xl">{point.title}</h3>
-								<p class="mt-3 leading-relaxed text-charcoal/70 sm:text-lg">{point.body}</p>
-							</div>
-						</li>
-					))
-				}
-			</ol>
-		</div>
-	</section>
-
-	{/*
-	  Capabilities. An index rather than three feature cards: one rule per row,
-	  the name set large and the line that explains it directly beneath it.
-	  Inverted so it carries weight between two cream sections — the change of
-	  ground is what announces it.
-
-	  Three, not four. Branding follows underneath at a quarter of the size,
-	  because it is real work but it is not what this page is selling, and giving
-	  it an equal row made the page look unsure what it was for.
-	*/}
-	<section id="services" class="bg-charcoal text-cream" aria-labelledby="services-heading">
-		<div class="wrapper py-24 lg:py-36">
-			<div class="grid gap-y-6">
-				<h2 id="services-heading" class="display display-section">Whatever the website needs.</h2>
-
-				<p class="max-w-2xl text-lg leading-relaxed text-cream/70 sm:text-xl">
-					Sometimes you need one sharp page. Sometimes you need a full website, an online
-					store, or something more custom. We start with the business and build what makes
-					sense around it.
-				</p>
-			</div>
-
-			{/* Name over description, same as every other pairing on the page. The
-			    rule at the head of each row is what separates one capability from
-			    the next now that the two halves share a column.
-
-			    A row answers a pointer resting on it by stepping in from the margin
-			    and coming up out of the muted grey it sits at — the rule above it
-			    brightening at the same time, so what responds is the whole row and
-			    not just a word in it. Deliberately no fill and no cursor change:
-			    these are not links, and a tinted band under one would say they
-			    were. It is the index acknowledging where you are reading. */}
-			<dl class="mt-16 border-b border-cream/15 lg:mt-24">
-				{
-					CAPABILITIES.map((capability) => (
-						<div class="group grid gap-y-4 border-t border-cream/15 py-8 transition-colors duration-300 hover:border-cream/40 lg:py-12">
-							<dt class="display display-item transition-transform duration-300 ease-out motion-safe:group-hover:translate-x-1.5">
-								{capability.title}
-							</dt>
-							<dd class="max-w-xl text-lg leading-relaxed text-cream/70 transition-colors duration-300 group-hover:text-cream/90">
-								{capability.body}
-							</dd>
-						</div>
-					))
-				}
-			</dl>
-
-			{/*
-			  Branding, set as an aside. It is pushed to the right half and dropped
-			  to label scale so that nothing about it competes with the three names
-			  above: the eye reads the index, then finds this. Full-strength cream
-			  on the question so it still reads as a heading rather than as
-			  metadata, and no rule of its own — a fourth hairline here would put it
-			  straight back in the list.
-			*/}
-			<div class="mt-14 lg:mt-20 lg:grid lg:grid-cols-12">
-				<div class="lg:col-span-6 lg:col-start-7">
-					<h3 class="eyebrow text-cream">{BRANDING.heading}</h3>
-
-					<p class="mt-4 max-w-lg leading-relaxed text-cream/70 sm:text-lg">
-						{BRANDING.body}
-					</p>
-				</div>
-			</div>
-		</div>
-	</section>
-
-	{/*
-	  The difference, and the page's one full spread. The photograph is a
-	  business doing its own work while somebody else handles the website, which
-	  is the whole claim of the section, so it is given the scale to make it: it
-	  runs edge to edge on a phone — the only picture on the page that does — and
-	  takes five of twelve columns beside the statement above that.
-
-	  The statement is set in the page's statement voice rather than as a section
-	  heading, because it is an assertion and not a label for what follows. It is
-	  one of only two places that voice is used; the close at the foot of the
-	  page is the other.
-
-	  Portrait at 3:4, the mildest crop this frame takes without cutting into
-	  her.
-	*/}
-	<section class="wrapper py-24 lg:py-36" aria-labelledby="platform-heading">
-		<div class="grid gap-y-12 lg:grid-cols-12 lg:items-center lg:gap-x-16">
-			<div
-				class="scroll-settle -mx-6 aspect-[3/4] overflow-clip sm:-mx-8 lg:mx-0 lg:col-span-5 lg:rounded-sm"
-			>
-				<Image
-					src={bakeryImage}
-					alt="A baker in a sunlit kitchen boxing cupcakes beside finished cakes on a stand."
-					widths={[400, 600, 800, 1000]}
-					sizes="(min-width: 1024px) 30rem, 100vw"
-					width={1000}
-					height={1628}
-					quality={80}
-					class="h-full w-full object-cover"
-				/>
-			</div>
-
-			<div class="lg:col-span-7 lg:col-start-6">
-				<h2 id="platform-heading" class="display display-statement">
-					Built around your business, not a platform.
-				</h2>
-
-				<p class="mt-10 max-w-xl text-lg leading-relaxed text-charcoal/70 sm:text-xl">
-					We don't start by deciding which website builder to put you on. We start with
-					what the business needs, then choose and build the right thing around it.
-				</p>
-
-				<p class="mt-6 max-w-xl text-lg leading-relaxed text-charcoal/70 sm:text-xl">
-					That means fewer compromises now and less to undo later.
-				</p>
-			</div>
-		</div>
-	</section>
-
-	{/*
-	  Process. The mirror of the spread above it — heading left, photograph right
-	  — so two cream sections in a row do not sit in the same shape.
-
-	  The picture is two people working something out on a laptop, which is what
-	  the section is promising: a conversation, not a ticket. Three steps under
-	  it, one rule each, numbered because the claim being made is that there is
-	  no mystery to it.
-	*/}
-	<section id="how-it-works" class="wrapper py-24 lg:py-36" aria-labelledby="how-it-works-heading">
-		<div class="grid gap-y-10 lg:grid-cols-12 lg:items-end lg:gap-x-12">
-			<div class="lg:col-span-5">
-				<h2 id="how-it-works-heading" class="display display-section">
-					We figure out what you actually need.
-				</h2>
-
-				<p class="mt-8 max-w-md text-lg leading-relaxed text-charcoal/70 sm:text-xl">
-					No mystery process. No disappearing for weeks. We work out the right direction,
-					build it, and make sure you know what happens next.
-				</p>
-			</div>
-
-			<div
-				class="scroll-settle aspect-[3/2] w-full overflow-clip rounded-sm lg:col-span-7 lg:col-start-6"
-			>
-				<Image
-					src={figureItOutImage}
-					alt="Two people sitting together on a sofa in a clothing shop, working through something on a laptop."
-					widths={[640, 960, 1280, 1600, 1920]}
-					sizes="(min-width: 1024px) 44rem, 100vw"
-					width={1920}
-					height={1280}
-					quality={80}
-					class="h-full w-full object-cover"
-				/>
-			</div>
-		</div>
-
-		{/*
-		  An <ol>, because the order is the sequence. The numerals are set at label
-		  scale above each name rather than large and in rust: the four points
-		  upstairs already own that treatment, and repeating it here would make the
-		  two lists look like one list split in half.
-
-		  Each step rises in as it comes up the screen, and the offset walks the
-		  range along by a step per item so they resolve first, second, third — the
-		  order being the whole content of this list, it is worth having the row
-		  arrive in it. At lg they are side by side and would otherwise land
-		  together; stacked on a phone they are already in order, and the offset
-		  only spaces them a little further apart.
-		*/}
-		<ol class="mt-16 grid gap-y-10 lg:mt-24 lg:grid-cols-3 lg:gap-x-12">
-			{
-				PROCESS.map((step, index) => (
-					<li
-						class="rise-in border-t border-charcoal/20 pt-6 lg:pt-8"
-						style={`--rise-offset:${index * 8}%`}
-					>
-						{/* /70 rather than /50: this is 12px type, so it needs the full
-						    4.5:1, which charcoal only reaches here at 70%. */}
-						<p class="eyebrow text-charcoal/70">{ordinal(index)}</p>
-
-						{/* The one place green is still set as type rather than kept for
-						    a hover. Three step names on cream is a small enough dose to
-						    keep the colour in the brand without letting it own a band of
-						    the page, and forest clears 9.7:1 here, so the size is free. */}
-						<h3 class="display mt-5 text-[1.5rem] text-forest sm:text-[1.75rem] lg:text-[2rem]">
-							{step.title}
-						</h3>
-
-						<p class="mt-4 max-w-md leading-relaxed text-charcoal/70 sm:text-lg">{step.body}</p>
-					</li>
-				))
-			}
-		</ol>
-	</section>
-
-	{/*
-	  The close. Everything the page has to say has been said, so this is type
-	  and nothing else: the largest block on the page outside the hero, one
-	  paragraph, one button.
-
-	  Deliberately no photograph. Every section above it has carried one, and the
-	  last thing a visitor should meet before the form is the sentence — a
-	  picture here would only give the eye somewhere else to go.
-	*/}
-	<section class="bg-charcoal text-cream" aria-labelledby="close-heading">
-		<div class="wrapper py-24 lg:py-36">
-			<div class="border-t border-rust pt-12 lg:pt-16">
-				<h2 id="close-heading" class="display display-statement max-w-5xl">
-					Your business shouldn't have to apologize for its website.
-				</h2>
-
-				<p class="mt-10 max-w-2xl text-lg leading-relaxed text-cream/80 sm:text-xl">
-					Whether you're starting fresh, replacing something you've outgrown, or finally
-					making the website feel like the business behind it, tell us what you're working
-					on.
-				</p>
-
-				<a href={CONTACT_HREF} class="btn btn-cream mt-12 lg:mt-14">Start a project</a>
-			</div>
-		</div>
-	</section>
-
-	{/*
-	  The form. Charcoal, continuing the close above it, with the rust rule doing
-	  the separating that a change of ground would do elsewhere.
-
-	  Low friction is the whole design brief here: six things to pick from rather
-	  than nine, three fields, and one box to write in. The chips are real
-	  checkboxes — the input is visually hidden and the span beside it is styled
-	  from peer-checked, so the whole thing works with the keyboard, submits as a
-	  normal multi-value field, and needs no JavaScript.
-	*/}
-	<section id="contact" class="bg-charcoal text-cream" aria-labelledby="contact-heading">
-		<div class="wrapper py-24 lg:py-36">
-			{/* One line at 56px comes to 953px, so this heading stays unbroken at
-			    full width and the line under it gets the whole measure beneath. */}
-			<div class="grid gap-y-6 border-t border-cream/15 pt-12 lg:pt-16">
-				<h2 id="contact-heading" class="display display-section">What are you working on?</h2>
-
-				<p class="max-w-2xl text-lg leading-relaxed text-cream/80 sm:text-xl">
-					Pick what you know. Skip what you don't. We'll figure out the rest together.
-				</p>
-			</div>
-
-			{/* Rust opens the form the same way it opens the sections upstairs: the
-			    one rule on this panel that is the start of something rather than a
-			    divider inside it. At 3.6:1 on charcoal it clears the floor for a
-			    rule and nothing more, which is all it is being asked to do. */}
-			<form
-				method="post"
-				action={formConfigured ? FORM_ENDPOINT : undefined}
-				class="mt-16 border-t border-rust pt-12 lg:mt-24 lg:pt-16"
-			>
-				<fieldset>
-					<legend class="eyebrow text-cream/70">What do you need help with?</legend>
-
-					<div class="mt-6 flex flex-wrap gap-2.5 sm:gap-3">
-						{
-							PROJECT_TYPES.map((type) => (
-								<label>
-									<input type="checkbox" name="needs" value={type} class="peer sr-only" />
-									<span class="chip peer-checked:border-cream peer-checked:bg-cream peer-checked:text-charcoal peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-cream">
-										{type}
-									</span>
-								</label>
-							))
-						}
-					</div>
-				</fieldset>
-
-				{/* Three fields across the top row at desktop, then the message and
-				    the button sharing the row below it, so the CTA sits on the
-				    baseline of the textarea rather than adrift under the form. */}
-				<div
-					class="mt-14 grid gap-x-8 gap-y-10 border-t border-cream/20 pt-12 sm:grid-cols-2 lg:mt-16 lg:grid-cols-12 lg:gap-x-12 lg:gap-y-12 lg:pt-16"
-				>
-					<label class="block lg:col-span-4">
-						<span class="eyebrow text-cream/70">Name</span>
-						<input type="text" name="name" required autocomplete="name" class="field mt-3" />
-					</label>
-
-					<label class="block lg:col-span-4">
-						<span class="eyebrow text-cream/70">Email</span>
-						<input type="email" name="email" required autocomplete="email" class="field mt-3" />
-					</label>
-
-					<label class="block sm:col-span-2 lg:col-span-4">
-						<span class="eyebrow text-cream/70">Business</span>
-						<input
-							type="text"
-							name="business"
-							autocomplete="organization"
-							class="field mt-3"
-						/>
-					</label>
-
-					{/* The prompt sits outside the <label> and is tied on with
-					    aria-describedby rather than being nested inside it. Nested, it
-					    would be read as part of the field's name, so the label would
-					    announce as one thirteen-word sentence; described this way it
-					    arrives after the name, which is what a hint is. */}
-					<div class="sm:col-span-2 lg:col-span-7">
-						<label class="block" for="message">
-							<span class="eyebrow text-cream/70">Tell us a little about it</span>
-						</label>
-
-						<p id="message-hint" class="mt-3 text-sm leading-relaxed text-cream/70">
-							What does the business do, and what would you like the website to do better?
-						</p>
-
-						<textarea
-							id="message"
-							name="message"
-							rows="5"
-							aria-describedby="message-hint"
-							class="field mt-3 resize-y leading-relaxed"></textarea>
-					</div>
-
-					<div class="sm:col-span-2 lg:col-span-4 lg:col-start-9 lg:self-end">
-						<button
-							type="submit"
-							disabled={!formConfigured}
-							class="btn btn-cream w-full disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-cream disabled:hover:bg-cream sm:w-auto lg:w-full"
-						>
-							Let's talk
-							<svg
-								aria-hidden="true"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="square"
-								class="h-4 w-4"
-							>
-								<path d="M4 12h15M13 6l6 6-6 6"></path>
-							</svg>
-						</button>
-					</div>
-				</div>
-
-				{/* Honeypot. Bots fill it, people never see it. */}
-				<div class="hidden" aria-hidden="true">
-					<label>
-						Leave this field empty
-						<input type="text" name="_gotcha" tabindex="-1" autocomplete="off" />
-					</label>
-				</div>
-			</form>
-		</div>
-	</section>
+	{/* 13 — the footer comes from BaseLayout. */}
 </BaseLayout>
-
-<style>
-	/*
-	  The hero's entrance. Every piece of it starts 16px low and transparent and
-	  arrives over 550ms: the headline a line at a time 120ms apart, then the
-	  supporting line, then the pair of buttons. Nothing scales, blurs, or
-	  overshoots — the hero already has a moving picture behind it, and a second
-	  kind of movement in front of it would be one too many. This is only the
-	  copy settling into place.
-
-	  The last of it starts at 620ms and is done at 1170ms, which is where the
-	  header's wordmark finishes drawing, so the top of the page and the hero
-	  come to rest together rather than one after the other.
-
-	  Each element carries its own delay: --m is the mobile ladder, where the
-	  headline is four lines, and --d the desktop one, where it is three.
-	  Anything whose timing is the same at both widths — the supporting line, the
-	  buttons, and the headline pieces that do not move between the two — sets
-	  only --m, and --d falls back to it.
-	*/
-	.hero-rise {
-		animation: hero-rise 550ms cubic-bezier(0.33, 1, 0.68, 1) var(--m, 0ms) backwards;
-	}
-
-	/* lg, where the headline goes to three lines. The longhand has to come after
-	   the shorthand that sets the same property: a media query adds no
-	   specificity, so source order is the whole of what makes this win. */
-	@media (min-width: 64rem) {
-		.hero-rise {
-			animation-delay: var(--d, var(--m, 0ms));
-		}
-	}
-
-	/* Only a from: the resting state is the element exactly where the layout
-	   puts it, so `backwards` is what holds it low and hidden through its delay,
-	   and an animation that never runs leaves the hero simply present. */
-	@keyframes hero-rise {
-		from {
-			opacity: 0;
-			transform: translateY(1rem);
-		}
-	}
-
-	/*
-	  The global reduce rule collapses animation duration but not delay, which
-	  with `backwards` would hold each piece at opacity 0 for its full stagger —
-	  up to 620ms of blank hero, which is worse than the animation it is meant to
-	  spare anyone. Drop it outright instead: everything is there on the first
-	  frame.
-	*/
-	@media (prefers-reduced-motion: reduce) {
-		.hero-rise {
-			animation: none;
-		}
-	}
-</style>

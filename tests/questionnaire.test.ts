@@ -676,13 +676,17 @@ test('an unthemed questionnaire sets no custom properties at all', () => {
 	assert.equal(themeStyle(resolveTheme(questionnaire.theme)), undefined)
 })
 
-test('the resolver defaults and the :root block in global.css describe the same page', async () => {
-	/* The drift guard. global.css declares each --q-* default as a palette token
+test('the resolver defaults and the :root block in tokens.css describe the same page', async () => {
+	/* The drift guard. tokens.css declares each --q-* default as a palette token
 	   and this file declares it as a hex; if the two ever disagree, an unthemed
 	   page renders one thing and the resolver believes it renders another —
 	   which would show up as properties being emitted on a page that asked for
-	   no theme. Resolving the tokens here is what makes that impossible to miss. */
-	const css = await readFile('src/styles/global.css', 'utf8')
+	   no theme. Resolving the tokens here is what makes that impossible to miss.
+
+	   The file moved: global.css is now an import manifest and holds no
+	   declarations of its own. Both the palette and the nineteen semantic
+	   properties live in tokens.css, which is what this reads. */
+	const css = await readFile('src/styles/tokens.css', 'utf8')
 
 	const tokens = new Map<string, string>()
 	for (const [, name, value] of css.matchAll(/--color-([a-z0-9-]+):\s*(#[0-9a-fA-F]{3,8});/g)) {
@@ -692,7 +696,7 @@ test('the resolver defaults and the :root block in global.css describe the same 
 	const declared = new Map<string, string>()
 	for (const [, name, reference] of css.matchAll(/(--q-[a-z-]+):\s*var\((--color-[a-z0-9-]+)\);/g)) {
 		const hex = tokens.get(reference)
-		assert.ok(hex, `${name} points at ${reference}, which global.css does not define`)
+		assert.ok(hex, `${name} points at ${reference}, which tokens.css does not define`)
 		declared.set(name, hex)
 	}
 

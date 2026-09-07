@@ -1,0 +1,216 @@
+---
+/**
+ * PRICING.
+ *
+ * Black, and the first time the page has gone black. That change of ground is
+ * the whole framing device: nothing here is boxed, nothing floats, there is no
+ * comparison table and there are no cards. Two plans, stacked as full-width
+ * bands, separated by a hairline. The price is the loudest thing in each band
+ * and it is set in the serif at display scale, which is the one place on the
+ * page a number is allowed to behave like a headline.
+ *
+ * Two plans. There is no third, there is no enterprise tier, and the only
+ * badge is BEST VALUE.
+ */
+import { CONTACT_HREF, CTA_LABEL } from '../../config/site';
+import type { Plan } from '../../config/home';
+
+interface Props {
+	eyebrow: string;
+	heading: string;
+	body: string;
+	plans: readonly Plan[];
+	id?: string;
+}
+
+const { eyebrow, heading, body, plans, id }: Props = Astro.props;
+
+const planId = (index: number) => `plan-${index + 1}`;
+---
+
+<section class="ww-section ww-section-dark ww-pricing" id={id} aria-labelledby="pricing-heading">
+	<div class="ww-container">
+		<header class="ww-pricing-head">
+			<p class="ww-eyebrow ww-muted">{eyebrow}</p>
+
+			<h2 id="pricing-heading" class="ww-display-lg">{heading}</h2>
+
+			<p class="ww-body-lg ww-measure ww-muted">{body}</p>
+		</header>
+
+		<div class="ww-plans">
+			{
+				plans.map((plan, index) => (
+					<article class="ww-plan" aria-labelledby={`${planId(index)}-name`}>
+						<div class="ww-plan-lead">
+							{/*
+							  A small restrained label, not a ribbon and not a pill in the
+							  accent colour. It sits where an eyebrow sits, in the same mono
+							  face, and the only thing marking it out is that it is white
+							  where the eyebrows above it are grey.
+							*/}
+							{plan.badge && <p class="ww-eyebrow ww-plan-badge">{plan.badge}</p>}
+
+							<h3 id={`${planId(index)}-name`} class="ww-display-md">
+								{plan.name}
+							</h3>
+
+							<p class="ww-body ww-muted ww-plan-body">{plan.body}</p>
+
+							{/*
+							  The price. Serif, display-xxl, and deliberately not a heading:
+							  it is a quantity, and putting it in the outline between the
+							  plan name and the feature list would make the page's structure
+							  read "Website / $175/mo." as two peer headings.
+							*/}
+							<p class="ww-display-xxl ww-plan-price">{plan.price}</p>
+
+							<a href={CONTACT_HREF} class="ww-btn ww-btn-light ww-plan-cta">
+								{CTA_LABEL}
+								<span class="ww-sr-only">{` on ${plan.name}`}</span>
+							</a>
+						</div>
+
+						<div class="ww-plan-features">
+							<ul>
+								{plan.features.map((feature) => (
+									<li>
+										<span class="ww-body">{feature.label}</span>
+										{/*
+										  The capability underneath the label, where there is one.
+										  It makes the plan concrete without changing a word of
+										  the plan language above it.
+										*/}
+										{feature.detail && (
+											<span class="ww-small ww-muted ww-plan-detail">{feature.detail}</span>
+										)}
+									</li>
+								))}
+							</ul>
+
+							{plan.note && <p class="ww-small ww-plan-note">{plan.note}</p>}
+						</div>
+					</article>
+				))
+			}
+		</div>
+	</div>
+</section>
+
+<style>
+	.ww-pricing-head > * + * {
+		margin-top: var(--space-md);
+	}
+
+	.ww-plans {
+		margin-top: var(--space-2xl);
+		border-top: 1px solid var(--ww-hairline-dark);
+	}
+
+	@media (min-width: 768px) {
+		.ww-plans {
+			margin-top: var(--space-3xl);
+		}
+	}
+
+	/*
+	  MOBILE: one column. Name, description, price, action, then the features —
+	  which is the order the reference's mobile pricing reads in, and the order
+	  the decision is actually made in.
+	*/
+	.ww-plan {
+		padding-block: var(--space-xl);
+		border-bottom: 1px solid var(--ww-hairline-dark);
+	}
+
+	.ww-plan-badge {
+		color: var(--ww-white);
+		margin-bottom: var(--space-md);
+	}
+
+	.ww-plan-body {
+		margin-top: var(--space-sm);
+		max-width: 42ch;
+	}
+
+	.ww-plan-price {
+		margin-top: var(--space-lg);
+	}
+
+	.ww-plan-cta {
+		margin-top: var(--space-lg);
+		/* Full width on a phone, where a pill floating in the middle of a black
+		   band has nothing to align to. */
+		display: flex;
+		width: 100%;
+	}
+
+	.ww-plan-features {
+		margin-top: var(--space-xl);
+	}
+
+	.ww-plan-features ul {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	/* Hairlines again, one per feature. It is the same device as the service
+	   rows above and the footer below, at a smaller scale. */
+	.ww-plan-features li {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: var(--space-sm);
+		padding-block: var(--space-sm);
+		border-top: 1px solid var(--ww-hairline-dark);
+	}
+
+	.ww-plan-features li:first-child {
+		border-top: 0;
+		padding-top: 0;
+	}
+
+	.ww-plan-detail {
+		/* Pushed to the end of the row so the labels form a clean left column and
+		   the detail reads as an annotation rather than as a second feature. */
+		margin-inline-start: auto;
+	}
+
+	.ww-plan-note {
+		margin-top: var(--space-lg);
+		color: var(--ww-white);
+	}
+
+	/*
+	  DESKTOP: the band splits. The name, price and action take the left third
+	  and the features take the right, so the two plans line up as two rows of a
+	  page rather than as two columns of a table. Nothing is drawn around either
+	  half; the hairline between the bands is the only structure.
+	*/
+	@media (min-width: 768px) {
+		.ww-plan {
+			display: grid;
+			grid-template-columns: 5fr 6fr;
+			gap: var(--space-2xl);
+			padding-block: var(--space-2xl);
+		}
+
+		.ww-plan-cta {
+			display: inline-flex;
+			width: auto;
+		}
+
+		.ww-plan-features {
+			margin-top: 0;
+		}
+	}
+
+	@media (min-width: 1024px) {
+		.ww-plan {
+			grid-template-columns: 1fr 1fr;
+			gap: var(--space-3xl);
+			padding-block: var(--space-3xl);
+		}
+	}
+</style>

@@ -1,487 +1,590 @@
 ---
-import { NAV, SITE } from '../config/site';
+/**
+ * The site header.
+ *
+ * A white bar, a wordmark, three words, and one action. That is the whole of
+ * it, and the restraint is the design: the reference this site is built
+ * against puts a short row of plain nouns against a flat white ground and lets
+ * the page underneath do the talking. There is no mega menu, no icon set and
+ * no dropdown, and adding any of them would be the first step back towards a
+ * navigation bar that needs its own navigation.
+ *
+ * Below the `lg` breakpoint the three words fold into a panel behind a
+ * toggle. The action does not fold with them: "Start a project" stays in the
+ * bar at every width, because the one thing a visitor might want to do from
+ * anywhere on the page should never be two taps away.
+ *
+ * TWO MODES, one bar. By default it is that white bar, sticky, with a hairline
+ * under it. With `overlay` it is fixed and transparent and sits ON the page's
+ * hero rather than above it — the reference runs its wordmark and nav directly
+ * over the hero footage with no white band between them, and a white band is
+ * exactly what makes a full-bleed hero read as a picture placed under a
+ * website instead of as the first screen of one. Once the hero has scrolled
+ * past, the bar takes its normal white surface back.
+ *
+ * The overlay is for a page that opens on full-bleed media and nothing else.
+ * Every internal page keeps the plain white bar, because a transparent header
+ * over a white page is an invisible header.
+ */
+import { CONTACT_HREF, CTA_LABEL, NAV, SITE } from '../config/site';
 import Wordmark from './Wordmark.astro';
 
 interface Props {
 	/** Extra classes for the outer <header>. */
 	class?: string;
+	/**
+	 * Sit the bar on top of the page's hero rather than above it: fixed,
+	 * transparent, white type, no hairline. Only for a page whose first element
+	 * is full-bleed media tall enough to hold it.
+	 */
+	overlay?: boolean;
 }
 
-const { class: className = '' }: Props = Astro.props;
-
-/** 01, 02, 03 — the same index the process list upstairs is numbered with. */
-const ordinal = (index: number): string => String(index + 1).padStart(2, '0');
+const { class: className = '', overlay = false }: Props = Astro.props;
 ---
 
 {/*
-  The header holds the mark and one control. That control used to be the "Get
-  in touch" button, which made the header say the same thing the hero, the
-  close, and the footer were already saying, and left the other six sections of
-  a very long single page reachable only by scrolling. It is a menu now, and
-  contact is the last row in it.
-
-  The panel is a sibling of <header>, not a child, and has to be: the header
-  carries backdrop-blur, and a backdrop-filter makes an element the containing
-  block for its fixed descendants — a fixed panel inside it would be laid out
-  against the 5rem bar instead of the viewport. Kept in this component anyway,
-  because the button and the panel are one control.
+  `data-solid` is rendered ON and taken off again by the inline script below,
+  so the no-JavaScript rendering of an overlay header is the ordinary white bar
+  rather than white type on a white page. The script runs during parse, before
+  the bar has been painted once, so there is no flash of the solid state.
 */}
 <header
-	data-site-header
-	class:list={[
-		'sticky top-0 z-50 border-b border-charcoal/10 bg-cream/95 backdrop-blur-sm',
-		'transition-colors duration-300',
-		className,
-	]}
+	class:list={['ww-header', className]}
+	data-overlay={overlay ? '' : undefined}
+	data-solid={overlay ? '' : undefined}
 >
-	<div class="wrapper flex h-20 items-center justify-between gap-4 sm:gap-8">
+	<div class="ww-header-inner">
 		{/* The colour lives on the link rather than on the <svg>, so the mark
-		    inherits it through currentColor and flips to cream with the rest of
-		    the bar when the menu is open. */}
-		<a
-			href="/"
-			class="brand-link shrink-0 text-charcoal transition-opacity duration-200 hover:opacity-70"
-		>
-			<Wordmark animate class="h-8 w-auto sm:h-10" />
+		    inherits it through currentColor. The wordmark is supplied artwork and
+		    is not redrawn here; only its size and colour are this file's
+		    business. */}
+		<a href="/" class="ww-header-brand" aria-label={`${SITE.name}, home`}>
+			<Wordmark class="ww-header-mark" />
 		</a>
 
-		{/* -mr-3 pulls the 48px tap target's padding back so the bars line up with
-		    the wrapper gutter rather than sitting an eighth of an inch inside it. */}
-		<button
-			type="button"
-			id="menu-toggle"
-			class="menu-toggle -mr-3 shrink-0"
-			aria-controls="site-menu"
-			aria-expanded="false"
-		>
-			<span class="sr-only">Menu</span>
+		<nav class="ww-header-nav" aria-label="Main">
+			<ul>
+				{
+					NAV.map((item) => (
+						<li>
+							<a href={item.href}>{item.label}</a>
+						</li>
+					))
+				}
+			</ul>
+		</nav>
 
-			<span class="bars" aria-hidden="true">
-				<span class="bar"></span>
-				<span class="bar"></span>
-				<span class="bar"></span>
-			</span>
-		</button>
+		<div class="ww-header-actions">
+			<a href={CONTACT_HREF} class="ww-btn ww-btn-dark ww-header-cta">{CTA_LABEL}</a>
+
+			{/* The toggle is last in the DOM so that a keyboard user reaching it has
+			    already passed the brand and the action, and the panel it opens is
+			    the very next thing in the tab order. */}
+			<button
+				type="button"
+				class="ww-header-toggle"
+				aria-controls="site-menu"
+				aria-expanded="false"
+				data-menu-toggle
+			>
+				<span class="ww-sr-only">Menu</span>
+				<span class="ww-header-bars" aria-hidden="true">
+					<span></span>
+					<span></span>
+				</span>
+			</button>
+		</div>
+	</div>
+
+	{/*
+	  The mobile panel. A sibling of the bar inside the same sticky header, so it
+	  hangs off the bottom of it and the bar stays put behind it.
+
+	  `inert` while closed rather than `display: none`, because it has to be
+	  animatable AND unreachable, and only one of those comes free with the
+	  other. Everything inside it — links, the action — is taken out of the tab
+	  order and hidden from assistive tech by the one attribute.
+	*/}
+	<div id="site-menu" class="ww-header-panel" inert>
+		<nav aria-label="Main, expanded">
+			<ul>
+				{
+					NAV.map((item) => (
+						<li>
+							<a href={item.href}>{item.label}</a>
+						</li>
+					))
+				}
+			</ul>
+		</nav>
 	</div>
 </header>
 
-{/*
-  The menu. Charcoal, like the two panels on the page that make its flattest
-  claims, and it opens as an index rather than a list of links: rule, number,
-  name, and the line saying what is down there — the same four parts, in the
-  same order, as the capabilities index in #services.
+{
+	/*
+	  Two lines, inline and synchronous, and they have to be both.
 
-  What it is built out of is the point. Every section on the page opens with a
-  rule that draws and a heading; the wordmark opens by drawing its box and
-  wiping its letters in left to right. So the menu opens the same way, five
-  times over: each rust rule draws from the left, each name wipes in behind it
-  on the wordmark's own curve, and the rows resolve in page order 70ms apart.
-  Nothing here is a generic slide-in — it is the site's own entrance, repeated.
-*/}
-<nav id="site-menu" class="site-menu" aria-label="Sections" inert>
-	<div class="wrapper flex min-h-full flex-col pt-24 pb-10 sm:pt-28 lg:pb-14">
-		<ul>
-			{
-				NAV.map((item, index) => (
-					<li class="menu-row" style={`--row:${index}`}>
-						<a href={item.href} class="menu-link">
-							{/* The rule is the row's own element rather than a border, because a
-							    border cannot be drawn: this one scales out from its left edge. */}
-							<span class="menu-rule" aria-hidden="true" />
+	  The bar is rendered `data-solid` so that a page with no JavaScript gets
+	  the readable white header rather than white type over whatever the hero
+	  section turns out to be. Taking the attribute off is therefore the FIRST
+	  thing that has to happen, before the browser has painted the bar once —
+	  and a bundled <script> cannot do that, because Astro emits it as a module,
+	  modules are deferred, and deferred means "after the document is parsed",
+	  which is comfortably after the first paint of a header sitting at the top
+	  of the body. Hence is:inline.
 
-							<span class="menu-lead">
-								{/* Stone, not rust. Rust is the accent that opens every section on
-								    the page, but at 3.6:1 on charcoal it is a rule colour and never
-								    type — least of all 12px type. Stone clears 6.1:1 here. */}
-								<span class="menu-index eyebrow" aria-hidden="true">
-									{ordinal(index)}
-								</span>
-
-								<span class="menu-name display">{item.label}</span>
-							</span>
-
-							<span class="menu-note">{item.note}</span>
-						</a>
-					</li>
-				))
-			}
-		</ul>
-
-		{/* The rule that closes the index, the way the capability list closes
-		    itself downstairs. It is the sixth row as far as the stagger is
-		    concerned, so it draws last and the menu finishes on the same gesture
-		    it started with. */}
-		<span class="menu-rule menu-rule-close" style={`--row:${NAV.length}`} aria-hidden="true"
-		></span>
-
-		{/* mt-auto rather than a margin: the index sits under the header where it
-		    was dealt, and this settles to the foot of whatever screen it lands on.
-		    The same address the footer carries, for anyone who would rather not
-		    scroll to a form. */}
-		<div class="menu-foot mt-auto pt-12">
-			<p class="eyebrow text-stone">Or just email us</p>
-
-			<p class="mt-4">
-				<a
-					href={`mailto:${SITE.email}`}
-					class="text-lg text-cream underline decoration-stone/60 underline-offset-4 transition-colors duration-200 hover:decoration-rust focus-visible:outline-cream sm:text-xl"
-				>
-					{SITE.email}
-				</a>
-			</p>
-		</div>
-	</div>
-</nav>
+	  It cannot do the rest of the work either: at this point in the parse the
+	  <main> below has not been seen yet, so there is no hero element to observe
+	  and nothing to measure. That half lives in the deferred script at the
+	  bottom of this file, which runs once the page exists.
+	*/
+	overlay && (
+		<script is:inline>
+			document.querySelector('.ww-header[data-overlay]')?.removeAttribute('data-solid');
+		</script>
+	)
+}
 
 <style>
-	/* ======================================================================
-	   The toggle
+	/*
+	  Sticky rather than fixed: the page below scrolls under it and nothing has
+	  to be padded down to make room. The hairline underneath is the only edge
+	  it has — there is no shadow, and there is no blur.
+	*/
+	.ww-header {
+		position: sticky;
+		top: 0;
+		z-index: 100;
+		background-color: var(--ww-white);
+		border-bottom: 1px solid var(--ww-hairline-light);
+	}
 
-	   Three bars that behave like the rules everywhere else on this site:
-	   they draw from the left. Resting on it wipes them in one after another,
-	   55ms apart — the wordmark's letter stagger at a twelfth of the size —
-	   and opening the menu retracts the middle one to the left before the
-	   outer two swing across it.
+	/* ======================================================================
+	   THE OVERLAY.
+
+	   `fixed`, not `sticky`. Sticky reserves its own height in the flow, which
+	   would push a 100svh hero down by a header and give the page a scrollbar
+	   before anything has been scrolled. Fixed takes the bar out of the flow
+	   entirely so the hero starts at the top of the viewport and ends at the
+	   bottom of it, and the bar floats on top — which is the composition being
+	   matched.
+
+	   Everything below transitions, so the arrival of the white surface on
+	   scroll is a fade rather than a snap.
 	   ====================================================================== */
-	.menu-toggle {
-		display: inline-flex;
+	.ww-header[data-overlay] {
+		position: fixed;
+		inset-inline: 0;
+		background-color: transparent;
+		border-bottom-color: transparent;
+		transition:
+			background-color var(--dur-base) var(--ease-out),
+			border-bottom-color var(--dur-base) var(--ease-out);
+	}
+
+	/*
+	  White type, and it is the hero's scrim that makes it legible rather than
+	  anything drawn here. The hero's top gradient sits at ~30% black behind
+	  this bar, which holds white at better than 14:1 over even a blown-out
+	  frame — so the bar needs no scrim, no blur and no ground of its own.
+	*/
+	.ww-header[data-overlay]:not([data-solid]) :is(.ww-header-brand, .ww-header-toggle),
+	.ww-header[data-overlay]:not([data-solid]) .ww-header-nav a {
+		color: var(--ww-white);
+	}
+
+	/* The nav's hover is the site blue on white, which over footage is both
+	   hard to see and the one colour this page holds in reserve. Over media it
+	   dims instead. */
+	.ww-header[data-overlay]:not([data-solid]) .ww-header-nav a:hover {
+		color: var(--ww-white);
+		opacity: 0.7;
+	}
+
+	/* The action inverts with the bar: a black pill on dark footage is a hole,
+	   and the reference puts the light pill in this position over media. It
+	   goes back to black the moment the white surface arrives. */
+	.ww-header[data-overlay]:not([data-solid]) .ww-header-cta {
+		background-color: var(--ww-white);
+		border-color: var(--ww-white);
+		color: var(--ww-ink);
+	}
+
+	.ww-header[data-overlay]:not([data-solid]) .ww-header-cta:hover {
+		background-color: var(--ww-light);
+		border-color: var(--ww-light);
+	}
+
+	/*
+	  The closed phone panel draws a 1px white line across the bottom of a
+	  transparent bar, and it is not a border — the panel's own white background
+	  paints under its transparent 1px border-top, which is invisible against a
+	  white header and a bright hairline against footage. It only has a ground
+	  worth having once it is open.
+	*/
+	.ww-header[data-overlay]:not([data-solid]) .ww-header-panel:not([data-open]) {
+		background-color: transparent;
+	}
+
+	/* Scrolled past the hero — the ordinary bar, restored. */
+	.ww-header[data-overlay][data-solid] {
+		background-color: var(--ww-white);
+		border-bottom-color: var(--ww-hairline-light);
+	}
+
+	/*
+	  And the same while the phone menu is open. The panel is a white sheet
+	  hanging off the bottom of the bar; leaving the bar transparent above it
+	  would put white links on white in the panel's own shadow line and leave
+	  the wordmark floating over footage with a white sheet beneath it.
+	*/
+	.ww-header[data-overlay]:has(.ww-header-panel[data-open]) {
+		background-color: var(--ww-white);
+		border-bottom-color: var(--ww-hairline-light);
+	}
+
+	.ww-header[data-overlay]:has(.ww-header-panel[data-open])
+		:is(.ww-header-brand, .ww-header-toggle) {
+		color: var(--ww-ink);
+	}
+
+	.ww-header[data-overlay]:has(.ww-header-panel[data-open]) .ww-header-cta {
+		background-color: var(--ww-ink);
+		border-color: var(--ww-ink);
+		color: var(--ww-white);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.ww-header[data-overlay] {
+			transition: none;
+		}
+	}
+
+	.ww-header-inner {
+		width: 100%;
+		max-width: calc(var(--container-max) + var(--gutter) * 2);
+		margin-inline: auto;
+		padding-inline: var(--gutter);
+		height: var(--header-h);
+		display: flex;
+		align-items: center;
+		gap: var(--space-lg);
+	}
+
+	.ww-header-brand {
+		flex-shrink: 0;
+		display: flex;
+		align-items: center;
+		color: var(--ww-ink);
+		transition: opacity var(--dur-fast) var(--ease-out);
+	}
+
+	.ww-header-brand:hover {
+		opacity: 0.7;
+	}
+
+	/*
+	  :global, and it has to be. The wordmark is an inline <svg> rendered by
+	  Wordmark.astro, which takes a `class` but does not spread the rest of its
+	  props — so Astro's scoping attribute never reaches the element, and a
+	  scoped rule here would match nothing. The artwork carries width="2476" on
+	  itself, so "matches nothing" means a 2476px logo across the page rather
+	  than a subtle miss.
+
+	  The class name is specific enough to this component that globalising it
+	  costs nothing.
+	*/
+	:global(.ww-header-mark) {
+		height: 22px;
+		width: auto;
+	}
+
+	@media (min-width: 768px) {
+		:global(.ww-header-mark) {
+			height: 26px;
+		}
+	}
+
+	/*
+	  The three words. Hidden below lg and shown in the panel instead — at 1024px
+	  the bar has room for a wordmark, three nouns and a pill, and below it the
+	  three nouns are the first thing that has to give.
+	*/
+	.ww-header-nav {
+		display: none;
+	}
+
+	.ww-header-nav ul {
+		display: flex;
+		align-items: center;
+		gap: var(--space-lg);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.ww-header-nav a {
+		font-family: var(--font-sans);
+		font-size: var(--text-body);
+		font-weight: 500;
+		color: var(--ww-ink);
+		text-decoration: none;
+		/* The underline is drawn on hover rather than being present and
+		   transparent, so nothing shifts and there is no ghost line under a link
+		   at rest. */
+		text-decoration-color: transparent;
+		text-underline-offset: 6px;
+		transition: color var(--dur-fast) var(--ease-out);
+	}
+
+	.ww-header-nav a:hover {
+		color: var(--ww-blue);
+	}
+
+	@media (min-width: 1024px) {
+		.ww-header-nav {
+			display: block;
+		}
+	}
+
+	/* margin-inline-start: auto rather than justify-content on the row: it pins
+	   the actions right regardless of whether the nav in the middle is rendered
+	   at this width. */
+	.ww-header-actions {
+		margin-inline-start: auto;
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+	}
+
+	/* Shorter and tighter than a page CTA. The bar is 64px tall; a 48px pill in
+	   it would leave 8px of air above and below and read as a button wedged
+	   into a header rather than part of one. */
+	.ww-header-cta {
+		min-height: 40px;
+		padding-inline: 20px;
+		font-size: var(--text-small);
+	}
+
+	@media (min-width: 768px) {
+		.ww-header-cta {
+			min-height: 44px;
+			padding-inline: 24px;
+			font-size: var(--text-body);
+		}
+	}
+
+	/*
+	  Two bars, not three. At this weight a third adds nothing but noise, and the
+	  pair reads as a menu just as plainly.
+
+	  44px square, which is the tap target; the bars inside it are 20px wide and
+	  the padding around them is the rest.
+	*/
+	.ww-header-toggle {
+		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 3rem;
-		height: 3rem;
-		color: var(--color-charcoal);
-		transition: color 300ms ease;
+		width: 44px;
+		height: 44px;
+		/* Pull the target's own padding back so the bars line up with the page
+		   gutter rather than sitting a few pixels inside it. */
+		margin-inline-end: -10px;
+		background: none;
+		border: 0;
+		border-radius: var(--radius-pill);
+		color: var(--ww-ink);
 		cursor: pointer;
 	}
 
-	.bars {
-		position: relative;
-		display: block;
-		width: 26px;
-		height: 14px;
+	@media (min-width: 1024px) {
+		.ww-header-toggle {
+			display: none;
+		}
 	}
 
-	.bar {
-		position: absolute;
-		left: 0;
-		width: 100%;
+	.ww-header-bars {
+		display: block;
+		width: 20px;
+	}
+
+	.ww-header-bars span {
+		display: block;
 		height: 2px;
 		background-color: currentColor;
-		transform-origin: left center;
-		transition: transform 220ms cubic-bezier(0.65, 0, 0.35, 1);
-	}
-
-	.bar:nth-child(1) {
-		top: 0;
-	}
-
-	.bar:nth-child(2) {
-		top: 6px;
-	}
-
-	.bar:nth-child(3) {
-		top: 12px;
-	}
-
-	/* The hover wipe, and the reason it is an animation rather than a
-	   transition: a transition can only travel between two states, so it plays
-	   once and then has nowhere left to go. This has to re-run on every
-	   approach. Closed only — there are no bars to wipe once they are an X. */
-	html:not([data-menu-open]) .menu-toggle:hover .bar {
-		animation: bar-wipe 300ms cubic-bezier(0.33, 1, 0.68, 1) backwards;
-	}
-
-	html:not([data-menu-open]) .menu-toggle:hover .bar:nth-child(2) {
-		animation-delay: 55ms;
-	}
-
-	html:not([data-menu-open]) .menu-toggle:hover .bar:nth-child(3) {
-		animation-delay: 110ms;
-	}
-
-	@keyframes bar-wipe {
-		from {
-			transform: scaleX(0);
-		}
-	}
-
-	/* Open: the middle bar goes first, back out the way it came, and the outer
-	   two follow it across once it is clear. They rotate about their centres so
-	   the X actually crosses; the middle keeps the left origin every rule on
-	   this site has. */
-	html[data-menu-open] .bar {
-		transition-duration: 300ms;
-	}
-
-	html[data-menu-open] .bar:nth-child(1) {
-		transform: translateY(6px) rotate(45deg);
-		transform-origin: center;
-		transition-delay: 90ms;
-	}
-
-	html[data-menu-open] .bar:nth-child(2) {
-		transform: scaleX(0);
-		transition-duration: 180ms;
-	}
-
-	html[data-menu-open] .bar:nth-child(3) {
-		transform: translateY(-6px) rotate(-45deg);
-		transform-origin: center;
-		transition-delay: 90ms;
-	}
-
-	/* ======================================================================
-	   The header, while the menu is open
-
-	   The bar keeps the mark and the toggle and loses everything else: no
-	   ground, no blur, no hairline. The charcoal behind it is the panel, so
-	   the two read as one field with the mark sitting on it.
-	   ====================================================================== */
-	html[data-menu-open] [data-site-header] {
-		background-color: transparent;
-		border-color: transparent;
-		backdrop-filter: none;
-	}
-
-	html[data-menu-open] .brand-link,
-	html[data-menu-open] .menu-toggle {
-		color: var(--color-cream);
-	}
-
-	/* ======================================================================
-	   The panel
-
-	   Everything is a transition off one attribute on <html> rather than a set
-	   of keyframes, which buys the exit for free: closing is the same journey
-	   with shorter timings and no stagger, so the menu never disassembles
-	   itself slowly in front of someone who has already decided to leave.
-
-	   visibility is what takes it out of the a11y tree and out of hit testing
-	   at rest; it is transitioned with a delay so it holds until the wipe is
-	   finished. The script also flips `inert` on it, which is what keeps the
-	   rows out of the tab order — belt and braces, and cheap.
-	   ====================================================================== */
-	.site-menu {
-		position: fixed;
-		inset: 0;
-		z-index: 40;
-		overflow-y: auto;
-		overscroll-behavior: contain;
-		background-color: var(--color-charcoal);
-		color: var(--color-cream);
-		visibility: hidden;
-		clip-path: inset(0 0 100% 0);
 		transition:
-			clip-path 300ms cubic-bezier(0.65, 0, 0.35, 1),
-			visibility 0s linear 300ms;
+			transform var(--dur-base) var(--ease-out),
+			opacity var(--dur-fast) var(--ease-out);
 	}
 
-	html[data-menu-open] .site-menu {
-		visibility: visible;
-		clip-path: inset(0 0 0 0);
-		transition:
-			clip-path 480ms cubic-bezier(0.65, 0, 0.35, 1),
-			visibility 0s;
+	.ww-header-bars span + span {
+		margin-top: 5px;
 	}
 
-	.menu-link {
-		position: relative;
+	/* Open: the two bars cross. Each moves half the gap plus half its own height
+	   to meet in the middle, then rotates. */
+	[aria-expanded='true'] .ww-header-bars span:first-child {
+		transform: translateY(3.5px) rotate(45deg);
+	}
+
+	[aria-expanded='true'] .ww-header-bars span:last-child {
+		transform: translateY(-3.5px) rotate(-45deg);
+	}
+
+	/*
+	  The panel.
+
+	  It animates on grid-template-rows rather than on height, which is what lets
+	  it open to the height of its own content without that height being written
+	  down anywhere. The child needs `min-height: 0` and `overflow: hidden` for
+	  the row to be allowed to collapse below its content size.
+	*/
+	.ww-header-panel {
 		display: grid;
-		gap: 0.5rem 3rem;
-		padding-block: 1.125rem;
-		align-items: baseline;
+		grid-template-rows: 0fr;
+		background-color: var(--ww-white);
+		border-top: 1px solid var(--ww-hairline-light);
+		/* Closed, the panel is a 1px hairline sitting under a 1px hairline. Hide
+		   its own edge until it has something to edge. */
+		border-top-color: transparent;
+		transition:
+			grid-template-rows var(--dur-base) var(--ease-out),
+			border-top-color var(--dur-base) var(--ease-out);
 	}
 
-	@media (min-width: 48rem) {
-		.menu-link {
-			grid-template-columns: minmax(0, 1fr) 22rem;
-			padding-block: 1.75rem;
-		}
+	.ww-header-panel > nav {
+		min-height: 0;
+		overflow: hidden;
 	}
 
-	.menu-rule {
-		position: absolute;
-		inset-inline: 0;
-		top: 0;
-		height: 1px;
-		background-color: var(--color-rust);
-		transform: scaleX(0);
-		transform-origin: left center;
-		transition: transform 180ms ease-in;
+	.ww-header-panel[data-open] {
+		grid-template-rows: 1fr;
+		border-top-color: var(--ww-hairline-light);
 	}
 
-	/* The closing rule is the same object in the flow rather than pinned to the
-	   top of a row, so it inherits every other property — colour, origin, the
-	   draw itself — from the rule above. */
-	.menu-rule-close {
-		position: static;
+	.ww-header-panel ul {
+		margin: 0;
+		padding: var(--space-md) var(--gutter) var(--space-lg);
+		list-style: none;
+	}
+
+	/* Hairline-separated rows, the same device the pricing plans and the service
+	   accordion are built from. */
+	.ww-header-panel li + li {
+		border-top: 1px solid var(--ww-hairline-light);
+	}
+
+	.ww-header-panel a {
 		display: block;
-		width: 100%;
+		padding-block: var(--space-md);
+		font-family: var(--font-sans);
+		font-size: var(--text-heading);
+		font-weight: 500;
+		color: var(--ww-ink);
+		text-decoration: none;
 	}
 
-	.menu-lead {
-		display: flex;
-		align-items: baseline;
-		gap: 1rem;
-	}
-
-	.menu-index {
-		flex-shrink: 0;
-		color: var(--color-stone);
-		opacity: 0;
-		transition: opacity 150ms ease-in;
-	}
-
-	/* The wipe. A mask sweeping left to right across a stationary word is
-	   exactly what the wordmark's letters do, and clip-path is the same idea
-	   with none of the SVG: the glyphs never move, the reveal does. The
-	   vertical insets are negative so the box can never shave an overhang off
-	   a letter at rest. */
-	.menu-name {
-		display: block;
-		font-size: clamp(1.75rem, 1rem + 3.6vw, 3.25rem);
-		line-height: 1;
-		clip-path: inset(-0.3em 100% -0.3em 0);
-		transition:
-			clip-path 160ms ease-in,
-			transform 300ms ease-out;
-	}
-
-	.menu-note {
-		color: color-mix(in oklab, var(--color-cream) 60%, transparent);
-		line-height: 1.6;
-		opacity: 0;
-		transition:
-			opacity 150ms ease-in,
-			color 300ms ease;
-	}
-
-	@media (min-width: 48rem) {
-		.menu-note {
-			text-align: right;
+	@media (min-width: 1024px) {
+		.ww-header-panel {
+			display: none;
 		}
 	}
 
-	.menu-foot {
-		opacity: 0;
-		transition: opacity 150ms ease-in;
-	}
-
-	/* --row is the row's place in the page, set in the markup, and it is the
-	   only thing that differs between the five: the rule draws, the number
-	   arrives, the name wipes in behind the rule, and the whole row is 70ms
-	   behind the one above it, so the menu resolves top to bottom in the order
-	   the sections themselves appear. */
-	html[data-menu-open] .menu-rule {
-		transform: scaleX(1);
-		transition: transform 420ms cubic-bezier(0.65, 0, 0.35, 1)
-			calc(120ms + var(--row) * 70ms);
-	}
-
-	html[data-menu-open] .menu-index {
-		opacity: 1;
-		transition: opacity 300ms ease-out calc(200ms + var(--row) * 70ms);
-	}
-
-	html[data-menu-open] .menu-name {
-		clip-path: inset(-0.3em 0 -0.3em 0);
-		transition:
-			clip-path 520ms cubic-bezier(0.33, 1, 0.68, 1)
-				calc(200ms + var(--row) * 70ms),
-			transform 300ms ease-out;
-	}
-
-	html[data-menu-open] .menu-note {
-		opacity: 1;
-		transition:
-			opacity 400ms ease-out calc(300ms + var(--row) * 70ms),
-			color 300ms ease;
-	}
-
-	html[data-menu-open] .menu-foot {
-		opacity: 1;
-		transition: opacity 400ms ease-out 620ms;
-	}
-
-	/* The row answering a pointer: the name steps in from the margin and the
-	   line beside it comes up out of the muted grey, the same acknowledgement
-	   the capability rows make in #services. */
-	@media (hover: hover) {
-		.menu-link:hover .menu-name {
-			transform: translateX(0.375rem);
-		}
-
-		.menu-link:hover .menu-note {
-			color: color-mix(in oklab, var(--color-cream) 90%, transparent);
-		}
-	}
-
-	.menu-link:focus-visible {
-		outline: 2px solid var(--color-cream);
-		outline-offset: 4px;
-	}
-
-	/* The global reduce rule collapses durations but leaves delays alone, which
-	   would hold every row invisible for its share of the stagger and then snap
-	   it in. Drop the delays too, and the menu simply is open or is not. */
+	/* The panel's transition is the one piece of motion in the header, and under
+	   this query it simply is not one: it opens and closes on the same frame.
+	   The global collapse in base.css already does this; saying it here too
+	   means the rule survives that file being reorganised. */
 	@media (prefers-reduced-motion: reduce) {
-		.site-menu,
-		.site-menu *,
-		.bar {
-			transition-delay: 0ms !important;
-			animation: none !important;
+		.ww-header-panel,
+		.ww-header-bars span {
+			transition: none;
 		}
 	}
 </style>
 
 <script>
 	/*
-	  One attribute on <html> is the whole state: the panel, the header's
-	  colours, the bars and the scroll lock all key off it, so nothing can end
-	  up half open. Everything else here is the part CSS cannot do — telling
-	  assistive tech what the button did, keeping the tab order inside the
-	  panel, and putting focus back where it came from.
+	  The mobile menu. Roughly twenty lines, and it does four things: flips
+	  aria-expanded, opens the panel, makes the panel reachable, and closes on
+	  Escape or on a link being followed.
+	  
+	  It deliberately does NOT lock the page behind it. The panel hangs off the
+	  header and is at most four rows tall; it does not cover the page, so there
+	  is nothing to lock. `html[data-menu-open]` still exists in base.css for a
+	  future full-screen panel, and is not set here.
 	*/
-	const root = document.documentElement;
-	const toggle = document.getElementById('menu-toggle');
-	const menu = document.getElementById('site-menu');
+	const toggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+	const panel = document.getElementById('site-menu');
 
-	if (toggle && menu) {
-		/* The page behind the panel. Made inert while it is open so tabbing
-		   cannot wander into a section nobody can see. The header is left out on
-		   purpose: the mark and the close button are still on screen and still
-		   have to be reachable. */
-		const behind = document.querySelectorAll<HTMLElement>('main, footer, a[href="#main"]');
-
-		const isOpen = () => root.hasAttribute('data-menu-open');
-
-		const setOpen = (open: boolean, restoreFocus = true) => {
-			root.toggleAttribute('data-menu-open', open);
+	if (toggle && panel) {
+		const setOpen = (open: boolean) => {
 			toggle.setAttribute('aria-expanded', String(open));
-			menu.toggleAttribute('inert', !open);
-			behind.forEach((el) => el.toggleAttribute('inert', open));
-
-			if (open) {
-				/* preventScroll, or the panel jumps to put the first row where the
-				   browser thinks focus should be — mid-wipe. */
-				menu.querySelector('a')?.focus({ preventScroll: true });
-			} else if (restoreFocus) {
-				toggle.focus({ preventScroll: true });
-			}
+			panel.toggleAttribute('data-open', open);
+			// `inert` is what actually removes the closed panel from the tab order
+			// and from the accessibility tree. Without it the links inside a
+			// zero-height panel are still focusable, and tabbing through the header
+			// walks into a menu nobody can see.
+			panel.toggleAttribute('inert', !open);
 		};
 
-		toggle.addEventListener('click', () => setOpen(!isOpen()));
+		toggle.addEventListener('click', () => {
+			setOpen(toggle.getAttribute('aria-expanded') !== 'true');
+		});
 
-		/* Closed without restoring focus: the browser is about to move to the
-		   section this link points at, and dragging focus back up to the button
-		   would undo that for anyone on a keyboard. Closing first is also what
-		   releases the scroll lock in time for the jump to happen at all. */
-		menu.addEventListener('click', (event) => {
-			if ((event.target as HTMLElement).closest('a')) setOpen(false, false);
+		// Following a link inside the panel navigates to a fragment on this page,
+		// which does not reload it — so nothing would close the menu.
+		panel.addEventListener('click', (event) => {
+			if ((event.target as Element).closest('a')) setOpen(false);
 		});
 
 		document.addEventListener('keydown', (event) => {
-			if (event.key === 'Escape' && isOpen()) setOpen(false);
+			if (event.key !== 'Escape') return;
+			if (toggle.getAttribute('aria-expanded') !== 'true') return;
+			setOpen(false);
+			// Send focus back to the control that opened it, or it is left on the
+			// <body> and the next Tab starts from the top of the document.
+			toggle.focus();
 		});
+	}
+
+	/*
+	  THE OVERLAY'S SURFACE, on scroll.
+
+	  An IntersectionObserver rather than a scroll handler: there is no listener
+	  on the scroll thread, nothing recalculating on every frame while the hero
+	  video is playing, and the browser does the geometry itself.
+
+	  WHAT IS OBSERVED is the first block inside <main>. On an overlay page that
+	  is the full-bleed hero by definition — the overlay is not offered to a page
+	  that opens on anything else — and the header stays ignorant of what the
+	  hero component is called.
+
+	  THE ROOT is shrunk from the top by the bar's own height, so the flip
+	  happens at the moment the bottom of the hero passes under the bottom of the
+	  bar rather than the top of the viewport. The height changes once, at the
+	  768px breakpoint, so the observer is rebuilt whenever the bar resizes.
+	*/
+	const overlayHeader = document.querySelector<HTMLElement>('.ww-header[data-overlay]');
+	const hero = document.querySelector('main')?.firstElementChild;
+
+	if (overlayHeader && hero) {
+		let observer: IntersectionObserver | undefined;
+
+		const observe = () => {
+			observer?.disconnect();
+			observer = new IntersectionObserver(
+				([entry]) => overlayHeader.toggleAttribute('data-solid', !entry.isIntersecting),
+				{ rootMargin: `-${overlayHeader.offsetHeight}px 0px 0px 0px` },
+			);
+			observer.observe(hero);
+		};
+
+		observe();
+
+		// Fires on the breakpoint that changes --header-h, and on nothing else:
+		// the bar is a fixed height at any given width. Cheaper and more precise
+		// than listening for every resize.
+		new ResizeObserver(observe).observe(overlayHeader);
 	}
 </script>

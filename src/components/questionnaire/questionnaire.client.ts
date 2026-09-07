@@ -13,7 +13,7 @@
  * live work here, for free and in the reader's own language.
  *
  * The submit button is rendered disabled and enabled from here, once the
- * handlers are attached. That is the ProjectStack pattern: if this file never
+ * handlers are attached. The pattern is progressive enhancement: if this file never
  * runs, the client is not offered a button that would post their answers into
  * nothing.
  */

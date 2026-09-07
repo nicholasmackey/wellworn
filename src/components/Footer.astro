@@ -1,5 +1,16 @@
 ---
-import { BRAND, SITE } from '../config/site';
+/**
+ * The site footer.
+ *
+ * Black, small, and almost entirely type. No sitemap, no newsletter, no social
+ * row, and nothing invented: the only contact detail on this page is the email
+ * address in config/site.ts, and no phone number, postal address, legal entity
+ * or social profile is added here because none has been supplied.
+ *
+ * The three navigation words are repeated because a footer is the second place
+ * people look for them, not because the page needs a directory.
+ */
+import { BRAND, CONTACT_HREF, CTA_LABEL, NAV, SITE } from '../config/site';
 
 interface Props {
 	class?: string;
@@ -10,62 +21,129 @@ const { class: className = '' }: Props = Astro.props;
 const year = new Date().getFullYear();
 ---
 
-{/*
-  The rust rule is what separates the footer from the contact panel above it,
-  which is charcoal now too. One hairline does the job the old forest band
-  was doing, and it is the same accent that opens the sections upstairs.
-*/}
-<footer class:list={['border-t border-stone/40 bg-charcoal text-cream', className]}>
-	<div class="wrapper py-16 lg:py-24">
-		<div class="grid gap-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
-			<div class="sm:col-span-2">
-				<a href="/" class="inline-block transition-opacity duration-200 hover:opacity-70">
+<footer class:list={['ww-footer', className]}>
+	<div class="ww-container">
+		<div class="ww-footer-top">
+			<div class="ww-footer-brand">
+				<a href="/" aria-label={`${SITE.name}, home`}>
 					<img
 						src={BRAND.wordmarkLight}
-						alt={SITE.name}
+						alt=""
 						width={149}
 						height={36}
 						loading="lazy"
 						decoding="async"
-						class="h-8 w-auto sm:h-9"
 					/>
 				</a>
-				{/* "Independent" is doing real work here rather than padding the
-				    line: it is the one word that separates this from an agency and
-				    from a template shop, which is the distinction the rest of the
-				    page has been drawing. */}
-				<p class="mt-6 max-w-sm text-stone">Independent web design + development.</p>
+
+				{/* "Independent" is doing real work here rather than padding the line:
+				    it is the one word that separates this from an agency and from a
+				    template shop. */}
+				<p class="ww-body ww-muted">Independent web design + development.</p>
 			</div>
 
-			{/*
-			  Not the #contact target any more: that is the homepage form, which
-			  every CTA now scrolls to. This is the plain email address, for
-			  anyone who would rather not use a form.
-			*/}
-			<section aria-labelledby="footer-contact-heading" class="lg:col-start-4">
-				<h2 id="footer-contact-heading" class="eyebrow text-stone">Have a project?</h2>
-				<p class="mt-6">
-					<a
-						href={`mailto:${SITE.email}`}
-						class="text-cream underline decoration-stone/60 underline-offset-4 transition-colors duration-200 hover:decoration-rust"
-					>
-						{SITE.email}
-					</a>
+			<nav class="ww-footer-nav" aria-label="Footer">
+				<ul>
+					{
+						NAV.map((item) => (
+							<li>
+								<a href={item.href} class="ww-body">
+									{item.label}
+								</a>
+							</li>
+						))
+					}
+				</ul>
+			</nav>
+
+			<div class="ww-footer-contact">
+				<a href={CONTACT_HREF} class="ww-btn ww-btn-light">{CTA_LABEL}</a>
+
+				<p>
+					<a href={`mailto:${SITE.email}`} class="ww-link ww-footer-email">{SITE.email}</a>
 				</p>
-			</section>
+			</div>
 		</div>
 
-		<div class="mt-16 border-t border-cream/15 pt-8">
-			{/* Not .eyebrow, which would uppercase the name. The mark above is
-			    uppercase because the artwork is drawn that way; the name set as
-			    running text is not, and shouting it here would only make the two
-			    disagree. Everything else about the line — face, weight, size —
-			    matches the labels it sits with, at heading tracking rather than
-			    label tracking, which is what sentence case wants.
-
-			    Kept on one line: a newline between two expressions is stripped as
+		<div class="ww-footer-bottom">
+			{/* Kept on one line: a newline between two expressions is stripped as
 			    JSX-style whitespace, which would run the year into the name. */}
-			<p class="font-display text-xs font-semibold tracking-heading text-stone">&copy; {year} {SITE.name}</p>
+			<p class="ww-small ww-muted">&copy; {year} {SITE.name}</p>
 		</div>
 	</div>
 </footer>
+
+<style>
+	.ww-footer {
+		background-color: var(--ww-black);
+		color: var(--ww-white);
+		padding-block: var(--space-2xl) var(--space-lg);
+	}
+
+	@media (min-width: 768px) {
+		.ww-footer {
+			padding-block: var(--space-3xl) var(--space-xl);
+		}
+	}
+
+	.ww-footer-top {
+		display: grid;
+		gap: var(--space-xl);
+	}
+
+	.ww-footer-brand img {
+		height: 26px;
+		width: auto;
+	}
+
+	.ww-footer-brand p {
+		margin-top: var(--space-md);
+		max-width: 32ch;
+	}
+
+	.ww-footer-nav ul {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-md) var(--space-lg);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.ww-footer-nav a {
+		text-decoration: none;
+		transition: color var(--dur-fast) var(--ease-out);
+	}
+
+	.ww-footer-nav a:hover {
+		color: var(--ww-disabled);
+	}
+
+	.ww-footer-contact > * + * {
+		margin-top: var(--space-md);
+	}
+
+	.ww-footer-email {
+		text-decoration-color: var(--ww-disabled);
+	}
+
+	.ww-footer-bottom {
+		margin-top: var(--space-2xl);
+		padding-top: var(--space-md);
+		border-top: 1px solid var(--ww-hairline-dark);
+	}
+
+	@media (min-width: 768px) {
+		.ww-footer-top {
+			grid-template-columns: 2fr 1fr 1fr;
+			gap: var(--space-2xl);
+		}
+
+		/* The action sits at the top of its column beside the wordmark rather than
+		   drifting down with the copy under it. */
+		.ww-footer-contact {
+			justify-self: end;
+			text-align: right;
+		}
+	}
+</style>

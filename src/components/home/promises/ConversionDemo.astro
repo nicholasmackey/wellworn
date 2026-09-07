@@ -1,0 +1,279 @@
+---
+/**
+ * MAKE IT EASY TO DO BUSINESS — finding you becomes contacting you.
+ *
+ * One screen, three states: a service, a two-field form, a confirmation. Then
+ * the lead lands on the business's side. The point is the shortness of it, so
+ * the form is two fields and stays two fields — a longer one would be a more
+ * realistic form and a worse argument.
+ *
+ * The three panels are stacked on top of each other and crossfade, which is
+ * what keeps the frame from resizing under the copy beside it: whichever
+ * panel is showing, the screen is the same height.
+ *
+ * The business, the customer, the number and the service are invented.
+ */
+interface Props {
+	ground: 'white' | 'cream';
+}
+
+const { ground }: Props = Astro.props;
+---
+
+<div class="wwd wwd-conv" data-demo="conversion" data-ground={ground} data-step="0">
+	<div
+		class="wwd-stage"
+		role="img"
+		aria-label="A customer viewing a kitchen remodel service on a small business site taps Request a quote, fills in a two-field form, and sees a confirmation. The business receives a new lead: Sarah requested a quote."
+	>
+		<div class="wwd-screen">
+			<div class="wwd-screen-bar">
+				<span class="wwd-name wwd-screen-name">Cedar &amp; Co.</span>
+				<span class="wwd-meta">Remodeling</span>
+			</div>
+
+			<div class="wwd-panels">
+				{/* 1 — the service, and the one thing to do about it. */}
+				<div class="wwd-panel-view is-service" data-view="service">
+					<span class="wwd-label">Service</span>
+					<p class="wwd-view-title">Kitchen remodel</p>
+					<p class="wwd-meta wwd-view-note">Free estimate. Usually replies same day.</p>
+					<span class="wwd-action wwd-action-primary wwd-cta" data-cta>Request a quote</span>
+				</div>
+
+				{/* 2 — two fields. Not three. */}
+				<div class="wwd-panel-view is-form" data-view="form">
+					<span class="wwd-label">Request a quote</span>
+					<div class="wwd-field">
+						<span class="wwd-field-label">Name</span>
+						<span class="wwd-field-value" data-typed>Sarah M.</span>
+					</div>
+					<div class="wwd-field">
+						<span class="wwd-field-label">Phone or email</span>
+						<span class="wwd-field-value" data-typed>(555) 0142</span>
+					</div>
+					<span class="wwd-action wwd-action-primary wwd-cta" data-submit>Request a quote</span>
+				</div>
+
+				{/* 3 — done. */}
+				<div class="wwd-panel-view is-done" data-view="done">
+					<span class="wwd-check" aria-hidden="true">
+						<svg viewBox="0 0 24 24" focusable="false">
+							<path
+								d="M5 12.5 10 17.5 19 7.5"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2.4"
+								stroke-linecap="round"
+								stroke-linejoin="round"></path>
+						</svg>
+					</span>
+					<p class="wwd-view-title">Request sent</p>
+					<p class="wwd-meta wwd-view-note">Cedar &amp; Co. will reply shortly.</p>
+				</div>
+			</div>
+		</div>
+
+		{/* The other side of the same thirty seconds. */}
+		<div class="wwd-panel wwd-lead" data-lead>
+			<span class="wwd-lead-dot" aria-hidden="true"></span>
+			<span>
+				<span class="wwd-label wwd-lead-label">New lead</span>
+				<span class="wwd-name wwd-lead-text">Sarah requested a quote</span>
+			</span>
+		</div>
+	</div>
+</div>
+
+<style>
+	.wwd-stage {
+		display: flex;
+		flex-direction: column;
+		gap: 0.7em;
+	}
+
+	.wwd-screen {
+		background-color: var(--wwd-panel);
+		border: 1px solid var(--wwd-line);
+		border-radius: var(--radius-input);
+		overflow: hidden;
+	}
+
+	.wwd-screen-bar {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 0.6em;
+		padding: 0.7em 0.9em;
+		border-bottom: 1px solid var(--wwd-line);
+	}
+
+	.wwd-screen-name {
+		font-size: 0.95em;
+	}
+
+	/* One box, three states. The height is the tallest of them, set by the
+	   form, so nothing outside the screen moves when the panel changes. */
+	.wwd-panels {
+		display: grid;
+		padding: 0.9em;
+	}
+
+	.wwd-panel-view {
+		grid-area: 1 / 1;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.35em;
+		opacity: 0;
+		transform: translateY(0.4em);
+		transition:
+			opacity var(--dur-base) var(--ease-out),
+			transform var(--dur-base) var(--ease-out);
+		pointer-events: none;
+	}
+
+	.wwd-view-title {
+		margin: 0;
+		font-family: var(--font-display);
+		font-size: 1.5em;
+		line-height: 1.1;
+		letter-spacing: var(--tracking-display);
+	}
+
+	.wwd-view-note {
+		margin: 0;
+	}
+
+	.wwd-cta {
+		margin-top: 0.7em;
+		align-self: stretch;
+		transition:
+			background-color var(--dur-fast) var(--ease-out),
+			transform var(--dur-fast) var(--ease-out);
+	}
+
+	/* The tap. A small, brief press — no bounce back through the other side. */
+	.wwd[data-step='1'] [data-cta],
+	.wwd[data-step='4'] [data-submit] {
+		transform: scale(0.97);
+		background-color: color-mix(in srgb, var(--ww-blue) 82%, black);
+	}
+
+	.wwd-field {
+		align-self: stretch;
+		margin-top: 0.5em;
+		padding: 0.5em 0.7em;
+		border: 1px solid var(--wwd-edge);
+		border-radius: var(--radius-input);
+		background-color: var(--ww-white);
+	}
+
+	.wwd-field-label {
+		display: block;
+		font-size: 0.72em;
+		color: var(--ww-muted);
+	}
+
+	/* Typed rather than pasted: the value is clipped from the left and the
+	   clip opens, which lands on the last character whatever the string is. */
+	.wwd-field-value {
+		display: block;
+		font-size: 0.95em;
+		white-space: nowrap;
+		clip-path: inset(0 100% 0 0);
+		transition: clip-path var(--dur-slow) var(--ease-out);
+	}
+
+	/* The confirmation is much shorter than the form the box is sized by, so
+	   it sits in the middle of that box rather than at the top of it with the
+	   form's leftover height under it. */
+	.wwd-panel-view.is-done {
+		justify-content: center;
+	}
+
+	.wwd-check {
+		display: grid;
+		place-items: center;
+		width: 2.4em;
+		height: 2.4em;
+		margin-bottom: 0.3em;
+		border-radius: var(--radius-pill);
+		background-color: var(--ww-blue);
+		color: var(--ww-white);
+	}
+
+	.wwd-check svg {
+		width: 1.3em;
+		height: 1.3em;
+	}
+
+	.wwd-lead {
+		display: flex;
+		align-items: center;
+		gap: 0.6em;
+		padding: 0.7em 0.9em;
+		opacity: 0;
+		transform: translateY(0.5em);
+		transition:
+			opacity var(--dur-base) var(--ease-out),
+			transform var(--dur-base) var(--ease-out);
+	}
+
+	.wwd-lead-dot {
+		flex: none;
+		width: 0.5em;
+		height: 0.5em;
+		border-radius: var(--radius-pill);
+		background-color: var(--ww-blue);
+	}
+
+	.wwd-lead-label {
+		display: block;
+		color: var(--ww-blue);
+	}
+
+	.wwd-lead-text {
+		font-size: 0.95em;
+	}
+
+	/* ------------------------------------------------------------------
+	   THE SEQUENCE. Which panel is showing at which step, and nothing else
+	   in this component decides that.
+
+	     0  the service
+	     1  the tap
+	     2  the form
+	     3  the form, filled
+	     4  submit pressed
+	     5  the confirmation
+	     6  the lead lands
+	   ------------------------------------------------------------------ */
+	.wwd[data-step='0'] [data-view='service'],
+	.wwd[data-step='1'] [data-view='service'],
+	.wwd[data-step='2'] [data-view='form'],
+	.wwd[data-step='3'] [data-view='form'],
+	.wwd[data-step='4'] [data-view='form'],
+	.wwd[data-step='5'] [data-view='done'],
+	.wwd[data-step='6'] [data-view='done'] {
+		opacity: 1;
+		transform: none;
+	}
+
+	.wwd[data-step='3'] .wwd-field-value,
+	.wwd[data-step='4'] .wwd-field-value,
+	.wwd[data-step='5'] .wwd-field-value,
+	.wwd[data-step='6'] .wwd-field-value {
+		clip-path: inset(0 0 0 0);
+	}
+
+	/* The second field finishes a beat after the first. */
+	.wwd-field:nth-of-type(2) .wwd-field-value {
+		transition-delay: 220ms;
+	}
+
+	.wwd[data-step='6'] .wwd-lead {
+		opacity: 1;
+		transform: none;
+	}
+</style>

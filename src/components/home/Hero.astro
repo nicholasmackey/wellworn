@@ -1,0 +1,517 @@
+---
+/**
+ * THE HERO — the master visual reference for the whole site.
+ *
+ * ONE VIEWPORT, composed as a single frame rather than as content stacked from
+ * the top. The section is 100svh and holds four things in a column: the space
+ * the fixed header floats in, the copy, and the client marquee sitting on the
+ * bottom edge, with flexible air above and below the copy doing the centring.
+ * Nothing in it is positioned with a hand-picked margin; the two flexible gaps
+ * are what make the composition survive a 390px phone and a 1440px laptop
+ * without either being written down separately.
+ *
+ * FULL BLEED, edge to edge, no rounded container and no inset. The footage is
+ * the canvas, the headline sits on top of it at --text-hero, and the only other
+ * things in the frame are one paragraph, one action, and the marquee.
+ *
+ * THE HEADER OVERLAYS THIS. index.astro passes `overlay` to Header, which makes
+ * the bar fixed and transparent, so this section starts at the top of the
+ * viewport and the wordmark and nav sit directly on the footage. The header is
+ * out of the flow, so the space it needs is reserved here — see --header-h on
+ * .ww-hero-inner — rather than by the header taking up room.
+ *
+ * Desktop and mobile are two compositions, not one composition at two widths.
+ * On a wide screen the copy is centred and the headline runs to two long lines.
+ * On a phone the copy goes flush left, the crop pulls to the centre of the
+ * footage where the subject is, and the headline takes four lines instead of
+ * being shrunk to fit in two.
+ */
+import { Image } from 'astro:assets';
+import { CONTACT_HREF, CTA_LABEL } from '../../config/site';
+import { CLIENT_LOGOS, HERO } from '../../config/home';
+import ClientLogoCarousel from './ClientLogoCarousel.astro';
+---
+
+<section class="ww-hero">
+	{/*
+	  The still sits UNDER the video rather than in its poster attribute. That
+	  buys two things a poster cannot: a responsive srcset, and a real element
+	  for the browser to treat as the LCP candidate while the video is still
+	  arriving. It is also the entire picture for a reduced-motion visitor, so
+	  it keeps its alt text and is never decorative.
+
+	  `width` is set as well as `widths`, on every <Image> on this site, and it
+	  is not redundant. Without it Astro points the plain `src` fallback at the
+	  image's FULL intrinsic size — 5809px in the case of figure-it-out.jpg —
+	  which puts a 1.2MB file in the deploy for the benefit of browsers that do
+	  not support srcset, and stamps the <img> with a width attribute six
+	  thousand pixels wide. Setting it pins the fallback to the largest entry in
+	  `widths`, which is the one every real browser was going to pick anyway.
+	*/}
+	<Image
+		src={HERO.poster}
+		alt={HERO.posterAlt}
+		width={2560}
+		widths={[640, 960, 1280, 1600, 1920, 2560]}
+		sizes="100vw"
+		quality={80}
+		loading="eager"
+		fetchpriority="high"
+		class="ww-hero-media"
+	/>
+
+	{/*
+	  Decorative, so it is hidden from assistive tech and taken out of the tab
+	  order. `controls` is absent, which is what keeps the native chrome off it;
+	  `disablepictureinpicture` removes the one control WebKit offers anyway.
+
+	  The `media` attribute on the <source> is the reduced-motion fallback: when
+	  the query does not match, resource selection finds no playable source, the
+	  file is never fetched, and the still above is simply never covered.
+	  base.css hides the element under the same query as a second line of
+	  defence, for engines that ignore source media.
+
+	  preload is metadata, not auto. The file is ~10MB and autoplay already
+	  starts the fetch the moment the element is ready, so `auto` only tells the
+	  browser it may pull the WHOLE clip ahead of everything else on the page —
+	  including the poster that is the actual LCP element. Metadata gets the
+	  header, autoplay does the rest, and the still underneath covers the gap.
+	*/}
+	<video
+		class="hero-video ww-hero-media"
+		autoplay
+		muted
+		loop
+		playsinline
+		preload="metadata"
+		aria-hidden="true"
+		tabindex="-1"
+		disablepictureinpicture
+	>
+		<source
+			src={HERO.videoSrc}
+			type="video/mp4"
+			media="(prefers-reduced-motion: no-preference)"
+		/>
+	</video>
+
+	{/*
+	  Only as much darkening as the white type needs. .ww-scrim is the shared
+	  two-layer treatment; the extra layer added here is a short gradient at the
+	  very top, which is what the header's white wordmark and nav are read
+	  against, and a matching one at the foot for the marquee.
+	*/}
+	<div class="ww-scrim ww-hero-scrim" aria-hidden="true"></div>
+
+	{/*
+	  The grain, over the footage and under everything that is read. It is one
+	  inline SVG turbulence tile, so it costs no request and no file in the
+	  deploy, and it is deliberately static — animated grain on a hero that
+	  already has a moving picture behind it is one kind of movement too many.
+	  Its only job is to put a common surface over the compression and give the
+	  frame a slightly analog edge; if it reads as "noise filter" it is too high.
+	*/}
+	<div class="ww-hero-grain" aria-hidden="true"></div>
+
+	{/*
+	  THE OPENING FADE. One black plate over the whole frame, sitting above the
+	  footage and the grain but UNDER .ww-hero-inner, so the wordmark, the nav,
+	  the headline and the action are all in front of it and never dim: the page
+	  arrives complete and it is the picture behind it that comes up out of black.
+
+	  It starts opaque and is gone by 1.5s. The video is not held back for it —
+	  autoplay begins the moment the element is ready, exactly as before, so what
+	  appears at the end of the fade is footage already in motion rather than a
+	  first frame.
+
+	  Default state is transparent, and the animation is added only under
+	  no-preference. A reduced-motion visitor gets the still immediately, with no
+	  entrance to sit through.
+	*/}
+	<div class="ww-hero-fade" aria-hidden="true"></div>
+
+	<div class="ww-hero-inner">
+		{/*
+		  The two spacers are the composition. Equal flexible gaps above and
+		  below the copy centre it in whatever is left between the header and the
+		  marquee, at any viewport height, without a single vertical margin being
+		  chosen by hand. They collapse to nothing on a short landscape phone,
+		  where min-height stops being the binding constraint, and the section
+		  simply grows to fit its content instead.
+		*/}
+		<div class="ww-hero-air" aria-hidden="true"></div>
+
+		<div class="ww-hero-body">
+			<div class="ww-container">
+				<h1 class="ww-hero-heading">{HERO.heading}</h1>
+
+				<p class="ww-body-lg ww-hero-lede">{HERO.body}</p>
+
+				{/*
+				  White rather than blue. The reference puts a white filled pill in this
+				  position and holds the blue for elsewhere, and against a moving
+				  photograph white is also the only fill that keeps its contrast
+				  whatever the frame behind it does. The blue action appears twice on
+				  this page: on the pricing plans and at the close.
+				*/}
+				<a href={CONTACT_HREF} class="ww-btn ww-btn-blue ww-hero-cta">{CTA_LABEL}</a>
+			</div>
+		</div>
+
+		<div class="ww-hero-air" aria-hidden="true"></div>
+
+		{/*
+		  The client marquee, INSIDE the hero rather than in a band below it —
+		  which is where the reference puts its merchant strip, and it is visible
+		  before anything has been scrolled. `tone="light"` drops the component's
+		  white ground and hairlines and paints the marks white, so it reads as
+		  part of the footage instead of as a separate section that happens to
+		  start at the bottom of the screen.
+		*/}
+		<div class="ww-hero-logos">
+			<ClientLogoCarousel logos={CLIENT_LOGOS} tone="light" />
+		</div>
+	</div>
+</section>
+
+<style>
+	/*
+	  THE FRAME.
+
+	  `svh`, not `vh`: on iOS `vh` is the height with the browser chrome
+	  retracted, so a 100vh hero is taller than the screen on load and pushes its
+	  own marquee under the address bar. The small viewport unit is the height
+	  the page actually gets on arrival, which is the height this composition is
+	  drawn for.
+
+	  min-height rather than height, so a short landscape phone — or a large
+	  accessibility text size — grows the section instead of overflowing it.
+	*/
+	.ww-hero {
+		position: relative;
+		min-height: 100svh;
+		display: flex;
+		overflow: hidden;
+		/* The grain blends, and a blend resolves against the nearest stacking
+		   context. Without this the section is not one, so the grain would reach
+		   past the hero and blend with the page behind it. */
+		isolation: isolate;
+		background-color: var(--ww-black);
+		color: var(--ww-white);
+	}
+
+	.ww-hero-media {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		/*
+		  The clip is 1920x1080 (16:9) and the hero box is now a full portrait
+		  viewport on a phone and a full landscape one on a laptop, so the crop
+		  changes direction hard between them: a laptop trims a little off the top
+		  and bottom, a phone keeps only the middle third of the frame. Centre is
+		  the one anchor that stays sensible through all of them, because the
+		  subject sits mid-frame — and on a phone the copy is bottom-weighted
+		  precisely so that middle third stays visible above the words. If the
+		  footage is ever recut with the subject off centre, this is the knob to
+		  turn, and `object-position: center 40%` under the mobile query is the
+		  usual answer.
+		*/
+		object-position: center;
+	}
+
+	/*
+	  The extra darkening the shared scrim does not do. Two short gradients, top
+	  and bottom, for the two things that sit on the edges of the frame and are
+	  therefore read against whatever the footage happens to be doing there: the
+	  overlaid header, and the marquee. The middle of the picture is left alone.
+	*/
+	.ww-hero-scrim {
+		background:
+			/*
+			  The nav band. Sized in pixels rather than as a percentage of the
+			  section, because what it has to cover is the header — a fixed
+			  200px, not a share of the viewport. As a percentage it was 22%,
+			  which is 176px on a laptop but 400px on a tall desktop display,
+			  darkening a third of the picture for a bar that is nowhere near
+			  it. It is strongest at the very top edge and gone by 200px.
+			*/
+			linear-gradient(
+					to bottom,
+					rgb(0 0 0 / 45%) 0%,
+					rgb(0 0 0 / 18%) 45%,
+					rgb(0 0 0 / 0%) 100%
+				)
+				top / 100% 200px no-repeat,
+			linear-gradient(to top, rgb(0 0 0 / 40%) 0%, rgb(0 0 0 / 0%) 20%),
+			linear-gradient(
+				to top,
+				rgb(0 0 0 / 52%) 0%,
+				rgb(0 0 0 / 34%) 45%,
+				rgb(0 0 0 / 26%) 100%
+			),
+			rgb(0 0 0 / 20%);
+	}
+
+	/*
+	  THE GRAIN.
+
+	  A 140px fractalNoise tile, desaturated, repeated at its natural size. Two
+	  reasons it is not a PNG: it adds nothing to the deploy, and a tile
+	  authored at 1x would either soften on a 2x screen or need a second file.
+
+	  Plain alpha compositing, NOT soft-light or overlay. Both of those are
+	  identity operations on mid-grey, and fractalNoise is grey noise centred on
+	  exactly that, so the blend modes that sound right for film grain resolve
+	  to very nearly nothing here — the layer measured as invisible before this
+	  was normal. At 8% the speckle is on the picture rather than in it, which
+	  is the correct trade for a layer whose whole job is to sit under notice.
+
+	  pointer-events: none is load-bearing. This sits over the whole section,
+	  and without it the CTA and the marquee below it stop being clickable.
+	*/
+	.ww-hero-grain {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		opacity: 0.08;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)'/%3E%3C/svg%3E");
+		background-repeat: repeat;
+		background-size: 140px 140px;
+	}
+
+	/*
+	  HEADER → air → COPY → air → MARQUEE.
+
+	  padding-top is the room the fixed header floats in. It is padding on this
+	  column rather than height on a spacer element, so the header's space is
+	  reserved by the same token the header reads and the two can never disagree.
+	*/
+	.ww-hero-inner {
+		position: relative;
+		z-index: 1;
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+		padding-top: var(--header-h);
+		/* Small, and smaller than the air above the copy. The marquee is meant
+		   to sit ON the bottom edge of the frame the way the reference's
+		   merchant strip does, so the only thing under it is the band's own
+		   breathing room inside the component. */
+		padding-bottom: var(--space-xs);
+	}
+
+	/*
+	  The flexible air. Two of them, equal, so the copy sits centred between the
+	  header and the marquee. `flex-basis: 0` matters: without it each spacer
+	  starts at its content height (zero) and the free space is distributed
+	  correctly anyway, but with a min-height added later it would not be — this
+	  keeps the pair honest.
+	*/
+	.ww-hero-air {
+		flex: 1 1 0;
+		/* Below this the copy and the marquee start crowding each other on a
+		   short viewport, so the section grows past 100svh rather than closing
+		   the gap to nothing. */
+		min-height: var(--space-lg);
+	}
+
+	.ww-hero-body {
+		/* No vertical padding. Everything above and below this block is the
+		   flexible air, which is the whole point of the structure — a margin here
+		   would be a second, competing opinion about where the copy sits. */
+		width: 100%;
+	}
+
+	/*
+	  THE HEADLINE.
+
+	  --text-hero rather than the display tier: this is the only headline on the
+	  site with a whole viewport to itself and it is set a full step above every
+	  other h1. Line height and tracking are tighter than the display defaults
+	  too — at 92px the display values leave it looking loosely set.
+
+	  `pretty`, not the `balance` the display roles use. Balance equalises line
+	  lengths, which on a phone turns this headline into "Good businesses /
+	  deserve / good websites." — three lines with a one-word middle. Pretty
+	  leaves the natural break and only guards against a stranded last word,
+	  which is the right trade for a headline this long.
+	*/
+	.ww-hero-heading {
+		font-family: var(--font-display);
+		font-weight: 400;
+		font-size: var(--text-hero);
+		line-height: var(--leading-hero);
+		letter-spacing: var(--tracking-hero);
+		text-wrap: pretty;
+		max-width: 15ch;
+	}
+
+	/*
+	  Secondary, and kept there. Body sans at 18px against a 52–92px serif, a
+	  narrow measure, and a full step of separation above it. It is not allowed
+	  to grow with the headline.
+	*/
+	.ww-hero-lede {
+		margin-top: var(--space-md);
+		max-width: 42ch;
+		/* Not pure white. The headline is the loud thing in this frame and a
+		   supporting line at the same value competes with it; 88% steps back
+		   without dropping anywhere near a contrast floor (17:1 over the scrim). */
+		color: rgb(255 255 255 / 88%);
+	}
+
+	.ww-hero-cta {
+		margin-top: var(--space-lg);
+	}
+
+	/*
+	  The marquee's own row. It is full-bleed by construction — the band runs
+	  off both edges of the viewport, which is what makes it read as movement
+	  rather than as a centred list — so this wrapper adds no gutter.
+	*/
+	.ww-hero-logos {
+		flex: none;
+		width: 100%;
+	}
+
+	/*
+	  MOBILE — the deliberate recomposition, not a shrunk desktop.
+
+	  The copy is flush left and the two spacers are weighted so the block sits
+	  low in the frame rather than dead centre. A phone crops the footage to a
+	  narrow vertical slice of its middle, and pushing the text down leaves that
+	  slice visible above the words instead of covering it. A centred four-line
+	  ragged headline on a 390px screen also produces four different line lengths
+	  pivoting around a centre axis, which is hard to read and looks accidental;
+	  flush left it has one clean edge.
+	*/
+	.ww-hero-air:first-child {
+		flex-grow: 1.9;
+	}
+
+	/* DESKTOP. Centred, cinematic, and the copy floats in the middle of a
+	   landscape frame with equal air above and below it. */
+	@media (min-width: 768px) {
+		.ww-hero-inner {
+			padding-bottom: var(--space-xs);
+		}
+
+		.ww-hero-air:first-child {
+			flex-grow: 1;
+		}
+
+		.ww-hero-body {
+			text-align: center;
+		}
+
+		.ww-hero-heading {
+			max-width: 22ch;
+			margin-inline: auto;
+		}
+
+		.ww-hero-lede {
+			margin-top: var(--space-md);
+			margin-inline: auto;
+			max-width: 52ch;
+		}
+	}
+
+	/*
+	  Wide enough for the headline to break in two rather than three. The
+	  measure is what decides the line count, not a <br>: at 92px "Good
+	  businesses deserve" is about 990px, so a container that can hold it takes
+	  two long lines and one that cannot takes three. 1200px of column can, from
+	  this breakpoint up; a 1024px laptop cannot, and gets three lines that
+	  still fill their frame. That is the responsive break the copy is allowed
+	  to have, and it is the only one.
+	*/
+	@media (min-width: 1280px) {
+		.ww-hero-heading {
+			max-width: 26ch;
+		}
+	}
+
+	.ww-hero-fade {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		background-color: var(--ww-black);
+		opacity: 0;
+	}
+
+	/*
+	  The entrance. Everything in the frame starts 16px low and transparent and
+	  arrives over 550ms, 110ms apart, in reading order. Nothing scales, blurs or
+	  overshoots: there is already a moving picture behind this copy, and a
+	  second kind of movement in front of it would be one too many.
+
+	  `backwards` is what holds each piece low and hidden through its delay, and
+	  the animation has only a `from` — the resting state is the element exactly
+	  where the layout puts it, so an entrance that never runs leaves the hero
+	  simply present.
+	*/
+	@media (prefers-reduced-motion: no-preference) {
+		.ww-hero-heading,
+		.ww-hero-lede,
+		.ww-hero-cta {
+			animation: ww-hero-rise var(--dur-slow) var(--ease-out) var(--delay, 0ms) backwards;
+		}
+
+		.ww-hero-lede {
+			--delay: 110ms;
+		}
+
+		.ww-hero-cta {
+			--delay: 220ms;
+		}
+
+		/* Black to picture, once, on arrival. Linear rather than eased: a
+		   fade out of black is read as light arriving, and any ease on it
+		   makes the frame appear to hesitate. */
+		.ww-hero-fade {
+			animation: ww-hero-unblack 1500ms linear both;
+		}
+
+		/*
+		  THE MARQUEE'S LATE ARRIVAL. It no longer rises with the copy; it waits
+		  out the 1.5s fade and two further seconds of settled hero, then comes
+		  up over a second — 3.5s to 4.5s.
+
+		  Only the OPACITY is delayed. The band's own translation lives on
+		  .ww-marquee-track inside the component and has been running since the
+		  document was parsed, untouched by anything here, so what appears at
+		  3.5s is a band already three and a half seconds into its travel rather
+		  than one starting from a standstill. That is the whole trick, and it is
+		  why this is a fade on the wrapper and not a play-state on the track.
+		*/
+		.ww-hero-logos {
+			animation: ww-hero-logos-in 1000ms var(--ease-out) 3500ms backwards;
+		}
+	}
+
+	@keyframes ww-hero-unblack {
+		from {
+			opacity: 1;
+		}
+
+		to {
+			opacity: 0;
+		}
+	}
+
+	@keyframes ww-hero-logos-in {
+		from {
+			opacity: 0;
+		}
+	}
+
+	@keyframes ww-hero-rise {
+		from {
+			opacity: 0;
+			transform: translateY(1rem);
+		}
+	}
+</style>

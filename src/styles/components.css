@@ -1,0 +1,385 @@
+/* ==========================================================================
+   WELLWORN — COMPONENT PRIMITIVES
+   --------------------------------------------------------------------------
+   The furniture the marketing site is built from. Type roles, containers,
+   sections, rules and actions. A page composes these; it does not invent
+   sizes of its own.
+
+   Everything here is prefixed .ww-. The unprefixed classes at the foot of the
+   file belong to the client portal and the questionnaire and are preserved
+   from the previous build — see portal.css.
+   ========================================================================== */
+
+@layer components {
+	/* ======================================================================
+	   TYPE ROLES
+
+	   Eight of them, and the count is the point. A heading picks the role that
+	   matches how loud it should be; it does not pick a pixel size. Every size
+	   is fluid, so there are no per-component breakpoint overrides to keep in
+	   step.
+
+	   The four display steps are WWBlock at 400. The display face does not set
+	   body copy — not at any size, not for a lede, not for a pull quote.
+	   ====================================================================== */
+
+	.ww-display-xxl,
+	.ww-display-xl,
+	.ww-display-lg,
+	.ww-display-md {
+		font-family: var(--font-display);
+		font-weight: 400;
+		line-height: var(--leading-display);
+		letter-spacing: var(--tracking-display);
+		text-wrap: balance;
+	}
+
+	/* Giant numerals. Pricing figures, and nothing else so far. Kept out of
+	   headings deliberately: at this size the type is a quantity, not a
+	   sentence. */
+	.ww-display-xxl {
+		font-size: var(--text-display-xxl);
+		line-height: 0.9;
+	}
+
+	/* The hero. One per page, and it should be the loudest thing on it. */
+	.ww-display-xl {
+		font-size: var(--text-display-xl);
+	}
+
+	/* Major section statements — the three promise headings, the pricing
+	   heading, the closing statement. */
+	.ww-display-lg {
+		font-size: var(--text-display-lg);
+		line-height: 1.02;
+	}
+
+	/* Smaller section headings, and the plan names in pricing. */
+	.ww-display-md {
+		font-size: var(--text-display-md);
+		line-height: 1.08;
+	}
+
+	/* Below the display tier the site switches to Inter, and stays there. */
+	.ww-heading {
+		font-family: var(--font-sans);
+		font-size: var(--text-heading);
+		font-weight: 500;
+		line-height: var(--leading-heading);
+		letter-spacing: -0.01em;
+	}
+
+	.ww-body-lg {
+		font-family: var(--font-sans);
+		font-size: var(--text-body-lg);
+		font-weight: 400;
+		line-height: var(--leading-body);
+	}
+
+	.ww-body {
+		font-family: var(--font-sans);
+		font-size: var(--text-body);
+		font-weight: 400;
+		line-height: var(--leading-body);
+	}
+
+	.ww-small {
+		font-family: var(--font-sans);
+		font-size: var(--text-small);
+		font-weight: 400;
+		line-height: var(--leading-body);
+	}
+
+	/* The mono label that opens a section. Uppercase is applied here rather
+	   than in the markup so the underlying text stays sentence case for search
+	   engines and for a screen reader, which spells an all-caps word out letter
+	   by letter. */
+	.ww-eyebrow {
+		font-family: var(--font-mono);
+		font-size: var(--text-eyebrow);
+		font-weight: 500;
+		line-height: 1.2;
+		letter-spacing: var(--tracking-eyebrow);
+		text-transform: uppercase;
+	}
+
+	/* A measure cap for running copy. 60ch is about ten words a line at
+	   --text-body-lg, which is where a paragraph stops being comfortable. */
+	.ww-measure {
+		max-width: 60ch;
+	}
+
+	.ww-measure-narrow {
+		max-width: 46ch;
+	}
+
+	/* ======================================================================
+	   CONTAINER AND SECTION
+
+	   .ww-container is the 1200px content column. .ww-section is the vertical
+	   rhythm — 80px on a phone, 120px from the tablet up, both from one token.
+	   The two are separate so a full-bleed section can take the rhythm without
+	   taking the column, and put its own container inside.
+	   ====================================================================== */
+
+	.ww-container {
+		width: 100%;
+		max-width: calc(var(--container-max) + var(--gutter) * 2);
+		margin-inline: auto;
+		padding-inline: var(--gutter);
+	}
+
+	.ww-section {
+		padding-block: var(--section-y);
+	}
+
+	/* A section that runs the full width of the viewport and manages its own
+	   insets — the hero, the logo marquee, the collage. It still takes part in
+	   the vertical rhythm unless it opts out. */
+	.ww-section-full {
+		width: 100%;
+	}
+
+	/* The three grounds. A page alternates between them; that alternation is
+	   most of what gives the site its depth, since there are no shadows to do
+	   the job. Each re-points the tokens the type roles read, so a heading
+	   inside one does not need to know which ground it landed on. */
+	.ww-section-dark {
+		background-color: var(--ww-black);
+		color: var(--ww-white);
+	}
+
+	.ww-section-cream {
+		background-color: var(--ww-cream);
+		color: var(--ww-ink);
+	}
+
+	.ww-section-light {
+		background-color: var(--ww-light);
+		color: var(--ww-ink);
+	}
+
+	/* Focus on a dark ground. Blue on black is 3.1:1, which is under the floor
+	   for a ring that has to be found before it is understood. */
+	.ww-section-dark :focus-visible,
+	.ww-footer :focus-visible {
+		outline-color: var(--ww-white);
+	}
+
+	/* ======================================================================
+	   SECONDARY COPY
+
+	   Two greys, and which one is correct depends entirely on the ground. On
+	   white, #707070 clears 5.2:1 and #999 does not. On black it is the other
+	   way round. These two classes exist so that choice is made once.
+	   ====================================================================== */
+	.ww-muted {
+		color: var(--ww-muted);
+	}
+
+	.ww-section-dark .ww-muted,
+	.ww-footer .ww-muted {
+		color: var(--ww-disabled);
+	}
+
+	/* ======================================================================
+	   RULES
+
+	   1px hairlines, everywhere. They are the site's only structural device
+	   besides the change of ground: they separate pricing plans, service rows,
+	   footer bands and section openings. There are no thick decorative borders
+	   and no boxes drawn for their own sake.
+	   ====================================================================== */
+	.ww-rule {
+		border: 0;
+		border-top: 1px solid var(--ww-hairline);
+		margin: 0;
+	}
+
+	.ww-section-dark .ww-rule,
+	.ww-footer .ww-rule {
+		border-top-color: var(--ww-hairline-dark);
+	}
+
+	/* ======================================================================
+	   ACTIONS
+
+	   One shape — a full pill — in four weights. Every call to action on the
+	   site is one of these, at one size. There is deliberately no large
+	   variant: a form submit wider than the button that sent someone to the
+	   form makes one action look like two.
+
+	     .ww-btn-dark    black fill, on a light ground. The default ask.
+	     .ww-btn-blue    blue fill, on a light ground. Held for the hero and
+	                     the closing statement, where the reference composition
+	                     puts the accent and it earns the room.
+	     .ww-btn-outline white fill, blue label, blue hairline. The secondary.
+	     .ww-btn-light   white fill, black label. The ask on a dark ground.
+
+	   Height is fixed rather than derived from padding so it holds wherever the
+	   button lands, whatever the type around it is doing.
+	   ====================================================================== */
+	.ww-btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: var(--space-sm);
+		min-height: 48px;
+		padding: 0 28px;
+		border: 1px solid transparent;
+		border-radius: var(--radius-pill);
+		font-family: var(--font-sans);
+		font-size: var(--text-body);
+		font-weight: 500;
+		line-height: 1;
+		text-decoration: none;
+		white-space: nowrap;
+		cursor: pointer;
+		transition:
+			background-color var(--dur-fast) var(--ease-out),
+			border-color var(--dur-fast) var(--ease-out),
+			color var(--dur-fast) var(--ease-out);
+	}
+
+	.ww-btn:disabled,
+	.ww-btn[aria-disabled='true'] {
+		cursor: not-allowed;
+		background-color: var(--ww-light);
+		border-color: var(--ww-light);
+		color: var(--ww-disabled);
+	}
+
+	.ww-btn-dark {
+		background-color: var(--ww-ink);
+		border-color: var(--ww-ink);
+		color: var(--ww-white);
+	}
+
+	.ww-btn-dark:hover {
+		background-color: var(--ww-ink-medium);
+		border-color: var(--ww-ink-medium);
+	}
+
+	.ww-btn-dark:active {
+		background-color: var(--ww-ink-soft);
+		border-color: var(--ww-ink-soft);
+	}
+
+	.ww-btn-blue {
+		background-color: var(--ww-blue);
+		border-color: var(--ww-blue);
+		color: var(--ww-white);
+	}
+
+	/* Hover walks the blue down rather than up. Lightening it would hand back
+	   contrast at the exact moment the pointer is on the control, and 4.6:1 has
+	   nothing to spare. */
+	.ww-btn-blue:hover {
+		background-color: #0055cc;
+		border-color: #0055cc;
+	}
+
+	.ww-btn-blue:active {
+		background-color: #0047ab;
+		border-color: #0047ab;
+	}
+
+	.ww-btn-outline {
+		background-color: var(--ww-white);
+		border-color: var(--ww-blue);
+		color: var(--ww-blue);
+	}
+
+	.ww-btn-outline:hover {
+		background-color: var(--ww-blue);
+		color: var(--ww-white);
+	}
+
+	.ww-btn-light {
+		background-color: var(--ww-white);
+		border-color: var(--ww-white);
+		color: var(--ww-ink);
+	}
+
+	.ww-btn-light:hover {
+		background-color: var(--ww-light);
+		border-color: var(--ww-light);
+	}
+
+	/* A text link that reads as an action. Square's "Learn more" — sans, medium,
+	   underlined with a real offset rather than a border. */
+	.ww-link {
+		font-family: var(--font-sans);
+		font-size: var(--text-body);
+		font-weight: 500;
+		color: inherit;
+		text-decoration: underline;
+		text-underline-offset: 5px;
+		text-decoration-thickness: 1px;
+		transition: text-decoration-color var(--dur-fast) var(--ease-out);
+	}
+
+	.ww-link:hover {
+		text-decoration-thickness: 2px;
+	}
+
+	/* ======================================================================
+	   MEDIA
+
+	   Photography is where this design gets its depth, so the frames around it
+	   are as close to nothing as they can be: no shadow, no border, and either
+	   the 50px card geometry or no radius at all.
+
+	   .ww-media is the frame. It clips, it holds an aspect ratio, and it paints
+	   a neutral ground so a slow image does not flash the section's colour
+	   through. The <img> inside fills it.
+	   ====================================================================== */
+	.ww-media {
+		position: relative;
+		overflow: hidden;
+		background-color: var(--ww-light);
+	}
+
+	.ww-media > img,
+	.ww-media > video,
+	.ww-media > picture > img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.ww-media-card {
+		border-radius: var(--radius-card);
+	}
+
+	.ww-media-tile {
+		border-radius: var(--radius-tile);
+	}
+
+	/* The scrim that makes white type legible over a photograph. Two layers,
+	   because a flat tint alone leaves a bright frame unprotected and a purely
+	   bottom-weighted gradient leaves the top half of a centred composition
+	   unprotected. Together they land near 78% black behind centred copy, which
+	   holds white above 12:1 against even a blown-out frame. */
+	.ww-scrim {
+		position: absolute;
+		inset: 0;
+		background:
+			linear-gradient(
+				to top,
+				rgb(0 0 0 / 62%) 0%,
+				rgb(0 0 0 / 40%) 45%,
+				rgb(0 0 0 / 30%) 100%
+			),
+			rgb(0 0 0 / 22%);
+	}
+
+	/* A much lighter version, for the corner of a video where only a small logo
+	   has to survive. It must not cover a meaningful part of the picture. */
+	.ww-scrim-corner {
+		position: absolute;
+		inset: auto 0 0 0;
+		height: 45%;
+		background: linear-gradient(to top, rgb(0 0 0 / 70%), rgb(0 0 0 / 0%));
+	}
+}

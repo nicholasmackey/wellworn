@@ -1,0 +1,373 @@
+---
+/**
+ * THE VIDEO TESTIMONIALS.
+ *
+ * Three clips in a row on a wide screen, stacked on a phone. Each is a tall
+ * 3:4 tile with the 50px feature geometry, filled edge to edge by its own
+ * picture, with the client's mark in the bottom-left corner and two small
+ * controls in the bottom-right. No shadow, no border, no caption bar, and
+ * nothing covering more of the frame than it has to.
+ *
+ * There is no heading over this section, and that is deliberate rather than an
+ * omission: no heading copy was supplied for it, and one is not invented here.
+ * It is named for assistive tech with aria-label, which is the one kind of
+ * label this build is allowed to write.
+ *
+ * The playback rules live in testimonials.client.ts. The short version: hover
+ * starts a clip, leaving does not stop it, one plays at a time, and everything
+ * hover can do a keyboard can do too.
+ */
+import { Image } from 'astro:assets';
+import type { Testimonial } from '../../config/home';
+
+interface Props {
+	testimonials: readonly Testimonial[];
+	id?: string;
+	label?: string;
+}
+
+const { testimonials, id, label = 'Client testimonials' }: Props = Astro.props;
+---
+
+<section class="ww-section ww-testimonials" id={id} aria-label={label}>
+	<div class="ww-container">
+		<ul class="ww-vt-grid">
+			{
+				testimonials.map((item, index) => (
+					<li>
+						{/*
+						  `data-muted` is in the markup, not left to the script. Every clip
+						  ships muted, the stylesheet reads this attribute to choose which
+						  of the two sound icons to draw, and without it the control renders
+						  with no icon at all until the script has run.
+						*/}
+						<article class="ww-vt-card" data-testimonial data-muted data-label={item.label}>
+							<div class="ww-media ww-media-card ww-vt-media">
+								{/*
+								  The poster is an <img> layer over the video rather than the
+								  video's own `poster` attribute, which buys a responsive
+								  srcset the attribute cannot take. It is faded out on the
+								  `playing` event — not on the click — so it stays up until
+								  there is genuinely a frame behind it to reveal.
+
+								  The first card loads eagerly and the other two lazily: on a
+								  wide screen card one is at or near the fold, and on a phone
+								  none of them is.
+								*/}
+								<Image
+									src={item.poster}
+									alt={item.posterAlt}
+									width={1200}
+									widths={[400, 600, 900, 1200]}
+									sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+									quality={78}
+									loading={index === 0 ? 'eager' : 'lazy'}
+									class="ww-vt-poster"
+								/>
+
+								{/*
+								  preload="metadata", not auto. Three clips preloading in full
+								  on a phone is three files nobody has asked for; metadata is
+								  the header and the first frame's worth, which is all that is
+								  needed for playback to start promptly when it is asked for.
+
+								  `muted` and `playsinline` are both load-bearing rather than
+								  polite. Without muted a browser refuses programmatic
+								  playback outright; without playsinline iOS takes the clip
+								  fullscreen the moment it starts, which turns a hover into a
+								  hijacked screen.
+
+								  No `controls`: the native control bar is a different design
+								  system pasted over this one. The two buttons below are the
+								  controls.
+								*/}
+								<video
+									src={item.videoSrc}
+									preload="metadata"
+									muted
+									playsinline
+									disablepictureinpicture
+									tabindex="-1"
+									aria-hidden="true"
+									class="ww-vt-video"
+								/>
+
+								{/* Only behind the corner furniture, and only enough of it to
+								    keep a white mark legible over an unknown frame. */}
+								<div class="ww-scrim-corner" aria-hidden="true" />
+
+								<img
+									src={item.logoSrc}
+									alt={item.logoAlt}
+									width={200}
+									height={48}
+									loading="lazy"
+									decoding="async"
+									class="ww-vt-logo"
+								/>
+
+								<div class="ww-vt-controls">
+									{/*
+									  A real <button>, so Space and Enter both work and focus
+									  lands on it in document order without anything being
+									  wired up. Its accessible name is set by the client script
+									  and flips between "Play …" and "Pause …" — a toggle whose
+									  name changes says more than aria-pressed does here,
+									  because the two states have different verbs.
+									*/}
+									<button
+										type="button"
+										class="ww-vt-btn"
+										data-play-toggle
+										aria-label={`Play ${item.label}`}
+									>
+										<svg viewBox="0 0 24 24" aria-hidden="true" class="ww-vt-icon-play">
+											<path d="M8 5v14l11-7z" fill="currentColor" />
+										</svg>
+										<svg viewBox="0 0 24 24" aria-hidden="true" class="ww-vt-icon-pause">
+											<path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor" />
+										</svg>
+									</button>
+
+									<button
+										type="button"
+										class="ww-vt-btn"
+										data-sound-toggle
+										aria-label={`Unmute ${item.label}`}
+									>
+										<svg viewBox="0 0 24 24" aria-hidden="true" class="ww-vt-icon-muted">
+											<path
+												d="M4 9h3l4-3.5v13L7 15H4z"
+												fill="currentColor"
+											/>
+											<path
+												d="m15 9.5 4 5m0-5-4 5"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="1.8"
+												stroke-linecap="round"
+											/>
+										</svg>
+										<svg viewBox="0 0 24 24" aria-hidden="true" class="ww-vt-icon-sound">
+											<path
+												d="M4 9h3l4-3.5v13L7 15H4z"
+												fill="currentColor"
+											/>
+											<path
+												d="M15 9a4 4 0 0 1 0 6M17.5 6.5a7.5 7.5 0 0 1 0 11"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="1.8"
+												stroke-linecap="round"
+											/>
+										</svg>
+									</button>
+								</div>
+							</div>
+						</article>
+					</li>
+				))
+			}
+		</ul>
+	</div>
+</section>
+
+<style>
+	.ww-testimonials {
+		background-color: var(--ww-white);
+	}
+
+	.ww-vt-grid {
+		display: grid;
+		gap: var(--space-md);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	/*
+	  MOBILE: one column, and each tile keeps the same 3:4 frame it has on
+	  desktop. Three cards side by side on a phone would be three thumbnails; a
+	  single column of tall frames is the whole point of choosing a portrait
+	  ratio in the first place.
+	*/
+	@media (min-width: 640px) {
+		.ww-vt-grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+
+		/* Two columns and three cards leaves a hole. The third spans both and
+		   takes a landscape crop, which reads as a deliberate composition rather
+		   than as a card that failed to find a partner. */
+		.ww-vt-grid li:last-child {
+			grid-column: 1 / -1;
+		}
+
+		.ww-vt-grid li:last-child .ww-vt-media {
+			aspect-ratio: 16 / 9;
+		}
+	}
+
+	@media (min-width: 1024px) {
+		.ww-vt-grid {
+			grid-template-columns: repeat(3, 1fr);
+		}
+
+		.ww-vt-grid li:last-child {
+			grid-column: auto;
+		}
+
+		.ww-vt-grid li:last-child .ww-vt-media {
+			aspect-ratio: 3 / 4;
+		}
+	}
+
+	.ww-vt-card {
+		height: 100%;
+	}
+
+	.ww-vt-media {
+		aspect-ratio: 3 / 4;
+		background-color: var(--ww-ink-soft);
+		cursor: pointer;
+	}
+
+	/* Both media layers fill the frame. The poster sits above the video and gets
+	   out of the way once there is something behind it. */
+	.ww-vt-poster,
+	.ww-vt-video {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.ww-vt-poster {
+		z-index: 1;
+		transition: opacity var(--dur-base) var(--ease-out);
+	}
+
+	[data-playing] .ww-vt-poster {
+		opacity: 0;
+	}
+
+	.ww-scrim-corner {
+		z-index: 2;
+	}
+
+	/*
+	  The client mark, bottom left. Small, white, and sitting on nothing but the
+	  corner gradient — no plate, no pill, no panel. It must never be the reason
+	  a third of the picture is covered.
+	*/
+	.ww-vt-logo {
+		position: absolute;
+		z-index: 3;
+		left: var(--space-md);
+		bottom: var(--space-md);
+		height: 22px;
+		width: auto;
+	}
+
+	@media (min-width: 768px) {
+		.ww-vt-logo {
+			left: var(--space-lg);
+			bottom: var(--space-lg);
+			height: 26px;
+		}
+	}
+
+	.ww-vt-controls {
+		position: absolute;
+		z-index: 3;
+		right: var(--space-md);
+		bottom: var(--space-md);
+		display: flex;
+		gap: var(--space-sm);
+	}
+
+	@media (min-width: 768px) {
+		.ww-vt-controls {
+			right: var(--space-lg);
+			bottom: var(--space-lg);
+		}
+	}
+
+	/*
+	  44px, which is the tap target floor, and a pill like every other action on
+	  the site. Translucent white over the frame rather than a solid plate: it
+	  has to be findable without becoming furniture.
+	*/
+	.ww-vt-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 44px;
+		height: 44px;
+		padding: 0;
+		border: 0;
+		border-radius: var(--radius-pill);
+		background-color: rgb(0 0 0 / 55%);
+		color: var(--ww-white);
+		cursor: pointer;
+		transition: background-color var(--dur-fast) var(--ease-out);
+	}
+
+	.ww-vt-btn:hover {
+		background-color: rgb(0 0 0 / 80%);
+	}
+
+	.ww-vt-btn:focus-visible {
+		outline: 2px solid var(--ww-white);
+		outline-offset: 2px;
+	}
+
+	.ww-vt-btn svg {
+		width: 20px;
+		height: 20px;
+	}
+
+	/*
+	  Both icons are in the markup and one is hidden, rather than the path being
+	  swapped by script. It keeps every icon in the component where it can be
+	  seen, and it means the client script sets state and never draws.
+
+	  `display: none` rather than opacity, so the hidden one is not a click
+	  target and contributes nothing to layout.
+	*/
+	.ww-vt-icon-pause,
+	.ww-vt-icon-sound {
+		display: none;
+	}
+
+	[data-playing] .ww-vt-icon-play {
+		display: none;
+	}
+
+	[data-playing] .ww-vt-icon-pause {
+		display: block;
+	}
+
+	[data-muted] .ww-vt-icon-sound {
+		display: none;
+	}
+
+	[data-muted] .ww-vt-icon-muted {
+		display: block;
+	}
+
+	.ww-vt-card:not([data-muted]) .ww-vt-icon-muted {
+		display: none;
+	}
+
+	.ww-vt-card:not([data-muted]) .ww-vt-icon-sound {
+		display: block;
+	}
+</style>
+
+<script>
+	import { initTestimonials } from './testimonials.client';
+
+	initTestimonials();
+</script>

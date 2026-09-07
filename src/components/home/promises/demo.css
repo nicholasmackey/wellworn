@@ -1,0 +1,185 @@
+/* ==========================================================================
+   THE PROMISE DEMONSTRATIONS — SHARED SHELL
+   --------------------------------------------------------------------------
+   Three small product demonstrations sit where the three promise bands used
+   to carry a photograph. They are drawn, not photographed: search results,
+   a reputation profile, a quote request. Each one shows the outcome its band
+   describes rather than illustrating it.
+
+   This file is everything the three have in common — the canvas they are
+   drawn on, the type scale, the panels, chips, buttons and stars. What is
+   particular to one demonstration lives in that component's own scoped
+   block.
+
+   SIZING. The frame keeps the photograph's aspect ratios exactly, which
+   means the box goes from roughly 350x260 on a phone to 560x700 on a
+   desktop. Rather than three sets of breakpoints, the frame is a size
+   container and one root font-size is derived from it; everything inside is
+   written in em, so the whole interface scales as one thing and never
+   overflows the frame it is drawn in. Below the tablet split the fourth
+   search result and the third review are dropped instead of squeezed — a
+   short frame recomposes, it does not shrink.
+
+   MOTION. Every transition here is 300-700ms on the shared ease-out curve.
+   base.css already collapses all of it under prefers-reduced-motion; the
+   client script does the other half by jumping straight to the final step.
+   ========================================================================== */
+
+@layer components {
+	/* The photograph's frame, reused. .ww-media supplies the clip and the
+	   50px radius; this supplies the ground and makes the box a size
+	   container so the interface inside can measure it. */
+	.wwd-frame {
+		container-type: size;
+		background-color: var(--ww-cream);
+	}
+
+	.wwd-frame[data-ground='cream'] {
+		background-color: var(--ww-white);
+	}
+
+	.wwd {
+		--wwd-panel: var(--ww-white);
+		--wwd-line: var(--ww-hairline-light);
+		--wwd-edge: var(--ww-hairline);
+
+		/* Width and height both get a say: a wide short frame is limited by
+		   its height, a tall narrow one by its width. */
+		font-size: clamp(9px, min(3.6cqw, 4.2cqh), 16px);
+		font-family: var(--font-sans);
+		line-height: 1.35;
+		color: var(--ww-ink);
+
+		position: absolute;
+		inset: 0;
+		padding: clamp(16px, 6cqw, 40px);
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		overflow: hidden;
+	}
+
+	.wwd[data-ground='cream'] {
+		--wwd-panel: var(--ww-cream);
+	}
+
+	/* --------------------------------------------------------------------
+	   PANELS, ROWS, TYPE
+	   -------------------------------------------------------------------- */
+	.wwd-panel {
+		background-color: var(--wwd-panel);
+		border: 1px solid var(--wwd-line);
+		border-radius: var(--radius-input);
+	}
+
+	.wwd-name {
+		font-weight: 600;
+		letter-spacing: -0.01em;
+	}
+
+	.wwd-meta {
+		font-size: 0.82em;
+		color: var(--ww-muted);
+	}
+
+	.wwd-strong {
+		font-weight: 600;
+		color: var(--ww-ink);
+	}
+
+	.wwd-label {
+		font-family: var(--font-mono);
+		font-size: 0.68em;
+		font-weight: 500;
+		letter-spacing: var(--tracking-eyebrow);
+		text-transform: uppercase;
+		color: var(--ww-muted);
+	}
+
+	/* The one place blue is allowed to appear: the found state, the primary
+	   action, the owner's reply, the lead. Never more than one per view. */
+	.wwd-chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4em;
+		padding: 0.25em 0.7em;
+		border-radius: var(--radius-pill);
+		background-color: var(--ww-blue);
+		color: var(--ww-white);
+		font-size: 0.72em;
+		font-weight: 600;
+		letter-spacing: 0.01em;
+		white-space: nowrap;
+	}
+
+	.wwd-chip-quiet {
+		background-color: transparent;
+		border: 1px solid var(--wwd-edge);
+		color: var(--ww-muted);
+		font-weight: 500;
+	}
+
+	.wwd-action {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.45em 1em;
+		border-radius: var(--radius-pill);
+		border: 1px solid var(--wwd-edge);
+		font-size: 0.82em;
+		font-weight: 500;
+		white-space: nowrap;
+	}
+
+	.wwd-action-primary {
+		background-color: var(--ww-blue);
+		border-color: var(--ww-blue);
+		color: var(--ww-white);
+		font-weight: 600;
+	}
+
+	/* --------------------------------------------------------------------
+	   STARS. Two identical rows, the top one clipped to the rating, so a
+	   4.2 that becomes a 4.8 is a width transition and not a redraw.
+	   -------------------------------------------------------------------- */
+	.wwd-stars {
+		position: relative;
+		display: inline-block;
+		letter-spacing: 0.06em;
+		white-space: nowrap;
+		color: var(--wwd-edge);
+	}
+
+	.wwd-stars > span {
+		position: absolute;
+		inset: 0;
+		width: var(--wwd-fill, 0%);
+		overflow: hidden;
+		color: var(--ww-ink);
+		transition: width var(--dur-slow) var(--ease-out);
+	}
+
+	/* --------------------------------------------------------------------
+	   REVEALS. Anything that arrives mid-sequence and changes the height of
+	   the stack animates its own height, so everything below it moves with
+	   it rather than jumping when it lands.
+	   -------------------------------------------------------------------- */
+	.wwd-reveal {
+		display: grid;
+		grid-template-rows: 0fr;
+		opacity: 0;
+		transition:
+			grid-template-rows var(--dur-slow) var(--ease-out),
+			opacity var(--dur-base) var(--ease-out);
+	}
+
+	.wwd-reveal > * {
+		overflow: hidden;
+		min-height: 0;
+	}
+
+	.wwd-reveal.is-open {
+		grid-template-rows: 1fr;
+		opacity: 1;
+	}
+}

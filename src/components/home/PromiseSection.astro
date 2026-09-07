@@ -1,0 +1,203 @@
+---
+/**
+ * A PROMISE BAND — "Get found.", "Earn trust.", "Make it easy to do business."
+ *
+ * The three core statements the whole page is built around, each given a full
+ * editorial band: a display heading, one or two short paragraphs, and one large
+ * photograph. Not a feature card, not a three-across icon grid, and nothing
+ * with a border around it.
+ *
+ * The same component draws all three, but it is given enough to vary them so
+ * they do not read as one thing stamped out three times: which side the
+ * photograph takes, and which ground the band sits on. Down the page that
+ * produces picture-right on white, picture-left on cream, picture-right on
+ * white — an alternation you feel scrolling without ever quite noticing.
+ *
+ * On a phone the split collapses to one column with the photograph second. The
+ * heading is the reason someone keeps reading; a full-width picture above it
+ * would push it under the fold on every one of the three.
+ */
+import { Image } from 'astro:assets';
+import type { PromiseBand } from '../../config/home';
+import LocalSearchDemo from './promises/LocalSearchDemo.astro';
+import ReputationDemo from './promises/ReputationDemo.astro';
+import ConversionDemo from './promises/ConversionDemo.astro';
+import './promises/demo.css';
+
+interface Props {
+	promise: PromiseBand;
+	/**
+	 * Which heading level this band takes. Every band on the homepage is an h2
+	 * under the hero's h1; the prop exists so an inner page can drop one of
+	 * these a level without the outline going wrong.
+	 */
+	level?: 'h2' | 'h3';
+}
+
+const { promise, level = 'h2' }: Props = Astro.props;
+const Heading = level;
+
+const headingId = promise.id ? `${promise.id}-heading` : undefined;
+
+/*
+ * WHAT SITS IN THE PICTURE'S PLACE.
+ *
+ * Each band shows the outcome it is describing rather than a photograph of a
+ * business: search results that find the bakery, a profile that gains a review
+ * and a reply, a quote request that takes two fields. They are keyed off the
+ * band's own id, so the section still does not know which of the three it is
+ * drawing — a band with no demonstration of its own falls back to the
+ * photograph in the data, which is why the import above stays.
+ */
+const DEMOS = {
+	'get-found': LocalSearchDemo,
+	'earn-trust': ReputationDemo,
+	'make-it-easy': ConversionDemo,
+} as const;
+
+const Demo = promise.id && promise.id in DEMOS ? DEMOS[promise.id as keyof typeof DEMOS] : undefined;
+---
+
+<section
+	class:list={['ww-section', 'ww-promise', promise.ground === 'cream' && 'ww-section-cream']}
+	id={promise.id}
+	aria-labelledby={headingId}
+>
+	<div class="ww-container">
+		<div class:list={['ww-promise-grid', promise.imageSide === 'left' && 'is-flipped']}>
+			<div class="ww-promise-copy">
+				<Heading id={headingId} class="ww-display-lg">{promise.heading}</Heading>
+
+				{promise.body.map((paragraph) => <p class="ww-body-lg ww-measure">{paragraph}</p>)}
+			</div>
+
+			{
+				Demo ? (
+					/*
+					  The frame is the photograph's frame, unchanged: same class, same
+					  aspect ratios, same 50px geometry, same side of the split. Only
+					  what is drawn inside it is different. The ground goes in because
+					  the demonstration has to sit on the opposite surface to the band
+					  it is on, or its panels disappear into it.
+					*/
+					<div class="ww-media ww-media-card ww-promise-media wwd-frame" data-ground={promise.ground}>
+						<Demo ground={promise.ground} />
+					</div>
+				) : (
+					/*
+					  `sizes` is what stops a phone downloading a desktop-width crop.
+					  Below the split these run the full width of the container; above
+					  it they take a little under half of a 1200px column, so 560px is
+					  the widest they are ever painted at and the browser picks the
+					  candidate that matches its own DPR.
+
+					  Quality 68 rather than the 80 that reads as the safe default.
+					  These are dense documentary photographs and WebP spends
+					  enormously on that kind of detail. Check the build output before
+					  raising it.
+					*/
+					<div class="ww-media ww-media-card ww-promise-media">
+						<Image
+							src={promise.image}
+							alt={promise.imageAlt}
+							width={1200}
+							widths={[480, 720, 960, 1200]}
+							sizes="(min-width: 1024px) 560px, (min-width: 768px) 50vw, 100vw"
+							quality={68}
+							loading="lazy"
+							decoding="async"
+						/>
+					</div>
+				)
+			}
+
+		</div>
+	</div>
+</section>
+
+<style>
+	.ww-promise-grid {
+		display: grid;
+		gap: var(--space-lg);
+		align-items: center;
+	}
+
+	.ww-promise-copy > * + * {
+		margin-top: var(--space-md);
+	}
+
+	/* The heading gets more air under it than the paragraphs get between them,
+	   so the block reads as a statement followed by its explanation rather than
+	   as three paragraphs of equal weight. */
+	.ww-promise-copy > :first-child {
+		margin-bottom: var(--space-md);
+	}
+
+	.ww-promise-media {
+		/* 4:3 on a phone. The source photographs run from tall portrait to wide
+		   landscape, and a common frame is what keeps three bands feeling like one
+		   set — the crop is centred, which every one of these images survives. */
+		aspect-ratio: 4 / 3;
+	}
+
+	/*
+	  The demonstrations are portrait interfaces — a list of results, a
+	  profile, a form — and the photograph's 4:3 phone frame is not tall
+	  enough to hold one without cutting the bottom off it. On a phone those
+	  bands take a square instead. Everything else about the band is
+	  unchanged, and above the split the picture's own proportions already
+	  suit them, so nothing changes there.
+	*/
+	@media (max-width: 767px) {
+		.wwd-frame {
+			aspect-ratio: 1 / 1;
+		}
+	}
+
+	@media (min-width: 768px) {
+		.ww-promise-grid {
+			grid-template-columns: 1fr 1fr;
+			gap: var(--space-xl);
+		}
+
+		/*
+		  The flip is done with grid-column rather than by reordering the DOM,
+		  which matters: the heading stays first in the source on every band, so a
+		  screen reader and a keyboard always meet the statement before the
+		  picture that illustrates it, whichever side the picture is drawn on.
+		*/
+		.is-flipped .ww-promise-copy {
+			grid-column: 2;
+			grid-row: 1;
+		}
+
+		.is-flipped .ww-promise-media {
+			grid-column: 1;
+			grid-row: 1;
+		}
+
+		.ww-promise-media {
+			aspect-ratio: 5 / 6;
+		}
+	}
+
+	@media (min-width: 1024px) {
+		/* Even halves, deliberately. An asymmetric split would have to be written
+		   twice — once each way — because the flipped bands put the picture in
+		   column one, and two proportions to keep in step is two chances for a
+		   band to end up the wrong way round. */
+		.ww-promise-grid {
+			gap: var(--space-2xl);
+		}
+
+		.ww-promise-media {
+			aspect-ratio: 4 / 5;
+		}
+	}
+</style>
+
+<script>
+	import { initPromiseDemos } from './promises/promise-demos.client';
+
+	initPromiseDemos();
+</script>

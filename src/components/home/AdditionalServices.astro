@@ -1,0 +1,140 @@
+---
+/**
+ * NEED MORE THAN A WEBSITE?
+ *
+ * The transition out of the two plans. Still black, so it reads as the tail of
+ * the pricing section rather than as a new pitch, but built as an editorial
+ * service list rather than as more plans: hairline-separated rows, the name on
+ * the left, what it covers on the right, and no boxes anywhere.
+ *
+ * On the Reviews & Reputation row: the plan two screens up already sells that
+ * offer, at $297, as Website + Growth. Printing the same figure again here as
+ * though it were a separate product would give the page two prices for one
+ * thing. So this row explains what is inside that plan and names it in the
+ * slot where a price would go. The price itself has not changed and is not
+ * repeated. See the note over ADDITIONAL_SERVICES in config/home.ts.
+ */
+import { CONTACT_HREF } from '../../config/site';
+import type { AdditionalService } from '../../config/home';
+
+interface Props {
+	heading: string;
+	body: string;
+	services: readonly AdditionalService[];
+	id?: string;
+}
+
+const { heading, body, services, id }: Props = Astro.props;
+---
+
+<section class="ww-section ww-section-dark ww-more" id={id} aria-labelledby="more-heading">
+	<div class="ww-container">
+		<header class="ww-more-head">
+			<h2 id="more-heading" class="ww-display-lg">{heading}</h2>
+
+			<p class="ww-body-lg ww-measure ww-muted">{body}</p>
+		</header>
+
+		<div class="ww-more-list">
+			{
+				services.map((service) => (
+					<article class="ww-more-row">
+						<div class="ww-more-lead">
+							<h3 class="ww-display-md">{service.title}</h3>
+
+							{service.price && <p class="ww-small ww-muted ww-more-price">{service.price}</p>}
+						</div>
+
+						<div class="ww-more-detail">
+							{service.body && <p class="ww-body-lg ww-measure">{service.body}</p>}
+
+							{service.items && (
+								<ul>
+									{service.items.map((item) => (
+										<li class="ww-body">{item}</li>
+									))}
+								</ul>
+							)}
+
+							{/*
+							  The href in the data is empty on purpose: nothing on this page
+							  invents a destination. It resolves to the same address every
+							  other action on the site points at.
+							*/}
+							{service.cta && (
+								<a href={service.cta.href || CONTACT_HREF} class="ww-btn ww-btn-light ww-more-cta">
+									{service.cta.label}
+								</a>
+							)}
+						</div>
+					</article>
+				))
+			}
+		</div>
+	</div>
+</section>
+
+<style>
+	.ww-more-head > * + * {
+		margin-top: var(--space-md);
+	}
+
+	.ww-more-list {
+		margin-top: var(--space-2xl);
+		border-top: 1px solid var(--ww-hairline-dark);
+	}
+
+	.ww-more-row {
+		padding-block: var(--space-xl);
+		border-bottom: 1px solid var(--ww-hairline-dark);
+	}
+
+	.ww-more-price {
+		margin-top: var(--space-sm);
+	}
+
+	.ww-more-detail {
+		margin-top: var(--space-md);
+	}
+
+	.ww-more-detail ul {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.ww-more-detail li {
+		padding-block: var(--space-xs);
+		color: var(--ww-white);
+	}
+
+	.ww-more-cta {
+		margin-top: var(--space-lg);
+	}
+
+	@media (min-width: 768px) {
+		.ww-more-list {
+			margin-top: var(--space-3xl);
+		}
+
+		/* Name left, contents right. The same split the pricing bands take, at the
+		   same proportions, so the two sections read as one column of the page. */
+		.ww-more-row {
+			display: grid;
+			grid-template-columns: 5fr 6fr;
+			gap: var(--space-2xl);
+			padding-block: var(--space-2xl);
+		}
+
+		.ww-more-detail {
+			margin-top: 0;
+		}
+	}
+
+	@media (min-width: 1024px) {
+		.ww-more-row {
+			grid-template-columns: 1fr 1fr;
+			gap: var(--space-3xl);
+		}
+	}
+</style>

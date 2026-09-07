@@ -1,19 +1,45 @@
 ---
 /*
   Astro emits this page as dist/404.html (special-cased — not /404/index.html).
-  Cloudflare Pages serves a root-level 404.html for any request that matches no
-  asset, with a real 404 status. Without this file Pages falls back to serving
+  Cloudflare serves a root-level 404.html for any request that matches no asset,
+  with a real 404 status. Without this file it would fall back to serving
   index.html at 200, which is the soft-404 this page exists to prevent.
 */
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { CTA_LABEL, CONTACT_HREF } from '../config/site';
 ---
 
 <BaseLayout title="Page not found" description="This page doesn't exist." noindex>
-	<section class="wrapper py-28 lg:py-40">
-		<h1 class="display display-section">Page not found</h1>
+	<section class="ww-section ww-404">
+		<div class="ww-container">
+			<h1 class="ww-display-lg">Page not found</h1>
 
-		<p class="mt-6 max-w-md text-charcoal/70">This page doesn't exist.</p>
+			<p class="ww-body-lg ww-measure ww-muted">This page doesn't exist.</p>
 
-		<a href="/" class="btn btn-primary mt-10">Back home</a>
+			<div class="ww-404-actions">
+				<a href="/" class="ww-btn ww-btn-dark">Back home</a>
+				<a href={CONTACT_HREF} class="ww-btn ww-btn-outline">{CTA_LABEL}</a>
+			</div>
+		</div>
 	</section>
 </BaseLayout>
+
+<style>
+	/* Taller than a normal section. A short page on a tall screen leaves the
+	   footer floating in the middle of the viewport otherwise. */
+	.ww-404 {
+		padding-block: var(--space-3xl);
+		min-height: 60vh;
+	}
+
+	.ww-404 p {
+		margin-top: var(--space-md);
+	}
+
+	.ww-404-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-sm);
+		margin-top: var(--space-xl);
+	}
+</style>

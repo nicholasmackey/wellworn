@@ -12,7 +12,7 @@
  *
  * 1. NO THEME MEANS NO OUTPUT. `resolveTheme(undefined)` returns null, the page
  *    sets no custom properties at all, and the defaults declared on `:root` in
- *    global.css — which are the existing Wellworn values — are what render. An
+ *    tokens.css — which are the existing Wellworn values — are what render. An
  *    unthemed questionnaire is therefore byte-identical to one built before
  *    this file existed, not merely similar to it.
  *
@@ -23,7 +23,7 @@
  *    cannot pass it is replaced by a safe default. A client can make this page
  *    theirs; a client cannot make it unreadable.
  *
- * The defaults here MUST mirror the `--q-*` block in global.css. They are the
+ * The defaults here MUST mirror the `--q-*` block in tokens.css. They are the
  * comparison used to decide what to emit, so a value that drifts out of step
  * shows up as a property emitted on a page that did not ask for one. The unit
  * tests pin both halves.
@@ -38,7 +38,7 @@ const OBJECT_CONTRAST = 3
 /**
  * The current Wellworn questionnaire, as hex.
  *
- * Every value is a token from global.css, resolved by hand: charcoal, cream,
+ * Every value is a token from tokens.css, resolved by hand: charcoal, cream,
  * portal-paper, forest, and the state colours the portals already use. Keeping
  * them literal rather than reading them from CSS is what lets the contrast
  * checks below run at build time, in node, with nothing rendered.
@@ -393,7 +393,7 @@ export function resolveTheme(theme: Theme | undefined): ResolvedTheme | null {
 	}
 }
 
-/** The `:root` block in global.css, as data. Exported so the tests can pin it. */
+/** The `:root` block in tokens.css, as data. Exported so the tests can pin it. */
 export function defaultVars(): Record<string, string> {
 	return {
 		'--q-background': THEME_DEFAULTS.background,

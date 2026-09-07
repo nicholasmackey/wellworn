@@ -1,0 +1,308 @@
+---
+/**
+ * BUILT AROUND YOUR BUSINESS — the service list.
+ *
+ * Wide horizontal rows separated by 1px hairlines, each opening to a short
+ * line of copy. Explicitly not five rounded cards: the rows run the full width
+ * of the container, there is nothing boxed, and the only structure is the rules
+ * between them and the change of type inside them.
+ *
+ * NO ACCORDION LIBRARY. The whole interaction is a button, an aria-expanded
+ * attribute and a grid row animating from 0fr to 1fr — about fifteen lines of
+ * script and no dependency.
+ *
+ * WHY NOT <details>? Because a native <details> cannot be animated open in
+ * every browser that matters without scripting around its `open` attribute
+ * anyway, and because the summary element's default semantics are still
+ * inconsistent enough between screen readers that the button-plus-region
+ * pattern below is the one that behaves the same everywhere. This markup is
+ * the WAI-ARIA accordion pattern verbatim: a heading containing a button, the
+ * button pointing at its region with aria-controls, and the region pointing
+ * back with aria-labelledby.
+ */
+import type { Point } from '../../config/site';
+
+interface Props {
+	heading: string;
+	body: readonly string[];
+	services: readonly Point[];
+	id?: string;
+}
+
+const { heading, body, services, id }: Props = Astro.props;
+
+/** Stable ids for the button/region pairs. Index-based, because the list is
+ *  rendered once at build time and never reordered on the client. */
+const rowId = (index: number) => `service-${index + 1}`;
+---
+
+<section class="ww-section ww-services" id={id} aria-labelledby="services-heading">
+	<div class="ww-container">
+		<div class="ww-services-intro">
+			<h2 id="services-heading" class="ww-display-lg">{heading}</h2>
+
+			<div class="ww-services-intro-body">
+				{body.map((paragraph) => <p class="ww-body-lg ww-measure">{paragraph}</p>)}
+			</div>
+		</div>
+
+		<div class="ww-services-list">
+			{
+				services.map((service, index) => (
+					<div class="ww-service-row">
+						{/*
+						  A heading wrapping the button, not a heading styled as one. The
+						  five services are real subheadings of this section, and putting
+						  them at h3 is what lets someone navigating by heading find them
+						  at all. The button inside carries the whole clickable row.
+						*/}
+						<h3 class="ww-service-title">
+							<button
+								type="button"
+								id={`${rowId(index)}-toggle`}
+								aria-expanded="false"
+								aria-controls={rowId(index)}
+								data-accordion-toggle
+							>
+								<span class="ww-heading">{service.title}</span>
+
+								{/*
+								  A plus that becomes a minus: the horizontal bar stays and the
+								  vertical one rotates onto it. Decorative — the state is on
+								  aria-expanded, where a screen reader will find it.
+								*/}
+								<span class="ww-service-sign" aria-hidden="true">
+									<span />
+									<span />
+								</span>
+							</button>
+						</h3>
+
+						<div
+							id={rowId(index)}
+							role="region"
+							aria-labelledby={`${rowId(index)}-toggle`}
+							class="ww-service-panel"
+						>
+							<div>
+								<p class="ww-body-lg ww-measure">{service.body}</p>
+							</div>
+						</div>
+					</div>
+				))
+			}
+		</div>
+	</div>
+</section>
+
+<style>
+	.ww-services {
+		background-color: var(--ww-cream);
+	}
+
+	.ww-services-intro-body > * + * {
+		margin-top: var(--space-sm);
+	}
+
+	.ww-services-intro-body {
+		margin-top: var(--space-md);
+	}
+
+	@media (min-width: 1024px) {
+		/* The statement and its explanation side by side, which keeps the top of
+		   the section from being a tall stack of text before the first row. */
+		.ww-services-intro {
+			display: grid;
+			grid-template-columns: 5fr 6fr;
+			gap: var(--space-2xl);
+			align-items: end;
+		}
+
+		.ww-services-intro-body {
+			margin-top: 0;
+		}
+	}
+
+	/* The rules ARE the layout. A line above the first row and below the last,
+	   and one between every pair, so the list reads as a set of bands in the
+	   page rather than as a component sitting on it. */
+	.ww-services-list {
+		margin-top: var(--space-xl);
+		border-top: 1px solid var(--ww-hairline);
+	}
+
+	@media (min-width: 768px) {
+		.ww-services-list {
+			margin-top: var(--space-2xl);
+		}
+	}
+
+	.ww-service-row {
+		border-bottom: 1px solid var(--ww-hairline);
+	}
+
+	.ww-service-title {
+		margin: 0;
+	}
+
+	.ww-service-title button {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-md);
+		width: 100%;
+		padding-block: var(--space-md);
+		background: none;
+		border: 0;
+		text-align: left;
+		color: inherit;
+		cursor: pointer;
+	}
+
+	@media (min-width: 768px) {
+		.ww-service-title button {
+			padding-block: var(--space-lg);
+		}
+	}
+
+	/* The row is the whole button, so the focus ring would otherwise be a
+	   full-width rectangle jammed against the hairlines above and below it.
+	   Inset it. */
+	.ww-service-title button:focus-visible {
+		outline-offset: -4px;
+		border-radius: var(--radius-tile);
+	}
+
+	.ww-service-title button:hover .ww-heading {
+		color: var(--ww-blue);
+	}
+
+	.ww-service-title .ww-heading {
+		transition: color var(--dur-fast) var(--ease-out);
+	}
+
+	/* 44px so the control alone clears the tap target floor even though the whole
+	   row is pressable. */
+	.ww-service-sign {
+		position: relative;
+		flex: none;
+		width: 44px;
+		height: 44px;
+	}
+
+	.ww-service-sign span {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: 16px;
+		height: 1.5px;
+		margin: -0.75px 0 0 -8px;
+		background-color: currentColor;
+		transition: transform var(--dur-base) var(--ease-out);
+	}
+
+	.ww-service-sign span:last-child {
+		transform: rotate(90deg);
+	}
+
+	/* Open: the upright bar rotates flat onto the horizontal one and the plus
+	   becomes a minus. */
+	[aria-expanded='true'] .ww-service-sign span:last-child {
+		transform: rotate(0deg);
+	}
+
+	/*
+	  The panel animates on grid-template-rows, which is what lets it open to the
+	  height of its own content without that height being measured or written
+	  down anywhere. The inner div needs `min-height: 0` and `overflow: hidden`
+	  for the row to be allowed to collapse below its content size.
+
+	  `visibility` rides along on the same transition so a closed panel is not
+	  merely zero-height but genuinely inert: without it, the text inside a
+	  collapsed row is still findable by browser find-in-page and still reachable
+	  by a screen reader's virtual cursor. It is delayed on close and immediate
+	  on open, so it never blanks the content mid-animation.
+	*/
+	.ww-service-panel {
+		display: grid;
+		grid-template-rows: 0fr;
+		visibility: hidden;
+		transition:
+			grid-template-rows var(--dur-base) var(--ease-out),
+			visibility 0s linear var(--dur-base);
+	}
+
+	.ww-service-panel > div {
+		min-height: 0;
+		overflow: hidden;
+	}
+
+	.ww-service-panel[data-open] {
+		grid-template-rows: 1fr;
+		visibility: visible;
+		transition:
+			grid-template-rows var(--dur-base) var(--ease-out),
+			visibility 0s;
+	}
+
+	.ww-service-panel p {
+		padding-bottom: var(--space-lg);
+		color: var(--ww-ink-medium);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.ww-service-panel,
+		.ww-service-sign span {
+			transition: none;
+		}
+	}
+
+	/*
+	  Without JavaScript nothing can ever set data-open, so every row would stay
+	  shut and five lines of approved copy would be unreachable. Where the
+	  browser can tell us scripting is off, the rows are simply open and the
+	  controls are hidden — a plain hairline-separated list, which is what this
+	  section is underneath the interaction anyway.
+	*/
+	@media (scripting: none) {
+		.ww-service-panel {
+			grid-template-rows: 1fr;
+			visibility: visible;
+		}
+
+		.ww-service-sign {
+			display: none;
+		}
+
+		.ww-service-title button {
+			cursor: default;
+		}
+	}
+</style>
+
+<script>
+	/*
+	  Fifteen lines, and the whole of it. One listener on the list rather than
+	  one per row, so the count of services is not the count of listeners.
+
+	  Rows open and close independently: opening one does not close the others.
+	  A visitor comparing two services should not have to keep re-opening the
+	  first one.
+	*/
+	const toggles = document.querySelectorAll<HTMLButtonElement>('[data-accordion-toggle]');
+
+	for (const toggle of toggles) {
+		const panelId = toggle.getAttribute('aria-controls');
+		const panel = panelId ? document.getElementById(panelId) : null;
+		if (!panel) continue;
+
+		// Closed is the state the markup ships in, and `data-open` is what the
+		// stylesheet reads. aria-expanded is the state assistive tech reads. Both
+		// are set here, from one source, so they cannot drift apart.
+		toggle.addEventListener('click', () => {
+			const open = toggle.getAttribute('aria-expanded') !== 'true';
+			toggle.setAttribute('aria-expanded', String(open));
+			panel.toggleAttribute('data-open', open);
+		});
+	}
+</script>

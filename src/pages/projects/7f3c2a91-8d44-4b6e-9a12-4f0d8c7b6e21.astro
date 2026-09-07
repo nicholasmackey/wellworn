@@ -1,5 +1,18 @@
 ---
 /*
+ * The portal's three self-hosted typefaces, from node_modules. They used to be
+ * imported by BaseLayout, which meant every marketing page downloaded them
+ * too; the marketing site is on a different three families now, so these are
+ * imported by the routes that actually use them.
+ *
+ * `wght.css` is the full weight axis in one file per subset; browsers fetch
+ * only the subset they need via unicode-range. Russo One is static, one file
+ * per subset at a single weight.
+ */
+import '@fontsource-variable/montserrat/wght.css';
+import '@fontsource-variable/source-sans-3/wght.css';
+import '@fontsource/russo-one/400.css';
+/*
   Sweet Gems Boutique — the private client portal.
 
   Unlisted, not secret. The route is a UUID nobody can guess, the page is not
@@ -128,6 +141,7 @@ const DETAILS: readonly Detail[] = [
 	title={project.projectName}
 	description={`Private project portal for ${project.projectName}.`}
 	noindex
+	webFonts={false}
 	bodyClass="portal"
 	themeColor="#FFFFFF"
 >

@@ -1,0 +1,335 @@
+/* ==========================================================================
+   WELLWORN — DESIGN TOKENS
+   --------------------------------------------------------------------------
+   Every value the site is allowed to use lives here. Two systems share the
+   file, and they are deliberately kept apart:
+
+   1. The `--ww-*` system. The marketing site — homepage, and every public
+      page built after it. Editorial serif, restrained sans, mono labels,
+      black and white doing the work with one blue held in reserve.
+
+   2. The legacy palette under `@theme`. The client portals and the
+      questionnaire are a working tool a client has already been sent a link
+      to, not marketing, and they are not part of this redesign. Their
+      palette, their three typefaces, and the nineteen semantic questionnaire
+      properties below are preserved exactly as they were.
+
+   Nothing in the marketing system reads a legacy token, and nothing in the
+   portal reads a `--ww-*` one. That is what lets either change without the
+   other noticing.
+   ========================================================================== */
+
+@theme {
+	/* ----------------------------------------------------------------------
+	   MARKETING TYPEFACES.
+
+	   Three families, three roles, and the whole site addresses them through
+	   these names — no component ever writes a family out. WWBlock is
+	   self-hosted: its @font-face rule is in fonts.css and the file is
+	   preloaded in BaseLayout.astro. The other two are still loaded from
+	   Google Fonts by a <link> there.
+
+	   Weights loaded, and no others: WWBlock at 400 — it ships one face and
+	   there is no bold — Inter at 400/500/600, JetBrains Mono at 500. Asking
+	   any element for a weight outside that list gets a synthesized face, so
+	   don't.
+
+	   The fallback stack behind WWBlock is the serif it replaced, so a
+	   headline rendered before the file lands keeps roughly the colour and
+	   width it will settle into.
+	   ---------------------------------------------------------------------- */
+	--font-display: 'WWBlock', Georgia, 'Times New Roman', serif;
+	--font-sans: 'Inter', Helvetica, Arial, sans-serif;
+	--font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+	/* ----------------------------------------------------------------------
+	   MARKETING COLOUR, registered with Tailwind so `text-ww-muted` and friends
+	   exist for the occasional one-off in markup. The values themselves are
+	   declared once, in the :root block below, which is the source of truth;
+	   these only point at them. Do not paste a hex into this block.
+	   ---------------------------------------------------------------------- */
+	--color-ww-blue: var(--ww-blue);
+	--color-ww-black: var(--ww-black);
+	--color-ww-ink: var(--ww-ink);
+	--color-ww-ink-soft: var(--ww-ink-soft);
+	--color-ww-ink-medium: var(--ww-ink-medium);
+	--color-ww-muted: var(--ww-muted);
+	--color-ww-disabled: var(--ww-disabled);
+	--color-ww-white: var(--ww-white);
+	--color-ww-cream: var(--ww-cream);
+	--color-ww-light: var(--ww-light);
+	--color-ww-hairline: var(--ww-hairline);
+	--color-ww-hairline-light: var(--ww-hairline-light);
+
+	/* ----------------------------------------------------------------------
+	   LEGACY — the client portal palette, in the order it is meant to be
+	   reached for. Charcoal and cream are the portal; rust is its accent;
+	   forest and stone are held to small doses. Untouched by the redesign.
+	   ---------------------------------------------------------------------- */
+	--color-charcoal: #1f211f;
+	--color-cream: #f3f0e8;
+	--color-forest: #2e4033;
+	--color-stone: #a9a398;
+	--color-rust: #b85c3d;
+
+	/* The portal's own ground. White rather than cream, because the client
+	   co-brand lockup at the top of the page is supplied as artwork on white
+	   and any other ground would draw a visible box around it. */
+	--color-portal-paper: #ffffff;
+	/* The timeline's rail, and the ring on a marker that has not started. */
+	--color-portal-rail: #c9cbc8;
+
+	/* ----------------------------------------------------------------------
+	   LEGACY state colours, for the portals and nowhere else.
+
+	   Two values apiece. The plain value is the fill — the solid chip, the
+	   checkmark, the marker on the rail. The -deep value is that same hue
+	   walked down until it clears 4.5:1 on white, and is what small text is
+	   allowed to use.
+
+	                    fill        white on fill    deep        on white
+	   current .......  #0197f6        3.11:1      #017ac7       4.56:1
+	   complete ......  #20bf55        2.43:1      #17883c       4.54:1
+	   action ........  #ea9010        2.47:1      #b85c00       4.60:1
+	   blocked .......  #d92b1f        4.87:1      #c0281f       5.89:1
+	   upcoming ......  #6f7370        4.81:1      #5e625f       6.20:1
+	   ---------------------------------------------------------------------- */
+	--color-state-current: #0197f6;
+	--color-state-current-deep: #017ac7;
+	--color-state-complete: #20bf55;
+	--color-state-complete-deep: #17883c;
+	--color-state-action: #ea9010;
+	--color-state-action-deep: #b85c00;
+	--color-state-blocked: #d92b1f;
+	--color-state-blocked-deep: #c0281f;
+	--color-state-upcoming: #6f7370;
+	--color-state-upcoming-deep: #5e625f;
+
+	/* ----------------------------------------------------------------------
+	   LEGACY typefaces, self-hosted from Fontsource; the @font-face rules are
+	   imported in BaseLayout.astro. Renamed from --font-display/--font-sans,
+	   which the marketing system now owns. The "Variable" suffix is part of
+	   the family name Fontsource registers — it must match exactly or the
+	   fallback silently wins. Russo One is static and ships one weight (400).
+	   ---------------------------------------------------------------------- */
+	--font-legacy-display: 'Montserrat Variable', ui-sans-serif, system-ui, sans-serif;
+	--font-legacy-body: 'Source Sans 3 Variable', ui-sans-serif, system-ui, sans-serif;
+	--font-russo: 'Russo One', var(--font-legacy-display);
+
+	/* Legacy brand letter-spacing. Wide tracking on small uppercase type. */
+	--tracking-heading: 0.04em;
+	--tracking-label: 0.14em;
+	--tracking-brand: 0.22em;
+}
+
+:root {
+	/* ======================================================================
+	   MARKETING COLOUR — the real declarations.
+
+	   Black and white do the work. The blue is an accent and a signal, not a
+	   ground: it takes at most one action per screen and the odd link. A page
+	   where the blue is the first thing you see has gone wrong.
+
+	   Contrast, measured, because every one of these is used on type:
+
+	     ink    on white ......... 21.0:1   body, headings — anything
+	     ink-medium on white ..... 12.6:1   secondary body on light
+	     muted  on white ..........  5.2:1   small print on light
+	     disabled on white ........  2.8:1   FAILS text. Disabled controls only.
+	     blue   on white ..........  4.6:1   links, secondary CTA label
+	     white  on blue ...........  4.6:1   the blue filled action
+	     white  on black .......... 21.0:1   the dark sections
+	     muted  on black ..........  4.0:1   LARGE dark-section text only
+	     disabled on black ........  5.9:1   secondary copy on black
+	     hairline on white ........  1.6:1   rules. Never type.
+
+	   Note the inversion in the last two: #999 is the readable grey on black
+	   and #707070 is the readable grey on white. Reach for --ww-disabled for
+	   secondary copy in the black sections, not --ww-muted.
+	   ====================================================================== */
+	--ww-blue: #006aff;
+
+	--ww-black: #000000;
+	--ww-ink: #000000;
+	--ww-ink-soft: #1a1a1a;
+	--ww-ink-medium: #333333;
+	--ww-muted: #707070;
+	--ww-disabled: #999999;
+
+	--ww-white: #ffffff;
+	--ww-cream: #f7f6f5;
+	--ww-light: #f2f2f2;
+
+	--ww-hairline: #cccccc;
+	--ww-hairline-light: #e2e8f0;
+
+	/* Hairlines drawn on the black sections. The palette above has no dark
+	   rule colour, and a solid #333 line on black is heavier than the same
+	   line on white looks — white at 18% matches the weight. */
+	--ww-hairline-dark: rgb(255 255 255 / 18%);
+
+	/* ======================================================================
+	   TYPE SCALE.
+
+	   Fluid between a 360px phone and the 1200px container, so the curve is
+	   continuous and a tablet never lands on a size drawn for something else.
+	   Each clamp is (min, preferred, max) where the preferred term is written
+	   as rem + vw so it keeps scaling with the user's font size rather than
+	   pinning to the viewport alone.
+
+	   The four display steps are WWBlock. Everything below them is Inter, and
+	   the display face is never used for running copy.
+	   ====================================================================== */
+	/* The pricing figure, and so far nothing else. Its ceiling is set by the
+	   narrowest column it has to fit in — the left half of a pricing band at the
+	   768px breakpoint — not by how large a number could theoretically be drawn.
+	   "$175/mo." is eight characters, and eight characters of WWBlock at
+	   88px is about 350px wide. */
+	--text-display-xxl: clamp(3.5rem, 1.75rem + 4.4vw, 5.5rem); /* 56 → 88 */
+	--text-display-xl: clamp(2.75rem, 1.5rem + 5.6vw, 5.0625rem); /* 44 → 81 */
+
+	/* The homepage hero, and only the homepage hero. It sits a full step above
+	   display-xl because it is the only headline on the site that has a whole
+	   viewport to itself: the reference sets its hero at roughly 5% of the
+	   viewport width and lets it run to two long lines, which display-xl's 81px
+	   ceiling is too quiet to do. Every other h1 on the site stays on
+	   display-xl — this is not a general "bigger heading" token.
+
+	   52 → 92. The floor is set by the phone: at 52px "businesses" is about
+	   260px wide and clears a 350px content column with room for the descender,
+	   and the headline lands on four lines rather than being shrunk into two.
+	   The ceiling is reached at ~1030px and holds from there, so a 1440px and a
+	   1920px screen get the same headline rather than a wall of type. */
+	--text-hero: clamp(3.25rem, 1.6rem + 6.4vw, 5.75rem); /* 52 → 92 */
+
+	/* Tighter than the display tier on both axes. At 92px the display values
+	   (0.98 / -0.02em) leave the two lines looking loosely set and the words
+	   loosely spaced; the reference runs its hero at -0.04em. */
+	--leading-hero: 0.94;
+	--tracking-hero: -0.035em;
+	--text-display-lg: clamp(2.25rem, 1.4rem + 3.8vw, 3.5rem); /* 36 → 56 */
+	--text-display-md: clamp(1.75rem, 1.25rem + 2.2vw, 2.5rem); /* 28 → 40 */
+
+	--text-heading: clamp(1.25rem, 1.1rem + 0.65vw, 1.5rem); /* 20 → 24 */
+	--text-body-lg: 1.125rem; /* 18 */
+	--text-body: 1rem; /* 16 */
+	--text-small: 0.875rem; /* 14 */
+	--text-eyebrow: 0.875rem; /* 14 */
+
+	--leading-display: 0.98;
+	--leading-heading: 1.15;
+	--leading-body: 1.5;
+
+	--tracking-display: -0.02em;
+	--tracking-eyebrow: 0.1em;
+
+	/* ======================================================================
+	   SPACING. Seven steps, and no others. If a gap wants a value that is not
+	   on this list, the answer is almost always one of the neighbours.
+	   ====================================================================== */
+	--space-xs: 4px;
+	--space-sm: 10px;
+	--space-md: 20px;
+	--space-lg: 40px;
+	--space-xl: 60px;
+	--space-2xl: 80px;
+	--space-3xl: 120px;
+
+	/* The vertical rhythm of a major marketing section, as one value the
+	   sections all read. 80px on a phone, 120px from the tablet up — the
+	   desktop figure would swallow a small screen whole. */
+	--section-y: var(--space-2xl);
+
+	/* ======================================================================
+	   CONTAINER. 1200px of content, with gutters that open up with the
+	   viewport. The gutter is a token of its own because full-bleed sections
+	   need to reach for it to line their inner content up with the container
+	   above them.
+	   ====================================================================== */
+	--container-max: 1200px;
+	--gutter: var(--space-md);
+
+	/* ======================================================================
+	   RADIUS. Four values. A fifth is a bug.
+
+	     tile   — small media, logo chips, inline thumbnails
+	     input  — form controls
+	     card   — the big Square-style feature geometry. Cards either take
+	              this or stay flat and uncontained. There is no middle.
+	     pill   — every action on the site
+	   ====================================================================== */
+	--radius-tile: 4px;
+	--radius-input: 10px;
+	--radius-card: 50px;
+	--radius-pill: 9999px;
+
+	/* ======================================================================
+	   MOTION. Restrained by construction: two durations and one curve.
+	   ====================================================================== */
+	--ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+	--dur-fast: 160ms;
+	--dur-base: 300ms;
+	--dur-slow: 550ms;
+
+	/* Header height, published as a token because the hero, the scroll-padding
+	   and the mobile menu panel all have to agree with it. */
+	--header-h: 64px;
+}
+
+@media (min-width: 768px) {
+	:root {
+		--section-y: var(--space-3xl);
+		--gutter: var(--space-lg);
+		--header-h: 72px;
+	}
+}
+
+@media (min-width: 1280px) {
+	:root {
+		--gutter: var(--space-xl);
+	}
+}
+
+/* ==========================================================================
+   LEGACY — THE QUESTIONNAIRE'S SEMANTIC SURFACE.
+
+   Nineteen names, and every questionnaire component reads one of them rather
+   than a palette token. That is what makes a themed questionnaire possible
+   without a themed component: a client's colours are set once, as custom
+   properties on the questionnaire's root element, and the same generic
+   renderer picks them up.
+
+   The values here ARE the Wellworn questionnaire. A definition with no
+   `theme` block sets no properties at all and renders from this list.
+
+   This block and THEME_DEFAULTS in lib/questionnaire/theme.ts describe the
+   same thing in two languages, so they have to agree. A unit test pins the
+   pair. Do not edit one without the other.
+   ========================================================================== */
+:root {
+	--q-background: var(--color-portal-paper);
+	--q-text: var(--color-charcoal);
+	--q-surface: var(--color-portal-paper);
+	--q-border: var(--color-charcoal);
+	--q-accent: var(--color-charcoal);
+	--q-accent-text: var(--color-cream);
+	--q-accent-hover: var(--color-forest);
+	--q-focus: var(--color-state-current);
+	--q-control: var(--color-state-current);
+
+	--q-info: var(--color-state-current);
+	--q-info-ink: var(--color-state-current-deep);
+	--q-success: var(--color-state-complete-deep);
+	--q-success-ink: var(--color-state-complete-deep);
+	--q-warning: var(--color-state-action-deep);
+	--q-warning-ink: var(--color-state-action-deep);
+	--q-error: var(--color-state-blocked);
+	--q-error-ink: var(--color-state-blocked-deep);
+	--q-error-on: var(--color-portal-paper);
+
+	/* The select's chevron, drawn in the type colour. A url() cannot
+	   interpolate a custom property, so the whole url() is one — see
+	   `chevron()` in lib/questionnaire/theme.ts, which builds the themed
+	   version of this from a hex the schema has already constrained. */
+	--q-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%231f211f' stroke-width='1.5' stroke-linecap='square'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E");
+}

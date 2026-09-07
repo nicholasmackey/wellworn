@@ -1,0 +1,201 @@
+/* ==========================================================================
+   WELLWORN — BASE
+   --------------------------------------------------------------------------
+   Element defaults only. Nothing here knows about a section, a card or a
+   button; if a rule needs a class name to say what it is for, it belongs in
+   components.css.
+   ========================================================================== */
+
+@layer base {
+	html {
+		-webkit-text-size-adjust: 100%;
+		scroll-behavior: smooth;
+		/* Offset anchor jumps so the sticky header never covers a heading. The
+		   header publishes its own height as a token, so the two cannot drift. */
+		scroll-padding-top: calc(var(--header-h) + var(--space-md));
+		/* Hold the scrollbar's gutter open at all times. Opening the mobile menu
+		   locks the page behind it, and without a reserved gutter the scrollbar
+		   would vanish at that moment and every line on the page would jump a
+		   scrollbar's width sideways underneath it. Costs nothing where the
+		   scrollbar is an overlay (macOS, touch), which is most places. */
+		scrollbar-gutter: stable;
+	}
+
+	/* The page behind the open mobile menu does not scroll. Set on the document
+	   rather than in the header component because it is the document that stops
+	   scrolling — and because it has to survive the component's styles being
+	   scoped. */
+	html[data-menu-open] {
+		overflow: hidden;
+	}
+
+	/*
+	  The marketing ground: white, Inter, black. The portals set their own on
+	  <body> through BaseLayout's bodyClass, so nothing here is a decision they
+	  inherit.
+
+	  `font-synthesis: none` is load-bearing rather than tidy. Only three
+	  weights of Inter are downloaded and WWBlock ships a single face, and
+	  without this a browser will happily fake the ones that are missing — a
+	  smeared synthetic bold in the middle of an editorial headline is exactly
+	  the kind of thing that survives a review because it looks almost right.
+	*/
+	/*
+	  The page shell, on <body>. A column that is at least the height of the
+	  screen, with the main region growing to fill it, so a short page (the 404,
+	  say) puts its footer at the bottom of the window rather than halfway up it.
+	  `dvh` so the mobile browser chrome retracting does not leave a strip of
+	  ground under the footer.
+	*/
+	.ww-page {
+		display: flex;
+		flex-direction: column;
+		min-height: 100dvh;
+	}
+
+	.ww-main {
+		flex: 1;
+	}
+
+	body {
+		background-color: var(--ww-white);
+		color: var(--ww-ink);
+		font-family: var(--font-sans);
+		font-size: var(--text-body);
+		line-height: var(--leading-body);
+		font-synthesis: none;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	/*
+	  Headings carry no size, weight or family of their own. This is deliberate:
+	  the level of a heading is a document-structure decision and its size is a
+	  design decision, and tying the two together is what produces pages where
+	  the right size can only be reached by using the wrong tag. Every heading
+	  on the marketing site takes one of the .ww-display-* / .ww-heading classes
+	  in components.css, chosen for how loud it should be, and the h-level is
+	  chosen for where it sits in the outline.
+	*/
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		font-size: inherit;
+		font-weight: inherit;
+		text-wrap: balance;
+	}
+
+	p {
+		text-wrap: pretty;
+	}
+
+	a {
+		color: inherit;
+	}
+
+	/*
+	  Focus. Blue on light ground, and the one place the accent is not held in
+	  reserve — a focus ring is the interface telling a keyboard user where they
+	  are, and it has to win. The dark sections re-point it at white in
+	  components.css, because blue on black is 3.1:1 and this ring has to be
+	  seen before it is understood.
+	*/
+	:focus-visible {
+		outline: 2px solid var(--ww-blue);
+		outline-offset: 2px;
+	}
+
+	::selection {
+		background-color: var(--ww-blue);
+		color: var(--ww-white);
+	}
+
+	img,
+	picture,
+	video,
+	svg {
+		display: block;
+		max-width: 100%;
+	}
+
+	/*
+	  A background video must not paint its own ground before it has a frame to
+	  show. WebKit gives a media element an opaque black backdrop once it opens
+	  a decode session, which would cover the still underneath while the file
+	  buffers — and cover it indefinitely on an iPhone in Low Power Mode, where
+	  autoplay is blocked outright and no frame ever arrives.
+	*/
+	.hero-video {
+		background-color: transparent;
+	}
+
+	/* ----------------------------------------------------------------------
+	   LEGACY headings, for the client portal and the questionnaire. Those pages
+	   were built against a base rule that set every heading in uppercase
+	   Montserrat, and they still expect it. Scoped to their two body classes so
+	   the marketing site is not dragged back into it.
+
+	   Uppercase is applied in CSS rather than in the markup so the underlying
+	   text stays sentence case for search engines and screen readers.
+	   ---------------------------------------------------------------------- */
+	.portal :is(h1, h2, h3, h4, h5, h6),
+	.q-page :is(h1, h2, h3, h4, h5, h6) {
+		font-family: var(--font-legacy-display);
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: var(--tracking-heading);
+	}
+
+	/* And their body copy, which used to come from the <body> rule above. */
+	.portal,
+	.q-page {
+		font-family: var(--font-legacy-body);
+	}
+
+	.portal :focus-visible,
+	.q-page :focus-visible {
+		outline-color: var(--color-state-current);
+	}
+
+	.portal ::selection,
+	.q-page ::selection {
+		background-color: var(--color-forest);
+		color: var(--color-cream);
+	}
+
+	/* ----------------------------------------------------------------------
+	   REDUCED MOTION.
+
+	   The global collapse below is a blunt instrument on purpose: it catches
+	   any animation or transition added later that forgets to ask. Components
+	   that need a genuinely different behaviour under this query — rather than
+	   the same behaviour instantly — say so themselves. The logo marquee stops
+	   scrolling and becomes a scrollable row; the testimonial videos stop
+	   playing on hover and wait to be pressed.
+	   ---------------------------------------------------------------------- */
+	@media (prefers-reduced-motion: reduce) {
+		html {
+			scroll-behavior: auto;
+		}
+
+		*,
+		*::before,
+		*::after {
+			animation-duration: 0.01ms !important;
+			animation-iteration-count: 1 !important;
+			transition-duration: 0.01ms !important;
+			scroll-behavior: auto !important;
+		}
+
+		/* A decorative background video. Its <source> is gated on the inverse of
+		   this query, so a conforming browser never fetches the file; this hides
+		   the empty element too, in case one selects the source anyway. Either
+		   way the still underneath becomes the hero. */
+		.hero-video {
+			display: none;
+		}
+	}
+}
