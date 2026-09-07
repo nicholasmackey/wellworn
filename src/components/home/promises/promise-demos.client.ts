@@ -1,6 +1,10 @@
 /**
- * THE THREE PROMISE DEMONSTRATIONS — the twenty seconds of behaviour they
- * share.
+ * THE PROMISE DEMONSTRATIONS — the behaviour the reputation and conversion
+ * bands share.
+ *
+ * The get found band no longer runs through here: it is drawn inside a phone
+ * and has a zoom and a typed query of its own, so it carries its own timeline
+ * in local-search.client.ts.
  *
  * Each demonstration is a short, ordered sequence, and the sequence is the
  * whole of the state: the root element carries `data-step`, the components'
@@ -9,12 +13,9 @@
  * a new visual only needs a selector, and nothing in here has to learn about
  * it.
  *
- * Three things cannot be done in CSS alone, and they are the three exceptions
+ * Two things cannot be done in CSS alone, and they are the two exceptions
  * below:
  *
- *   the reorder    `order` is not transitionable, so the search results are
- *                  measured, reordered, and carried from where they were to
- *                  where they now are. A FLIP, in nine lines.
  *   the counting   4.2 to 4.8, and 47 to 48.
  *   the reveals    a block that arrives mid-sequence animates its own height
  *                  (0fr to 1fr) so the stack below drifts rather than jumps.
@@ -23,7 +24,7 @@
  * where it would be over before it was seen, and not on every scroll past.
  * The observer releases the element as soon as it has fired. What is left
  * afterwards is the successful final state, which is the state that matters:
- * found, trusted, contacted.
+ * trusted, contacted.
  *
  * REDUCED MOTION. No sequence at all. The final step is applied on the spot
  * and the counters are written at their finished values. base.css already
@@ -40,8 +41,6 @@ const VISIBLE_RATIO = 0.4;
  * as separate events.
  */
 const TIMELINES: Record<string, readonly number[]> = {
-	/* query, results, the move, the found state */
-	search: [200, 550, 1150, 1900],
 	/* the review lands, the score rises, the owner replies */
 	reputation: [400, 1000, 1700],
 	/* tap, form, filled, submit, confirmation, lead */
@@ -78,58 +77,10 @@ function countParts(el: HTMLElement): { from: number; to: number; decimals: numb
 	};
 }
 
-/**
- * The reorder. Measure, reorder, measure, then put every row back where it
- * started and let it transition to where it belongs.
- */
-function sortResults(root: HTMLElement): void {
-	const list = root.querySelector<HTMLElement>('[data-results]');
-	if (!list) return;
-
-	const rows = Array.from(list.querySelectorAll<HTMLElement>('[data-result]'));
-	const before = rows.map((row) => row.getBoundingClientRect().top);
-
-	list.classList.add('is-sorted');
-
-	const after = rows.map((row) => row.getBoundingClientRect().top);
-
-	rows.forEach((row, i) => {
-		const dy = before[i] - after[i];
-		if (dy === 0) return;
-		row.style.transition = 'none';
-		row.style.transform = `translateY(${dy}px)`;
-	});
-
-	/* Force the moved-back positions to be painted before releasing them,
-	   otherwise the browser coalesces both styles and nothing animates. */
-	void list.offsetHeight;
-
-	rows.forEach((row) => {
-		/*
-		 * Written out rather than handed back to the stylesheet, because the
-		 * rule the rows are under carries the populate stagger's
-		 * transition-delay and the move must not inherit it.
-		 */
-		row.style.transition = 'transform 600ms cubic-bezier(0.33, 1, 0.68, 1)';
-		row.style.transform = '';
-	});
-}
-
 /** Everything a step does beyond setting the number. */
 function applyStep(demo: Demo, step: number, instant: boolean): void {
 	const { root, name } = demo;
 	root.dataset.step = String(step);
-
-	if (name === 'search') {
-		if (step === 3) {
-			if (instant) root.querySelector('[data-results]')?.classList.add('is-sorted');
-			else sortResults(root);
-		}
-		if (step === 4) {
-			root.querySelector('[data-reveal]')?.classList.add('is-open');
-		}
-		return;
-	}
 
 	if (name === 'reputation') {
 		if (step === 1) {

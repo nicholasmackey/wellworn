@@ -1,0 +1,189 @@
+---
+/**
+ * A SMARTPHONE, DRAWN.
+ *
+ * A modern handset silhouette built out of two divs and a pill: black bezel,
+ * large corner radius, edge-to-edge screen, a Dynamic Island centred in the
+ * status bar. No photograph, no PNG, no vendor mark, and nothing pretending
+ * to be a rendered object — one hairline of inner light on the bezel and a
+ * shadow soft enough to be a suggestion.
+ *
+ * SIZING. Everything is em, and the one font-size the device reads comes from
+ * the size container it is placed in. That makes the whole device one scalable
+ * unit: drop it in a 350px box or a 700px one and the bezel, the corner radius,
+ * the island and whatever is slotted into the screen all keep their
+ * proportions. The device is 24em wide by 52em tall — a hair under 9:19.5 —
+ * so the caller's container only has to be a size container for it to resolve.
+ *
+ * The screen clips. Anything slotted in is free to overflow and will simply be
+ * cut at the glass, which is what the search demonstration relies on.
+ */
+interface Props {
+	/** Shown at the left of the status bar. */
+	time?: string;
+	/** Extra classes for the outer stage — the caller's positioning. */
+	class?: string;
+}
+
+const { time = '9:41', class: className }: Props = Astro.props;
+---
+
+<div class:list={['ww-phone-stage', className]}>
+	<div class="ww-phone">
+		<div class="ww-phone-screen">
+			<div class="ww-phone-status" aria-hidden="true">
+				<span class="ww-phone-time">{time}</span>
+				<span class="ww-phone-glyphs">
+					{/* Cellular, wifi, battery. Drawn small enough to read as texture. */}
+					<svg viewBox="0 0 17 12" aria-hidden="true" focusable="false">
+						<rect x="0" y="8" width="3" height="4" rx="1"></rect>
+						<rect x="4.5" y="6" width="3" height="6" rx="1"></rect>
+						<rect x="9" y="3.5" width="3" height="8.5" rx="1"></rect>
+						<rect x="13.5" y="1" width="3" height="11" rx="1"></rect>
+					</svg>
+					<svg viewBox="0 0 16 12" aria-hidden="true" focusable="false">
+						<path
+							d="M1 4.2A10.5 10.5 0 0 1 15 4.2"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.7"
+							stroke-linecap="round"></path>
+						<path
+							d="M3.9 7.3a6.4 6.4 0 0 1 8.2 0"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.7"
+							stroke-linecap="round"></path>
+						<circle cx="8" cy="10.4" r="1.3"></circle>
+					</svg>
+					<svg viewBox="0 0 25 12" aria-hidden="true" focusable="false">
+						<rect
+							x="0.75"
+							y="0.75"
+							width="20.5"
+							height="10.5"
+							rx="3"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.2"
+							opacity="0.45"></rect>
+						<rect x="2.5" y="2.5" width="15" height="7" rx="1.6"></rect>
+						<path d="M23 4.2v3.6a2.1 2.1 0 0 0 0-3.6Z" opacity="0.45"></path>
+					</svg>
+				</span>
+			</div>
+
+			<div class="ww-phone-island" aria-hidden="true"></div>
+
+			<div class="ww-phone-content"><slot /></div>
+
+			<div class="ww-phone-home" aria-hidden="true"></div>
+		</div>
+	</div>
+</div>
+
+<style>
+	/*
+	  The stage fills whatever it is given and clips. The device is taller than
+	  the stage on purpose in the search demonstration — it is pushed into, and
+	  the bottom of the handset runs off the bottom of the frame.
+	*/
+	.ww-phone-stage {
+		position: absolute;
+		inset: 0;
+		overflow: hidden;
+		display: flex;
+		justify-content: center;
+
+		/* The one measurement the whole device is derived from: roughly a
+		   thirty-fifth of the frame's height, floored and ceilinged so a very
+		   small or very large frame still gets a believable handset. */
+		font-size: clamp(7px, 2.9cqh, 22px);
+		font-family: var(--font-sans);
+	}
+
+	.ww-phone {
+		flex: none;
+		width: 24em;
+		height: 52em;
+		margin-top: 0.7em;
+		padding: 0.72em;
+		border-radius: 3.6em;
+		background-color: #0a0a0b;
+
+		/* Depth, and no more than that: a hairline of light where the glass
+		   meets the bezel, and one soft shadow underneath. */
+		box-shadow:
+			inset 0 0 0 0.06em rgb(255 255 255 / 14%),
+			0 0.5em 1.6em rgb(0 0 0 / 14%);
+		transform-origin: 50% 0;
+	}
+
+	.ww-phone-screen {
+		position: relative;
+		height: 100%;
+		border-radius: 2.95em;
+		overflow: hidden;
+		background-color: var(--ww-cream);
+		display: flex;
+		flex-direction: column;
+	}
+
+	.ww-phone-status {
+		flex: none;
+		height: 3em;
+		padding: 0 1.7em;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		color: var(--ww-ink);
+	}
+
+	.ww-phone-time {
+		font-size: 0.78em;
+		font-weight: 600;
+		letter-spacing: -0.01em;
+	}
+
+	.ww-phone-glyphs {
+		display: flex;
+		align-items: center;
+		gap: 0.35em;
+		fill: currentColor;
+	}
+
+	.ww-phone-glyphs svg {
+		height: 0.62em;
+		width: auto;
+	}
+
+	.ww-phone-island {
+		position: absolute;
+		top: 0.62em;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 6.4em;
+		height: 1.8em;
+		border-radius: var(--radius-pill);
+		background-color: #000;
+		pointer-events: none;
+	}
+
+	.ww-phone-content {
+		flex: 1 1 auto;
+		min-height: 0;
+		overflow: hidden;
+	}
+
+	.ww-phone-home {
+		position: absolute;
+		left: 50%;
+		bottom: 0.62em;
+		transform: translateX(-50%);
+		width: 8.2em;
+		height: 0.3em;
+		border-radius: var(--radius-pill);
+		background-color: rgb(0 0 0 / 28%);
+		pointer-events: none;
+	}
+</style>

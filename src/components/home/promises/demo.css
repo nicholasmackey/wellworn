@@ -2,9 +2,12 @@
    THE PROMISE DEMONSTRATIONS — SHARED SHELL
    --------------------------------------------------------------------------
    Three small product demonstrations sit where the three promise bands used
-   to carry a photograph. They are drawn, not photographed: search results,
-   a reputation profile, a quote request. Each one shows the outcome its band
-   describes rather than illustrating it.
+   to carry a photograph. They are drawn, not photographed: a local search on
+   a phone, a reputation profile, a quote request. Each one shows the outcome
+   its band describes rather than illustrating it.
+
+   The get found band uses only the frame from this file — its interface is
+   drawn inside SmartphoneFrame and styles itself.
 
    This file is everything the three have in common — the canvas they are
    drawn on, the type scale, the panels, chips, buttons and stars. What is

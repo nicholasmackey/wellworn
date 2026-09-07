@@ -152,6 +152,16 @@ const Demo = promise.id && promise.id in DEMOS ? DEMOS[promise.id as keyof typeo
 		.wwd-frame {
 			aspect-ratio: 1 / 1;
 		}
+
+		/*
+		  Except the get found band, which is a phone rather than a screenful.
+		  A handset is 9:19.5, so a square frame can only hold a narrow one;
+		  the taller box is what keeps the type on its screen readable at
+		  390px. This is the only band that draws a device.
+		*/
+		#get-found .wwd-frame {
+			aspect-ratio: 4 / 5;
+		}
 	}
 
 	@media (min-width: 768px) {
