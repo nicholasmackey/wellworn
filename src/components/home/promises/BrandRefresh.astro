@@ -1,0 +1,161 @@
+---
+/**
+ * BRAND REFRESHES — the before and after, wiped.
+ *
+ * The one card in the rail whose proof is a mark rather than a screen. Hood's
+ * old logo is on the stage first, held back a little: desaturated, flattened,
+ * slightly dropped in contrast, which is honestly how it reads next to the
+ * redrawn one. When the card opens, a single vertical edge travels left to
+ * right; the new brand is uncovered behind it and the old one is taken away
+ * with it. It stops on the new mark and stays there. It does not loop.
+ *
+ * THE WHOLE ANIMATION IS ONE ATTRIBUTE. data-played on the root moves three
+ * things across the stage together — the new mark's clip opens, the old mark's
+ * clip closes, the rule travels — and CSS transitions do the interpolating.
+ * The three could have been driven off one custom property holding the edge
+ * position, which would read better, but a transition on a value that reaches
+ * its target through var() does not reliably interpolate; the endpoints are
+ * written out instead. No script beyond setting and removing the attribute.
+ *
+ * Both assets live in public/ and are served as-is: the wordmark is an SVG and
+ * has nothing to gain from the image pipeline, and the old logo is shown once,
+ * at one size, on one card.
+ */
+---
+
+<div class="wwb" data-brand-refresh>
+	<div class="wwb-stage">
+		<img
+			class="wwb-old"
+			src="/hood-old-logo.png"
+			alt="Hood’s previous logo."
+			width="561"
+			height="561"
+			loading="lazy"
+			decoding="async"
+		/>
+
+		<img
+			class="wwb-new"
+			src="/hood-brand.svg"
+			alt="Hood’s new wordmark."
+			width="545"
+			height="91"
+			loading="lazy"
+			decoding="async"
+		/>
+
+		<span class="wwb-edge" aria-hidden="true"></span>
+	</div>
+</div>
+
+<style>
+	.wwb {
+		--wwb-wipe: 900ms;
+
+		position: absolute;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		gap: clamp(10px, 3cqh, 22px);
+		padding: clamp(16px, 6cqw, 40px);
+		background-color: var(--ww-black);
+	}
+
+	/* Both marks are centred in the same box, so the wipe is one edge crossing
+	   one frame rather than two pictures swapping places. */
+	.wwb-stage {
+		position: relative;
+		flex: 1 1 auto;
+		min-height: 0;
+	}
+
+	.wwb-old,
+	.wwb-new {
+		position: absolute;
+		inset: 0;
+		margin: auto;
+		max-width: 100%;
+		max-height: 100%;
+		object-fit: contain;
+	}
+
+	/* Dated on purpose: flat, dull, a little washed. Nothing is done to the
+	   file — this is the same asset, presented the way it actually looked. */
+	.wwb-old {
+		width: min(74%, 74cqh);
+		height: auto;
+		filter: grayscale(38%) saturate(70%) contrast(88%);
+		opacity: 0.66;
+		/* Taken away by the same edge that brings the new one in. */
+		clip-path: inset(0 0 0 0);
+		transition: clip-path var(--wwb-wipe) var(--ease-out);
+	}
+
+	.wwb-new {
+		width: 86%;
+		height: auto;
+		clip-path: inset(0 100% 0 0);
+		transition: clip-path var(--wwb-wipe) var(--ease-out);
+	}
+
+	/* The edge. A hairline of the site's blue that travels with the wipe and
+	   is gone by the time it lands, so the final state is the mark alone. */
+	.wwb-edge {
+		position: absolute;
+		top: 6%;
+		bottom: 6%;
+		left: 0;
+		width: 1px;
+		background-color: var(--ww-blue);
+		opacity: 0;
+		transition: left var(--wwb-wipe) var(--ease-out);
+	}
+
+	/* Two-stage, so it cannot be a transition: in fast, held across the
+	   travel, out just before the edge reaches the far side. */
+	.wwb[data-played] .wwb-old {
+		clip-path: inset(0 0 0 100%);
+	}
+
+	.wwb[data-played] .wwb-new {
+		clip-path: inset(0 0 0 0);
+	}
+
+	.wwb[data-played] .wwb-edge {
+		left: 100%;
+		animation: wwb-edge var(--wwb-wipe) var(--ease-out) forwards;
+	}
+
+	@keyframes wwb-edge {
+		0% {
+			opacity: 0;
+		}
+
+		12% {
+			opacity: 1;
+		}
+
+		82% {
+			opacity: 1;
+		}
+
+		100% {
+			opacity: 0;
+		}
+	}
+
+	/* Keep the same before/after states, but snap between them with no wipe,
+	   edge or fade. The delayed start still gives the old mark its full read. */
+	@media (prefers-reduced-motion: reduce) {
+		.wwb-old,
+		.wwb-new {
+			transition: none;
+		}
+
+		.wwb[data-played] .wwb-edge {
+			animation: none;
+		}
+	}
+</style>

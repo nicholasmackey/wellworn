@@ -1,6 +1,6 @@
 ---
 /**
- * The masthead: the client's own co-brand lockup, and two lines of small type
+ * The masthead: the client's own co-brand lockup, and one line of small type
  * under it.
  *
  * The artwork is supplied — public/images/projects/sweet-gems-project-header.png
@@ -35,37 +35,61 @@ const { project }: Props = Astro.props;
 ---
 
 {/*
-  No rule under the masthead. The first band opens with one of its own two
-  pixels lower, and two hairlines that close to each other read as a mistake
-  rather than as a frame.
+  No rule under the masthead. The first band opens with one of its own a little
+  lower, and two hairlines that close to each other read as a mistake rather
+  than as a frame.
 */}
-<header>
-	<div class="pt-8 pb-7 sm:pt-11 sm:pb-9">
-		<h1 class="portal-enter w-full lg:mx-auto lg:max-w-[64rem] lg:px-8">
-			<span class="block aspect-[2103/430] overflow-hidden">
-				<img
-					src="/images/projects/sweet-gems-project-header.png"
-					alt={`Wellworn × ${project.projectName}`}
-					width="2103"
-					height="677"
-					fetchpriority="high"
-					decoding="async"
-					class="h-full w-full object-cover object-center"
-				/>
-			</span>
-		</h1>
+<header class="ww-masthead">
+	<h1 class="ww-enter ww-masthead-art">
+		<span class="ww-media ww-masthead-frame">
+			<img
+				src="/images/projects/sweet-gems-project-header.png"
+				alt={`Wellworn × ${project.projectName}`}
+				width="2103"
+				height="677"
+				fetchpriority="high"
+				decoding="async"
+			/>
+		</span>
+	</h1>
 
-		{/*
-		  Two labels rather than a subtitle. They say the two things a client
-		  wants confirmed before reading anything else: that this page was made
-		  for them by name, and that it is theirs rather than a page anyone can
-		  find. Centred under a centred lockup, and the page turns left-aligned
-		  the moment the masthead ends.
-		*/}
-		<p
-			class="portal-enter portal-enter-delay-1 eyebrow mt-6 px-5 text-center text-charcoal/55 sm:mt-8 sm:px-8"
-		>
-			Prepared for {project.projectName}
-		</p>
-	</div>
+	{/*
+	  A label rather than a subtitle. It says the thing a client wants confirmed
+	  before reading anything else: that this page was made for them by name.
+	  Centred under a centred lockup, and the page turns left-aligned the moment
+	  the masthead ends.
+	*/}
+	<p class="ww-eyebrow ww-muted ww-enter ww-masthead-note" style="--enter-i:1">
+		Prepared for {project.projectName}
+	</p>
 </header>
+
+<style>
+	.ww-masthead {
+		padding-block: var(--space-lg) var(--space-xl);
+	}
+
+	.ww-masthead-art {
+		width: 100%;
+	}
+
+	.ww-masthead-frame {
+		display: block;
+		aspect-ratio: 2103 / 430;
+		background-color: transparent;
+	}
+
+	.ww-masthead-note {
+		margin-top: var(--space-md);
+		padding-inline: var(--gutter);
+		text-align: center;
+	}
+
+	@media (min-width: 1024px) {
+		.ww-masthead-art {
+			max-width: calc(64rem + var(--gutter) * 2);
+			margin-inline: auto;
+			padding-inline: var(--gutter);
+		}
+	}
+</style>

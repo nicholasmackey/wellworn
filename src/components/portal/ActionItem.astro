@@ -11,7 +11,9 @@
  * step actually has somewhere to send her. Until a signing link or a payment
  * link exists, the item is the task and its status and nothing else — a button
  * that goes nowhere, or worse a plausible one that 404s, undoes exactly the
- * impression this page is for.
+ * impression this page is for. When there is one it is the site's own filled
+ * action, at the site's own size, because there is no such thing as a portal
+ * button.
  */
 import type { PhaseStep } from '../../config/project';
 import StateChip from './StateChip.astro';
@@ -30,7 +32,7 @@ const label = step.actionLabel ?? step.label;
 const cta = step.url && step.ctaLabel ? { href: step.url, label: step.ctaLabel } : null;
 
 /* Red only where the data actually says so. A step that is merely waiting is
-   orange; a step that has failed or gone overdue is the one that earns red. */
+   amber; a step that has failed or gone overdue is the one that earns red. */
 const actionState =
 	step.status === 'overdue'
 		? { label: 'Overdue', variant: 'blocked' as const }
@@ -43,26 +45,20 @@ const actionState =
   Mobile gives the task, state, and optional CTA their own clean rows. From the
   small breakpoint up, the state returns inline and the CTA sits to the right.
 
-  No marker in the left margin. ACTION NEEDED follows the task in amber text,
-  and the label starts hard against the shell's own left edge with the rest of
-  the page's type.
+  No marker in the left margin. ACTION NEEDED follows the task in amber, and the
+  label starts hard against the column's own left edge with the rest of the
+  page's type.
 */}
-<li
-	class="border-t border-charcoal/12 py-4 sm:flex sm:flex-wrap sm:items-baseline sm:justify-between sm:gap-x-6 sm:gap-y-3"
->
-	<div class="min-w-0 flex-1">
-		<p class="text-[1.0625rem] leading-snug">
+<li class="ww-action">
+	<div class="ww-action-task">
+		<p class="ww-body-lg">
 			{label}
-			<span class="mt-2 block sm:mt-0 sm:ml-2 sm:inline">
+			<span class="ww-action-state">
 				<StateChip label={actionState.label} variant={actionState.variant} />
 			</span>
 		</p>
 
-		{
-			step.detail && (
-				<p class="mt-1 text-[0.9375rem] leading-relaxed text-charcoal/60">{step.detail}</p>
-			)
-		}
+		{step.detail && <p class="ww-body ww-muted ww-action-detail">{step.detail}</p>}
 	</div>
 
 	{
@@ -71,7 +67,7 @@ const actionState =
 				href={cta.href}
 				target="_blank"
 				rel="noopener noreferrer"
-				class="portal-cta mt-4 w-full justify-center sm:mt-0 sm:w-auto"
+				class="ww-btn ww-btn-dark ww-action-cta"
 			>
 				{cta.label}
 				<svg
@@ -80,7 +76,7 @@ const actionState =
 					stroke="currentColor"
 					stroke-width="1.5"
 					stroke-linecap="square"
-					class="h-2.5 w-2.5"
+					class="ww-action-arrow"
 					aria-hidden="true"
 				>
 					<path d="M2.5 6h7M6.5 3l3 3-3 3" />
@@ -89,3 +85,59 @@ const actionState =
 		)
 	}
 </li>
+
+<style>
+	.ww-action {
+		padding-block: var(--space-md);
+		border-top: 1px solid var(--ww-hairline);
+	}
+
+	.ww-action-task {
+		min-width: 0;
+		flex: 1;
+	}
+
+	/* Its own line on a phone, where "Action needed" after a long task would
+	   otherwise be pushed off the end of it. */
+	.ww-action-state {
+		display: block;
+		margin-top: var(--space-sm);
+	}
+
+	.ww-action-detail {
+		margin-top: var(--space-xs);
+	}
+
+	.ww-action-cta {
+		display: flex;
+		width: 100%;
+		margin-top: var(--space-md);
+	}
+
+	.ww-action-arrow {
+		width: 12px;
+		height: 12px;
+	}
+
+	@media (min-width: 640px) {
+		.ww-action {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: baseline;
+			justify-content: space-between;
+			gap: var(--space-sm) var(--space-md);
+		}
+
+		.ww-action-state {
+			display: inline;
+			margin-top: 0;
+			margin-left: var(--space-sm);
+		}
+
+		.ww-action-cta {
+			display: inline-flex;
+			width: auto;
+			margin-top: 0;
+		}
+	}
+</style>

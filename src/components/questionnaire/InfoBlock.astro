@@ -6,10 +6,8 @@
  * file, why a section is short, what a client does not need to prepare — at the
  * point it becomes relevant, rather than in an introduction nobody rereads.
  *
- * Set apart from the questions around it by a hairline down its left edge and
- * a tint too faint to read as a status. Deliberately not a card and not one of
- * the state colours: this is the page talking, not the page reporting
- * something, and every colour on a portal page means a status.
+ * Set apart from the questions around it by a rule down its left edge and a
+ * wash too faint to read as a status — see the style block below.
  */
 import type { OfType } from '../../lib/questionnaire/schema';
 import { DATA, questionId, showIfAttr } from '../../lib/questionnaire/dom';
@@ -28,21 +26,33 @@ const attrs = {
 };
 ---
 
-<div
-	id={questionId(question.id)}
-	class="q-question border-l-2 border-(--q-border)/15 bg-(--q-text)/[0.02] py-4 pr-4 pl-5"
-	hidden={isHidden}
-	{...attrs}
->
-	{question.heading && <p class="eyebrow text-(--q-text)/70">{question.heading}</p>}
+<div id={questionId(question.id)} class="q-question ww-info" hidden={isHidden} {...attrs}>
+	{question.heading && <p class="ww-eyebrow ww-muted">{question.heading}</p>}
 
-	<div class:list={['flex flex-col gap-3', question.heading && 'mt-3']}>
-		{
-			question.body.map((paragraph) => (
-				<p class="max-w-[68ch] text-[0.9375rem] leading-relaxed text-(--q-text)/70">
-					{paragraph}
-				</p>
-			))
-		}
+	<div class:list={['ww-info-body', question.heading && 'has-heading']}>
+		{question.body.map((paragraph) => <p class="ww-body ww-muted">{paragraph}</p>)}
 	</div>
 </div>
+
+<style>
+	/* Set apart by a rule down its left edge and a wash too faint to read as a
+	   status — the page's lightest ground, which is the same one a disabled
+	   field takes. Deliberately not a card and not one of the state colours:
+	   this is the page talking, not the page reporting something. */
+	.ww-info {
+		padding: var(--space-md);
+		border-left: 2px solid var(--ww-hairline);
+		background-color: var(--ww-light);
+	}
+
+	.ww-info-body {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+		max-width: 68ch;
+	}
+
+	.ww-info-body.has-heading {
+		margin-top: var(--space-sm);
+	}
+</style>

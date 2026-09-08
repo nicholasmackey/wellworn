@@ -2,33 +2,51 @@
 /**
  * The portal's footer: one line, and the only thing it needs to say.
  *
- * The site footer is a charcoal band asking whether you have a project. She has
+ * The site footer is a black band asking whether you have a project. She has
  * one — it is the page above. What a client wants at the bottom of a status
  * page is the address of a human being, so that is what is here.
  *
- * Drawn from the questionnaire's semantic variables rather than from charcoal
- * directly, so the one line of Wellworn attribution on the page survives a
- * client theme putting a dark ground under it. On a project portal, which sets
- * no theme, every one of them resolves to the charcoal this was written in.
+ * The colour is drawn from the questionnaire's semantic variables rather than
+ * from the palette directly, so the one line of Wellworn attribution on the
+ * page survives a client theme putting a dark ground under it. On a project
+ * portal, which sets no theme, every one of them resolves to the site's own
+ * black on white.
  */
 import { SITE } from '../../config/site';
 
 const year = new Date().getFullYear();
 ---
 
-<footer class="mt-16 border-t border-(--q-border)/15 sm:mt-20">
-	<div
-		class="portal-shell flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-7 sm:py-8"
-	>
-		<p class="text-[0.9375rem] text-(--q-text)/70">
+<footer class="ww-doc-footer">
+	<div class="ww-doc ww-doc-footer-row">
+		<p class="ww-body ww-muted">
 			Questions about anything here? Email{' '}
-			<a
-				href={`mailto:${SITE.email}`}
-				class="text-(--q-text) underline decoration-(--q-text)/30 underline-offset-4 transition-colors duration-200 hover:decoration-(--q-text)"
-				>{SITE.email}</a
-			>.
+			<a href={`mailto:${SITE.email}`} class="ww-link ww-doc-footer-link">{SITE.email}</a>.
 		</p>
 
-		<p class="eyebrow text-(--q-text)/55">&copy; {year} {SITE.name}</p>
+		<p class="ww-eyebrow ww-muted">&copy; {year} {SITE.name}</p>
 	</div>
 </footer>
+
+<style>
+	.ww-doc-footer {
+		margin-top: var(--space-2xl);
+		border-top: 1px solid var(--ww-hairline);
+	}
+
+	.ww-doc-footer-row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-sm) var(--space-md);
+		padding-block: var(--space-lg);
+	}
+
+	/* The one link on the page, in the site's own text-link treatment but at
+	   the size of the sentence it sits inside. */
+	.ww-doc-footer-link {
+		font-size: inherit;
+		color: var(--ww-ink);
+	}
+</style>

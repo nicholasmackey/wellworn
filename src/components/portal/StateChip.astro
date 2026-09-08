@@ -5,17 +5,58 @@
  * Real text rather than a coloured dot with a tooltip, so the state survives
  * being read aloud, printed, or looked at by someone who cannot separate the
  * ochre from the green.
+ *
+ * The geometry is .ww-chip, in portal.css. What is here is only the colour,
+ * one rule per variant, kept beside the element rather than in the shared
+ * stylesheet because this is the only element in the codebase that wears them.
  */
 import { CHIP, type ChipVariant } from './state';
 
 interface Props {
-	/** Sentence case here; the shared status class sets it uppercase in CSS. */
+	/** Sentence case here; .ww-chip sets it uppercase in CSS. */
 	label: string;
 	variant: ChipVariant;
-	class?: string;
 }
 
-const { label, variant, class: className = '' }: Props = Astro.props;
+const { label, variant }: Props = Astro.props;
 ---
 
-<span class:list={['portal-chip', CHIP[variant], className]}>{label}</span>
+<span class:list={['ww-chip', CHIP[variant]]}>{label}</span>
+
+<style>
+	/* The three live states, filled. The label is the page's own ground punched
+	   back out of the fill, so a themed page keeps the pairing. */
+	.chip-current {
+		background-color: var(--color-state-current);
+		color: var(--ww-white);
+	}
+
+	.chip-complete {
+		background-color: var(--color-state-complete);
+		color: var(--ww-white);
+	}
+
+	.chip-blocked {
+		background-color: var(--color-state-blocked);
+		color: var(--ww-white);
+	}
+
+	/* A client's own action, in words alone — see .ww-chip-quiet. The deep of
+	   the hue, because this one is small type on the page's ground rather than
+	   a label on a fill. */
+	.chip-action {
+		color: var(--color-state-action-deep);
+	}
+
+	/* The phase that starts next: crisp, and silent. */
+	.chip-neutral {
+		border-color: var(--ww-hairline);
+		color: var(--ww-ink);
+	}
+
+	/* The ones behind it. Grey on the site's lightest ground, no border. */
+	.chip-upcoming {
+		background-color: var(--ww-light);
+		color: var(--ww-muted);
+	}
+</style>

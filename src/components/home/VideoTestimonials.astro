@@ -8,29 +8,44 @@
  * controls in the bottom-right. No shadow, no border, no caption bar, and
  * nothing covering more of the frame than it has to.
  *
- * There is no heading over this section, and that is deliberate rather than an
- * omission: no heading copy was supplied for it, and one is not invented here.
- * It is named for assistive tech with aria-label, which is the one kind of
- * label this build is allowed to write.
+ * One centred line sits over the grid and names what follows. It is the
+ * section's accessible name too, via aria-labelledby, so the heading a sighted
+ * visitor reads and the name a screen reader announces are the same string
+ * rather than two that can drift apart. It is set a step below the display-lg
+ * the other sections use: this section's weight is the three tall frames, and
+ * a headline as loud as the pricing statement competes with them.
+ *
+ * Under each frame, and never over it, sit the stars, the quote and who said
+ * it. The picture stays clean; the proof reads as caption rather than as a
+ * second card, so there is no box, no border and no shadow around it.
  *
  * The playback rules live in testimonials.client.ts. The short version: hover
- * starts a clip, leaving does not stop it, one plays at a time, and everything
- * hover can do a keyboard can do too.
+ * starts a clip with its sound, leaving pauses it, one plays at a time, and
+ * everything hover can do a keyboard can do too.
  */
 import { Image } from 'astro:assets';
 import type { Testimonial } from '../../config/home';
+import WordReveal from '../WordReveal.astro';
 
 interface Props {
 	testimonials: readonly Testimonial[];
+	heading: string;
 	id?: string;
-	label?: string;
 }
 
-const { testimonials, id, label = 'Client testimonials' }: Props = Astro.props;
+const { testimonials, heading, id }: Props = Astro.props;
 ---
 
-<section class="ww-section ww-testimonials" id={id} aria-label={label}>
+<section
+	class="ww-section ww-testimonials"
+	id={id}
+	aria-labelledby="testimonials-heading"
+>
 	<div class="ww-container">
+		<h2 id="testimonials-heading" class="ww-vt-heading" data-word-reveal>
+			<WordReveal text={heading} />
+		</h2>
+
 		<ul class="ww-vt-grid">
 			{
 				testimonials.map((item, index) => (
@@ -42,7 +57,15 @@ const { testimonials, id, label = 'Client testimonials' }: Props = Astro.props;
 						  with no icon at all until the script has run.
 						*/}
 						<article class="ww-vt-card" data-testimonial data-muted data-label={item.label}>
-							<div class="ww-media ww-media-card ww-vt-media">
+							{/*
+							  The focal point is handed to CSS as a custom property rather
+							  than set on each layer, so the poster and the video are cropped
+							  by the same rule and cannot drift apart.
+							*/}
+							<div
+								class="ww-media ww-media-card ww-vt-media"
+								style={item.focal ? `--vt-focal: ${item.focal};` : undefined}
+							>
 								{/*
 								  The poster is an <img> layer over the video rather than the
 								  video's own `poster` attribute, which buys a responsive
@@ -99,8 +122,8 @@ const { testimonials, id, label = 'Client testimonials' }: Props = Astro.props;
 								<img
 									src={item.logoSrc}
 									alt={item.logoAlt}
-									width={200}
-									height={48}
+									width={item.logoWidth}
+									height={item.logoHeight}
 									loading="lazy"
 									decoding="async"
 									class="ww-vt-logo"
@@ -164,6 +187,38 @@ const { testimonials, id, label = 'Client testimonials' }: Props = Astro.props;
 									</button>
 								</div>
 							</div>
+
+							{/*
+							  Stars, quote, attribution. Presentational SVGs with one
+							  aria-label on the group: five separate star images would be
+							  announced five times and say nothing.
+							*/}
+							<div class="ww-vt-copy">
+								<p
+									class="ww-vt-stars"
+									role="img"
+									aria-label={`${item.rating} out of 5 stars`}
+								>
+									{Array.from({ length: 5 }, (_, star) => (
+										<svg
+											viewBox="0 0 20 20"
+											aria-hidden="true"
+											class={star < item.rating ? 'ww-vt-star' : 'ww-vt-star ww-vt-star-empty'}
+										>
+											<path
+												d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8z"
+												fill="currentColor"
+											/>
+										</svg>
+									))}
+								</p>
+
+								<blockquote class="ww-vt-quote ww-body">&ldquo;{item.quote}&rdquo;</blockquote>
+
+								<p class="ww-vt-attribution ww-small">
+									{item.name} &middot; {item.business}
+								</p>
+							</div>
 						</article>
 					</li>
 				))
@@ -177,12 +232,40 @@ const { testimonials, id, label = 'Client testimonials' }: Props = Astro.props;
 		background-color: var(--ww-white);
 	}
 
+	/*
+	  Centred, and narrow enough that the line breaks where the sentence does
+	  rather than running the full 1200px column. 32 → 52px against the 36 → 56
+	  of display-lg: the same face and the same tight leading, one step quieter.
+	*/
+	.ww-vt-heading {
+		font-family: var(--font-display);
+		font-weight: 400;
+		font-size: clamp(2rem, 1.15rem + 3.4vw, 3.25rem);
+		line-height: 1.04;
+		letter-spacing: var(--tracking-display);
+		text-wrap: balance;
+		max-width: 18ch;
+		margin-inline: auto;
+		text-align: center;
+	}
+
+	/*
+	  The same gap the other sections put between their heading block and the
+	  content under it, so this section starts the way the rest of the page
+	  does.
+	*/
 	.ww-vt-grid {
 		display: grid;
 		gap: var(--space-md);
-		margin: 0;
+		margin: var(--space-2xl) 0 0;
 		padding: 0;
 		list-style: none;
+	}
+
+	@media (min-width: 768px) {
+		.ww-vt-grid {
+			margin-top: var(--space-3xl);
+		}
 	}
 
 	/*
@@ -196,15 +279,21 @@ const { testimonials, id, label = 'Client testimonials' }: Props = Astro.props;
 			grid-template-columns: repeat(2, 1fr);
 		}
 
-		/* Two columns and three cards leaves a hole. The third spans both and
-		   takes a landscape crop, which reads as a deliberate composition rather
-		   than as a card that failed to find a partner. */
+		/*
+		  Two columns and three cards leaves a hole. The third takes the full row
+		  and is centred in it at one column's width, so the odd card reads as a
+		  deliberate composition rather than as a card that failed to find a
+		  partner.
+
+		  It keeps the 3:4 frame rather than stretching to a landscape one. These
+		  are phone clips of people talking: widened to 16:9 the crop becomes a
+		  band across the middle of the picture, and the speaker loses the top of
+		  their head to it.
+		*/
 		.ww-vt-grid li:last-child {
 			grid-column: 1 / -1;
-		}
-
-		.ww-vt-grid li:last-child .ww-vt-media {
-			aspect-ratio: 16 / 9;
+			width: calc(50% - var(--space-md) / 2);
+			justify-self: center;
 		}
 	}
 
@@ -213,17 +302,60 @@ const { testimonials, id, label = 'Client testimonials' }: Props = Astro.props;
 			grid-template-columns: repeat(3, 1fr);
 		}
 
+		/*
+		  Three columns, so the third card is an ordinary card again. Every part
+		  of the two-column arrangement has to be undone here, `justify-self`
+		  included: a centred grid item does not stretch to its column, and since
+		  everything inside the card is absolutely positioned there is no content
+		  to give it a width, so leaving it centred collapses the card to nothing.
+		*/
 		.ww-vt-grid li:last-child {
 			grid-column: auto;
-		}
-
-		.ww-vt-grid li:last-child .ww-vt-media {
-			aspect-ratio: 3 / 4;
+			width: auto;
+			justify-self: stretch;
 		}
 	}
 
 	.ww-vt-card {
 		height: 100%;
+	}
+
+	/*
+	  Enough air under the frame that the copy reads as its own thing and not as
+	  a caption pinned to the picture's edge.
+	*/
+	.ww-vt-copy {
+		margin-top: var(--space-lg);
+	}
+
+	.ww-vt-stars {
+		display: flex;
+		gap: 2px;
+		/* Warm gold, and local to this component: the marketing palette is black,
+		   white and one blue, and a star colour is not a system colour. */
+		color: #e8a11c;
+	}
+
+	.ww-vt-star {
+		width: 16px;
+		height: 16px;
+	}
+
+	/* A rating below five draws the remaining stars as outlines rather than
+	   dropping them, so all five keep their place in the row. */
+	.ww-vt-star-empty {
+		color: var(--ww-hairline);
+	}
+
+	.ww-vt-quote {
+		margin: var(--space-sm) 0 0;
+		max-width: 38ch;
+		color: var(--ww-ink);
+	}
+
+	.ww-vt-attribution {
+		margin-top: var(--space-sm);
+		color: var(--ww-muted);
 	}
 
 	.ww-vt-media {
@@ -241,6 +373,7 @@ const { testimonials, id, label = 'Client testimonials' }: Props = Astro.props;
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
+		object-position: var(--vt-focal, 50% 50%);
 	}
 
 	.ww-vt-poster {
@@ -266,15 +399,27 @@ const { testimonials, id, label = 'Client testimonials' }: Props = Astro.props;
 		z-index: 3;
 		left: var(--space-md);
 		bottom: var(--space-md);
-		height: 22px;
+		height: 66px;
 		width: auto;
+		/* A very wide mark can never crowd the controls; contain keeps it from
+		   being squashed if it ever hits that ceiling. */
+		max-width: 50%;
+		object-fit: contain;
+		/*
+		  The corner gradient handles a frame that is dark or middling. It does
+		  not handle a white van, a bright sky or a pale sweater filling the
+		  bottom of the shot, and all three of those are in this set. A soft
+		  black glow under the mark carries it over any of them without putting a
+		  plate on the picture.
+		*/
+		filter: drop-shadow(0 1px 6px rgb(0 0 0 / 60%));
 	}
 
 	@media (min-width: 768px) {
 		.ww-vt-logo {
 			left: var(--space-lg);
 			bottom: var(--space-lg);
-			height: 26px;
+			height: 78px;
 		}
 	}
 

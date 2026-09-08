@@ -1,216 +1,386 @@
 ---
 /**
- * PRICING.
+ * THE ONE WEBSITE OFFER.
  *
- * Black, and the first time the page has gone black. That change of ground is
- * the whole framing device: nothing here is boxed, nothing floats, there is no
- * comparison table and there are no cards. Two plans, stacked as full-width
- * bands, separated by a hairline. The price is the loudest thing in each band
- * and it is set in the serif at display scale, which is the one place on the
- * page a number is allowed to behave like a headline.
+ * Black ground, one price, and the whole thing sized to sit inside a single
+ * desktop screen. The left column belongs to the person behind the price; the
+ * right column to the price and everything it buys.
  *
- * Two plans. There is no third, there is no enterprise tier, and the only
- * badge is BEST VALUE.
+ * THE ORDER IT IS MEANT TO BE READ IN, and every size below is chosen to
+ * enforce it: a better website → $0 down, $175 a month → what one payment
+ * covers → six things it covers → the price again, attached to all of them →
+ * start a project. The figure is the loudest thing in the section, two steps
+ * above its own heading, because by the time someone reaches this section the
+ * argument has been made and the number is the remaining question.
+ *
+ * THE INVENTORY is six rows on hairlines rather than six cards. A card would
+ * turn each item into an object to be weighed on its own; the point of this
+ * grid is its length, read in one pass, under one figure. Titles carry a
+ * heavier weight and the section's white; descriptions drop a step in size
+ * and to the dark-ground grey, so a scan reads six names before it reads a
+ * word of explanation.
+ *
+ * THE PORTRAIT stretches to whatever height the copy beside it comes to, so
+ * the two columns bottom out together without either being given a fixed
+ * height. The identification card is a real <figcaption> sitting over the
+ * lower part of the frame — the one white object in a black section, which is
+ * the whole reason it draws the eye.
+ *
+ * ON A PHONE the picture follows the copy rather than leading it. Source order
+ * is the mobile order; the desktop grid places the portrait back on the left.
  */
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
 import { CONTACT_HREF, CTA_LABEL } from '../../config/site';
-import type { Plan } from '../../config/home';
+import type { Point } from '../../config/site';
+import WordReveal from '../WordReveal.astro';
 
 interface Props {
 	eyebrow: string;
-	heading: string;
-	body: string;
-	plans: readonly Plan[];
+	/** The heading, one entry a line. See PRICING in config/home. */
+	heading: readonly string[];
+	upfront: string;
+	monthly: string;
+	/** The lede, one entry a paragraph. */
+	body: readonly string[];
+	features: readonly Point[];
+	closing: string;
+	portrait: ImageMetadata;
+	portraitAlt: string;
+	ownerName: string;
+	ownerRole: string;
 	id?: string;
 }
 
-const { eyebrow, heading, body, plans, id }: Props = Astro.props;
+const {
+	eyebrow,
+	heading,
+	upfront,
+	monthly,
+	body,
+	features,
+	closing,
+	portrait,
+	portraitAlt,
+	ownerName,
+	ownerRole,
+	id,
+}: Props = Astro.props;
 
-const planId = (index: number) => `plan-${index + 1}`;
+/* Where each heading line's stagger picks up, so two lines arrive as one
+   sentence rather than as two that each start over. Same device as the
+   closing statement. */
+const wordCounts = heading.map((line) => line.split(/\s+/).filter(Boolean).length);
+const lineStarts = wordCounts.map((_, index) =>
+	wordCounts.slice(0, index).reduce((total, count) => total + count, 0),
+);
 ---
 
 <section class="ww-section ww-section-dark ww-pricing" id={id} aria-labelledby="pricing-heading">
 	<div class="ww-container">
-		<header class="ww-pricing-head">
-			<p class="ww-eyebrow ww-muted">{eyebrow}</p>
+		<div class="ww-pricing-grid">
+			<div class="ww-pricing-offer" data-reveal-group>
+				<p class="ww-eyebrow ww-muted">{eyebrow}</p>
 
-			<h2 id="pricing-heading" class="ww-display-lg">{heading}</h2>
+				{/*
+				  The space between the line spans is not cosmetic. Adjacent
+				  elements with no whitespace between them are concatenated
+				  without one when the accessible name is computed, and this
+				  heading is the section's aria-labelledby target.
+				*/}
+				<h2 id="pricing-heading" class="ww-display-md ww-pricing-heading">
+					{
+						heading.map((line, index) => (
+							<>
+								<span data-word-reveal>
+									<WordReveal text={line} start={lineStarts[index]} />
+								</span>{' '}
+							</>
+						))
+					}
+				</h2>
 
-			<p class="ww-body-lg ww-measure ww-muted">{body}</p>
-		</header>
+				<p class="ww-pricing-price" data-reveal-block>
+					<span>{upfront}</span>{' '}<span>{monthly}</span>
+				</p>
 
-		<div class="ww-plans">
-			{
-				plans.map((plan, index) => (
-					<article class="ww-plan" aria-labelledby={`${planId(index)}-name`}>
-						<div class="ww-plan-lead">
-							{/*
-							  A small restrained label, not a ribbon and not a pill in the
-							  accent colour. It sits where an eyebrow sits, in the same mono
-							  face, and the only thing marking it out is that it is white
-							  where the eyebrows above it are grey.
-							*/}
-							{plan.badge && <p class="ww-eyebrow ww-plan-badge">{plan.badge}</p>}
+				<div class="ww-pricing-body" data-reveal-block style="--wr-i:1">
+					{body.map((paragraph) => <p class="ww-body ww-muted">{paragraph}</p>)}
+				</div>
 
-							<h3 id={`${planId(index)}-name`} class="ww-display-md">
-								{plan.name}
-							</h3>
+				<ul class="ww-pricing-benefits">
+					{
+						features.map((feature) => (
+							<li>
+								<h3 class="ww-body ww-pricing-benefit-title">{feature.title}</h3>
+								<p class="ww-small ww-muted">{feature.body}</p>
+							</li>
+						))
+					}
+				</ul>
 
-							<p class="ww-body ww-muted ww-plan-body">{plan.body}</p>
+				<div class="ww-pricing-actions">
+					<p class="ww-body-lg ww-pricing-close">{closing}</p>
+					<a href={CONTACT_HREF} class="ww-btn ww-btn-blue">{CTA_LABEL}</a>
+				</div>
+			</div>
 
-							{/*
-							  The price. Serif, display-xxl, and deliberately not a heading:
-							  it is a quantity, and putting it in the outline between the
-							  plan name and the feature list would make the page's structure
-							  read "Website / $175/mo." as two peer headings.
-							*/}
-							<p class="ww-display-xxl ww-plan-price">{plan.price}</p>
+			<figure class="ww-pricing-portrait">
+				<div class="ww-media ww-media-card ww-pricing-photo">
+					<Image
+						src={portrait}
+						alt={portraitAlt}
+						width={960}
+						widths={[480, 720, 960]}
+						sizes="(min-width: 1024px) 480px, 100vw"
+						quality={72}
+						loading="lazy"
+						decoding="async"
+					/>
+				</div>
 
-							<a href={CONTACT_HREF} class="ww-btn ww-btn-light ww-plan-cta">
-								{CTA_LABEL}
-								<span class="ww-sr-only">{` on ${plan.name}`}</span>
-							</a>
-						</div>
-
-						<div class="ww-plan-features">
-							<ul>
-								{plan.features.map((feature) => (
-									<li>
-										<span class="ww-body">{feature.label}</span>
-										{/*
-										  The capability underneath the label, where there is one.
-										  It makes the plan concrete without changing a word of
-										  the plan language above it.
-										*/}
-										{feature.detail && (
-											<span class="ww-small ww-muted ww-plan-detail">{feature.detail}</span>
-										)}
-									</li>
-								))}
-							</ul>
-
-							{plan.note && <p class="ww-small ww-plan-note">{plan.note}</p>}
-						</div>
-					</article>
-				))
-			}
+				<figcaption class="ww-pricing-id">
+					<p class="ww-display-md ww-pricing-name">{ownerName}</p>
+					<p class="ww-small ww-pricing-role">{ownerRole}</p>
+				</figcaption>
+			</figure>
 		</div>
 	</div>
 </section>
 
 <style>
-	.ww-pricing-head > * + * {
-		margin-top: var(--space-md);
+	/* One screen is the brief, so this section takes the 80px rhythm at every
+	   width rather than the 120px the tablet-and-up default would give it. */
+	.ww-pricing {
+		padding-block: var(--space-2xl);
 	}
 
-	.ww-plans {
-		margin-top: var(--space-2xl);
-		border-top: 1px solid var(--ww-hairline-dark);
+	.ww-pricing-grid {
+		display: grid;
+		gap: var(--space-xl);
 	}
 
-	@media (min-width: 768px) {
-		.ww-plans {
-			margin-top: var(--space-3xl);
-		}
-	}
-
-	/*
-	  MOBILE: one column. Name, description, price, action, then the features —
-	  which is the order the reference's mobile pricing reads in, and the order
-	  the decision is actually made in.
-	*/
-	.ww-plan {
-		padding-block: var(--space-xl);
-		border-bottom: 1px solid var(--ww-hairline-dark);
-	}
-
-	.ww-plan-badge {
-		color: var(--ww-white);
-		margin-bottom: var(--space-md);
-	}
-
-	.ww-plan-body {
+	.ww-pricing-heading {
 		margin-top: var(--space-sm);
-		max-width: 42ch;
+		max-width: 22ch;
 	}
 
-	.ww-plan-price {
-		margin-top: var(--space-lg);
+	.ww-pricing-heading > span {
+		display: block;
 	}
 
-	.ww-plan-cta {
-		margin-top: var(--space-lg);
-		/* Full width on a phone, where a pill floating in the middle of a black
-		   band has nothing to align to. */
-		display: flex;
-		width: 100%;
+	/* THE FIGURE. Two lines, set as blocks, and the loudest type in the
+	   section by two steps — it is drawn a tier above the heading it sits
+	   under, on the display face, at a line height tight enough that the two
+	   lines read as one quantity rather than as two statements.
+
+	   The size is written here rather than taken from .ww-display-xl because
+	   the ceiling is set by this column: the figure has to fit the 6fr half of
+	   a 1200px container without wrapping, and display-xl's 81px is past that.
+	   The size on this rule is the FIRST line's; the second takes half of it
+	   below. */
+	.ww-pricing-price {
+		margin-top: var(--space-md);
+		font-family: var(--font-display);
+		font-weight: 400;
+		font-size: clamp(3rem, 1.5rem + 4.7vw, 4.5rem); /* 48 → 72 */
+		line-height: 0.98;
+		letter-spacing: var(--tracking-display);
 	}
 
-	.ww-plan-features {
-		margin-top: var(--space-xl);
+	.ww-pricing-price > span {
+		display: block;
 	}
 
-	.ww-plan-features ul {
-		margin: 0;
+	/* THE SECOND LINE, at half the first. "$0 down." is the thing that stops
+	   someone, so it takes the whole size; the monthly figure answers it and
+	   sits under it as the smaller of the pair. Written as an em so the two
+	   stay in a 2:1 ratio at every width rather than needing a clamp of their
+	   own, and given a little air because a 36px line tucked straight under a
+	   72px one at 0.98 leading reads as crowded. */
+	.ww-pricing-price > span + span {
+		margin-top: var(--space-xs);
+		font-size: 0.5em;
+	}
+
+	.ww-pricing-body {
+		margin-top: var(--space-md);
+		max-width: 56ch;
+	}
+
+	.ww-pricing-body p + p {
+		margin-top: var(--space-sm);
+	}
+
+	/* THE INVENTORY. No cards. The grid is hairlines and space, which is the
+	   only structural device this site has besides the change of ground. */
+	.ww-pricing-benefits {
+		display: grid;
+		margin: var(--space-md) 0 0;
 		padding: 0;
 		list-style: none;
-	}
-
-	/* Hairlines again, one per feature. It is the same device as the service
-	   rows above and the footer below, at a smaller scale. */
-	.ww-plan-features li {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		gap: var(--space-sm);
-		padding-block: var(--space-sm);
 		border-top: 1px solid var(--ww-hairline-dark);
 	}
 
-	.ww-plan-features li:first-child {
-		border-top: 0;
-		padding-top: 0;
+	.ww-pricing-benefits li {
+		padding-block: var(--space-sm);
 	}
 
-	.ww-plan-detail {
-		/* Pushed to the end of the row so the labels form a clean left column and
-		   the detail reads as an annotation rather than as a second feature. */
-		margin-inline-start: auto;
+	.ww-pricing-benefits li + li {
+		border-top: 1px solid var(--ww-hairline-dark);
 	}
 
-	.ww-plan-note {
-		margin-top: var(--space-lg);
-		color: var(--ww-white);
+	/* A clear step above the description beside it: the section's white
+	   against the dark-ground grey, 16px against 14px, 600 against 400. Six
+	   titles should be readable as a list on their own. */
+	.ww-pricing-benefit-title {
+		font-weight: 600;
+		letter-spacing: -0.005em;
 	}
 
-	/*
-	  DESKTOP: the band splits. The name, price and action take the left third
-	  and the features take the right, so the two plans line up as two rows of a
-	  page rather than as two columns of a table. Nothing is drawn around either
-	  half; the hairline between the bands is the only structure.
-	*/
+	.ww-pricing-benefits p {
+		margin-top: 2px;
+	}
+
+	.ww-pricing-actions {
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		gap: var(--space-md);
+		margin-top: var(--space-md);
+		padding-top: var(--space-md);
+		border-top: 1px solid var(--ww-hairline-dark);
+	}
+
+	/* The one piece of secondary copy in the section that is not muted. It is
+	   the sentence the whole section is built to deliver, so it takes the
+	   white and a medium weight and sits a size above the inventory. */
+	.ww-pricing-close {
+		max-width: 34ch;
+		font-weight: 500;
+	}
+
+	/* THE PORTRAIT. Tall on a phone, and from the desktop breakpoint up it
+	   simply fills whatever height the column beside it comes to. */
+	.ww-pricing-portrait {
+		position: relative;
+		margin: 0;
+	}
+
+	.ww-pricing-photo {
+		aspect-ratio: 4 / 5;
+	}
+
+	/* Tucked into the right edge of the frame, sitting high enough off the
+	   bottom to clear the photograph's 50px radius. The corners that meet the
+	   edge are squared so the card reads as running off it rather than
+	   floating short of it. */
+	.ww-pricing-id {
+		position: absolute;
+		right: 0;
+		bottom: var(--space-lg);
+		max-width: calc(100% - var(--space-md) * 2);
+		padding: var(--space-sm) var(--space-md);
+		border-radius: var(--radius-input) 0 0 var(--radius-input);
+		background-color: var(--ww-white);
+		color: var(--ww-ink);
+	}
+
+	/* The one line of display type that is a name rather than a statement, so
+	   it takes the heading step rather than a display step. */
+	.ww-pricing-name {
+		font-size: var(--text-heading);
+	}
+
+	/* The one place on a dark section where the muted grey has to be the light
+	   ground's value, because the card is white. */
+	.ww-pricing-role {
+		margin-top: 2px;
+		color: var(--ww-muted);
+	}
+
+	@media (min-width: 640px) {
+		/* Three rows of two. The row rule has to run the full width of the
+		   grid, so it is drawn on the odd cells only and the even cell takes
+		   the vertical rule instead — a border on every cell would double up
+		   at the column gap. */
+		.ww-pricing-benefits {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			column-gap: var(--space-lg);
+		}
+
+		.ww-pricing-benefits li + li {
+			border-top: 0;
+		}
+
+		.ww-pricing-benefits li:nth-child(n + 3) {
+			border-top: 1px solid var(--ww-hairline-dark);
+		}
+
+		/* The only vertical rule in the grid, and it is the same hairline. */
+		.ww-pricing-benefits li:nth-child(even) {
+			padding-left: var(--space-lg);
+			border-left: 1px solid var(--ww-hairline-dark);
+		}
+
+		.ww-pricing-actions {
+			flex-direction: row;
+			align-items: center;
+			justify-content: space-between;
+			gap: var(--space-lg);
+		}
+
+		.ww-pricing-actions .ww-btn {
+			flex: none;
+		}
+	}
+
 	@media (min-width: 768px) {
-		.ww-plan {
-			display: grid;
-			grid-template-columns: 5fr 6fr;
-			gap: var(--space-2xl);
-			padding-block: var(--space-2xl);
-		}
-
-		.ww-plan-cta {
-			display: inline-flex;
-			width: auto;
-		}
-
-		.ww-plan-features {
-			margin-top: 0;
+		.ww-pricing-portrait {
+			max-width: 520px;
 		}
 	}
 
 	@media (min-width: 1024px) {
-		.ww-plan {
-			grid-template-columns: 1fr 1fr;
-			gap: var(--space-3xl);
-			padding-block: var(--space-3xl);
+		/* Where the two columns appear, and the only width at which the whole
+		   offer is meant to be taken in at once. The rhythm tightens again so
+		   the eyebrow and the button land inside one screen. */
+		.ww-pricing {
+			padding-block: var(--space-xl);
+		}
+
+		.ww-pricing-grid {
+			grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
+			column-gap: var(--space-2xl);
+			align-items: stretch;
+		}
+
+		/* Source order is the phone's order — copy, then picture. The desktop
+		   composition puts the picture back on the left. */
+		.ww-pricing-portrait {
+			grid-column: 1;
+			grid-row: 1;
+			max-width: none;
+			display: flex;
+		}
+
+		.ww-pricing-offer {
+			grid-column: 2;
+			grid-row: 1;
+		}
+
+		/* Fills the row, which the copy column sizes. The floor keeps the crop
+		   from going letterbox if the copy ever gets shorter. */
+		.ww-pricing-photo {
+			aspect-ratio: auto;
+			width: 100%;
+			min-height: 560px;
+		}
+	}
+
+	@media (min-width: 1280px) {
+		.ww-pricing-grid {
+			column-gap: var(--space-3xl);
 		}
 	}
 </style>

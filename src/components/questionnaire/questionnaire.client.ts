@@ -558,8 +558,7 @@ function init(): void {
 			const item = document.createElement('li')
 			const link = document.createElement('a')
 			link.href = `#question-${issue.id}`
-			link.className =
-				'text-[0.9375rem] leading-snug text-(--q-error-ink) underline decoration-(--q-error)/40 underline-offset-4 hover:decoration-(--q-error-ink)'
+			link.className = 'q-error-link'
 			link.textContent = `${issue.label}: ${issue.message}`
 			link.addEventListener('click', (event) => {
 				event.preventDefault()

@@ -38,50 +38,55 @@ const OBJECT_CONTRAST = 3
 /**
  * The current Wellworn questionnaire, as hex.
  *
- * Every value is a token from tokens.css, resolved by hand: charcoal, cream,
- * portal-paper, forest, and the state colours the portals already use. Keeping
- * them literal rather than reading them from CSS is what lets the contrast
- * checks below run at build time, in node, with nothing rendered.
+ * Every value is a token from tokens.css, resolved by hand: the site's own
+ * white, black and ink-medium, plus the four status colours the portals use.
+ * Keeping them literal rather than reading them from CSS is what lets the
+ * contrast checks below run at build time, in node, with nothing rendered.
+ *
+ * They are the design system rather than a palette of the questionnaire's own,
+ * which is the point: an unthemed questionnaire is the same black on white,
+ * with the same filled action and the same blue focus ring, as every other page
+ * on the site.
  */
 export const THEME_DEFAULTS = {
-	/** portal-paper */
+	/** --ww-white */
 	background: '#ffffff',
-	/** charcoal */
-	text: '#1f211f',
-	/** portal-paper — fields sit on the page's own ground */
+	/** --ww-ink */
+	text: '#000000',
+	/** --ww-white — fields sit on the page's own ground */
 	surface: '#ffffff',
-	/** charcoal — section rules at full strength, hairlines at an alpha */
-	border: '#1f211f',
-	/** charcoal — the submit button's fill, not rust; see .btn-primary */
-	accent: '#1f211f',
-	/** cream on charcoal, 14.4:1 */
-	accentText: '#f3f0e8',
-	/** forest — the hover of a filled button, the palette's secondary accent */
-	accentHover: '#2e4033',
-	/** state-current — the portal recolours focus from rust to its own blue */
-	focus: '#0197f6',
-	/** state-current — accent-color on the native radios and checkboxes */
-	control: '#0197f6',
+	/** --ww-ink — section rules at an alpha, field borders at another */
+	border: '#000000',
+	/** --ww-ink — the submit button is .ww-btn-dark, the site's default ask */
+	accent: '#000000',
+	/** white on black, 21:1 */
+	accentText: '#ffffff',
+	/** --ww-ink-medium — what .ww-btn-dark hovers to */
+	accentHover: '#333333',
+	/** --ww-blue — the site's focus ring, on every page */
+	focus: '#006aff',
+	/** --ww-blue — accent-color on the native radios and checkboxes */
+	control: '#006aff',
 
 	/* The four status colours. Each has an edge value (fills, 2px rules, field
 	   borders: 3:1) and an ink value (small text: 4.5:1), which is the split the
-	   portal palette already documents as its plain/-deep pairs.
+	   status palette already documents as its plain/-deep pairs.
 
-	   info and error keep their plain fills, both of which clear 3:1 on white,
-	   so the restore notice and the error summary render exactly as they do
-	   today. success and warning take their -deep values as the edge as well:
-	   state-complete (2.43:1) and state-action (2.47:1) are below the non-text
-	   floor on white, and neither is drawn anywhere today, so there is nothing
-	   to preserve and no reason to introduce an edge that fails. */
-	info: '#0197f6',
-	infoInk: '#017ac7',
+	   info is the site's blue, which clears 4.5:1 on white in both roles, so its
+	   edge and its ink are one value. error keeps its plain fill, which clears
+	   3:1 on white. success and warning take their -deep values as the edge as
+	   well: the plain fills reach 2.43:1 and 2.47:1 on white, below the non-text
+	   floor, and neither is drawn anywhere today, so there is nothing to
+	   preserve and no reason to introduce an edge that fails. */
+	info: '#006aff',
+	infoInk: '#006aff',
 	success: '#17883c',
 	successInk: '#17883c',
 	warning: '#b85c00',
 	warningInk: '#b85c00',
 	error: '#d92b1f',
 	errorInk: '#c0281f',
-	/** portal-paper on state-blocked-deep, 4.87:1 — the destructive button */
+	/** white on state-blocked-deep, 5.89:1 — the destructive button */
 	errorOn: '#ffffff',
 } as const
 
@@ -91,12 +96,11 @@ const SEMANTIC = ['info', 'success', 'warning', 'error'] as const
 /**
  * Type on a coloured fill, tried in this order.
  *
- * The palette's own two first, so a themed button still reaches for cream or
- * charcoal where either works, and pure white and black only as the last
- * resorts they are — they are the values that rescue a mid-tone accent nothing
- * else can carry.
+ * Two candidates, because the palette has two: this site sets white on black
+ * and black on white and holds nothing in between for type. Whichever of them
+ * can carry a label on the client's accent is the one that gets it.
  */
-const ON_CANDIDATES = ['#f3f0e8', '#1f211f', '#ffffff', '#000000'] as const
+const ON_CANDIDATES = ['#ffffff', '#000000'] as const
 
 type Rgb = readonly [number, number, number]
 
@@ -178,7 +182,7 @@ function deepen(color: string, ground: string, minimum: number): string | null {
 	return null
 }
 
-/** Charcoal or white, whichever the ground can carry as body copy. */
+/** Black or white, whichever the ground can carry as body copy. */
 function readableOn(ground: string): string {
 	return contrast(THEME_DEFAULTS.text, ground) >= contrast('#ffffff', ground)
 		? THEME_DEFAULTS.text
@@ -230,8 +234,8 @@ export function resolveTheme(theme: Theme | undefined): ResolvedTheme | null {
 	const background = normalizeHex(theme.background ?? THEME_DEFAULTS.background)
 
 	/* Type. A ground the author chose is allowed to be anything; the type on it
-	   is not. If what they asked for cannot be read, take the one of charcoal
-	   and white that can. */
+	   is not. If what they asked for cannot be read, take the one of black and
+	   white that can. */
 	let text = normalizeHex(theme.text ?? (groundThemed ? readableOn(background) : THEME_DEFAULTS.text))
 	if (contrast(text, background) < TEXT_CONTRAST) {
 		text = readableOn(background)

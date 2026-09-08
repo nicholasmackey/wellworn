@@ -3,13 +3,15 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { BRAND, SERVICES, SITE } from '../config/site';
 /*
- * Fonts are NOT imported here any more. WWBlock, the display face, is
- * self-hosted: its @font-face rule rides in with global.css below and the
- * file is preloaded in the head. The other two marketing families come from
- * Google Fonts, linked in the head below — see FONTS_HREF. The
- * portal's three self-hosted Fontsource families are imported by the two
- * /projects/* routes that use them, so the marketing pages no longer download
- * six typefaces to render three.
+ * Three typefaces, for every page this layout renders. WWBlock, the display
+ * face, is self-hosted: its @font-face rule rides in with global.css below and
+ * the file is preloaded in the head. The other two come from Google Fonts,
+ * linked in the head below — see FONTS_HREF.
+ *
+ * There is no per-page opt-out and no second set. The /projects/* routes used
+ * to turn these off and import three Fontsource families of their own, which
+ * is what made a client portal look like a different studio's product; they
+ * are set in the same three as everything else now.
  */
 import '../styles/global.css';
 
@@ -43,17 +45,6 @@ interface Props {
 	 * has left it behind.
 	 */
 	themeColor?: string;
-	/**
-	 * Fetch the marketing site's three Google-hosted typefaces.
-	 *
-	 * On by default, because every public page is set in them. The two
-	 * /projects/* routes turn it off: they replace both the header and the
-	 * footer slots below, so nothing on them is set in Inter, WWBlock or
-	 * JetBrains Mono, and they have three self-hosted families of their own. For
-	 * those pages this is a stylesheet request, two preconnects and a preload
-	 * spent on fonts no element will ask for.
-	 */
-	webFonts?: boolean;
 }
 
 const {
@@ -67,12 +58,11 @@ const {
 	bodyClass = '',
 	bodyStyle,
 	themeColor = '#ffffff',
-	webFonts = true,
 }: Props = Astro.props;
 
 /*
- * The marketing site's two Google-hosted typefaces, in one request. The
- * third, WWBlock, is self-hosted — see fonts.css.
+ * The site's two Google-hosted typefaces, in one request. The third, WWBlock,
+ * is self-hosted — see fonts.css.
  *
  * Only the weights the design system actually declares: Inter at
  * 400/500/600, JetBrains Mono at 500. base.css sets
@@ -112,7 +102,7 @@ const organizationSchema = {
 		'@type': 'OfferCatalog',
 		name: 'Services',
 		// Emitted on the homepage only, so it lists exactly what the homepage
-		// sells — the five services in the accordion, in the order they appear
+		// sells — the five service cards, in the order they appear
 		// there. `url` points at that section, since none of them has a route
 		// of its own yet.
 		itemListElement: SERVICES.map((service) => ({
@@ -175,22 +165,35 @@ const organizationSchema = {
 		  a preload for a font is always a CORS-mode fetch and a hint that does
 		  not match the request it is meant to satisfy downloads the file twice.
 		*/}
-		{
-			webFonts && (
-				<>
-					<link
-						rel="preload"
-						href="/fonts/wwblock-400.woff2"
-						as="font"
-						type="font/woff2"
-						crossorigin
-					/>
-					<link rel="preconnect" href="https://fonts.googleapis.com" />
-					<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-					<link rel="stylesheet" href={FONTS_HREF} />
-				</>
-			)
-		}
+		<link rel="preload" href="/fonts/wwblock-400.woff2" as="font" type="font/woff2" crossorigin />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link rel="stylesheet" href={FONTS_HREF} />
+
+		{/*
+		  THE TEXT ENTRANCE'S ONE PIECE OF INLINE WORK — see styles/reveal.css.
+
+		  The entrance starts from a hidden state, and a hidden state written
+		  unconditionally into the stylesheet is a page that stays blank when
+		  the script does not arrive. So the stylesheet's rules are all behind
+		  this attribute and the attribute is set here, in the head, before the
+		  first heading is parsed: no JavaScript, no attribute, no hidden text,
+		  and no flash of the words appearing before they are hidden either.
+
+		  The timeout is the same argument one step further out. If the module
+		  bundle fails to load or throws, nothing ever claims the attribute and
+		  it comes back off three seconds later, leaving every heading visible.
+		*/}
+		<script is:inline>
+			(function () {
+				var root = document.documentElement;
+				if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+				root.setAttribute('data-text-reveal', '');
+				setTimeout(function () {
+					if (!root.hasAttribute('data-text-reveal-ready')) root.removeAttribute('data-text-reveal');
+				}, 3000);
+			})();
+		</script>
 
 		<title>{pageTitle}</title>
 		<meta name="description" content={description} />
@@ -247,11 +250,11 @@ const organizationSchema = {
 
 		{/*
 		  The site header and footer are the fallback rather than the rule. A page
-		  that has its own chrome — the client portals, which are not part of the
-		  marketing site and must not be dressed as it — passes its own into these
-		  slots, and every other page gets the pair below without knowing the
-		  slots exist. Kept here rather than in a second layout so the head, the
-		  skip link and the flex column stay written once.
+		  with chrome of its own — a client portal, whose masthead is the client's
+		  own lockup and whose footer is one line of contact — passes it into these
+		  slots, and every other page gets the pair below without knowing the slots
+		  exist. Kept here rather than in a second layout so the head, the skip
+		  link and the flex column stay written once.
 		*/}
 		<slot name="header"><Header /></slot>
 

@@ -83,9 +83,8 @@ export const CONTACT_HREF = `mailto:${SITE.email}`
 export interface NavItem {
   readonly label: string
   /**
-   * Root-relative, not a bare fragment: the header ships on every page, so
-   * `#pricing` would do nothing at all from /404. `/#pricing` scrolls on the
-   * homepage and loads it from anywhere else.
+   * Root-relative: the header ships on every page, so homepage sections use a
+   * path plus fragment and standalone destinations use their own route.
    */
   readonly href: string
 }
@@ -101,7 +100,7 @@ export interface NavItem {
 export const NAV: readonly NavItem[] = [
   { label: 'Work', href: '/#work' },
   { label: 'Services', href: '/#services' },
-  { label: 'Pricing', href: '/#pricing' },
+  { label: 'Pricing', href: '/pricing' },
 ]
 
 /** The label on the one action in the header, and on every CTA on the page. */
@@ -114,12 +113,12 @@ export interface Point {
 }
 
 /**
- * What we do, as the homepage accordion lists it and as the structured data in
+ * What we do, as the homepage service cards list it and as the structured data in
  * BaseLayout enumerates it. Kept here rather than in config/home.ts because
  * BaseLayout reads it on every page that asks for schema, and home.ts pulls in
  * a dozen images this file has no business dragging along behind it.
  *
- * `body` is the line that appears when a row is expanded. Both are approved
+ * `body` is the line printed under the title on the card. Both are approved
  * copy: do not reword either.
  */
 export const SERVICES: readonly Point[] = [

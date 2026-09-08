@@ -20,6 +20,8 @@
  * where they now are; and the count from 3.5 to 5.0.
  */
 
+import { afterTextReveal } from '../../reveal.client';
+
 /** How much of the frame has to be in view before the sequence starts. */
 const VISIBLE_RATIO = 0.4;
 
@@ -197,6 +199,24 @@ function settle(root: HTMLElement, text: string): void {
 	root.classList.add('is-zoomed', 'is-listed', 'is-sorted', 'is-rated');
 }
 
+/**
+ * Play the sequence on one frame, once, whatever decided it was time.
+ *
+ * The service rail needs this: its copy of the frame is inside a card that is
+ * closed on arrival, so scrolling past it is exactly the wrong trigger — the
+ * sequence would be over before the card was ever opened. The rail marks its
+ * frame `data-deferred` so the observer below leaves it alone, and calls this
+ * the first time the card becomes the open one.
+ */
+export function startLocalSearch(root: HTMLElement): void {
+	if (root.dataset.searchPlayed === '') return;
+	root.dataset.searchPlayed = '';
+
+	const text = query(root.dataset.query ?? '');
+	if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) settle(root, text);
+	else run(root, text);
+}
+
 export function initLocalSearch(scope: ParentNode = document): void {
 	const roots = Array.from(scope.querySelectorAll<HTMLElement>('[data-local-search]'));
 	if (roots.length === 0) return;
@@ -213,7 +233,8 @@ export function initLocalSearch(scope: ParentNode = document): void {
 						   past it does nothing. */
 						observer?.unobserve(entry.target);
 						const root = entry.target as HTMLElement;
-						run(root, query(root.dataset.query ?? ''));
+						/* Behind the band's copy, and a beat behind that. */
+						afterTextReveal(root, () => startLocalSearch(root));
 					});
 				},
 				{ threshold: VISIBLE_RATIO },
@@ -223,17 +244,20 @@ export function initLocalSearch(scope: ParentNode = document): void {
 		if (root.dataset.searchReady === '') return;
 		root.dataset.searchReady = '';
 
-		const text = query(root.dataset.query ?? '');
 		if (reduced) {
-			settle(root, text);
+			startLocalSearch(root);
 			return;
 		}
 
 		/* Empty the field the moment the script takes over, or the fallback
 		   query the markup ships sits there in full until the typing starts and
-		   then snaps back to one letter. Without JavaScript it stays written. */
+		   then snaps back to one letter. Without JavaScript it stays written.
+		   A deferred frame still wants this — it is only its trigger that is
+		   somebody else's business. */
 		const typed = root.querySelector<HTMLElement>('[data-typed]');
 		if (typed) typed.textContent = '';
+
+		if (root.dataset.deferred === '') return;
 
 		observer?.observe(root);
 	});

@@ -30,9 +30,11 @@
 	}
 
 	/*
-	  The marketing ground: white, Inter, black. The portals set their own on
-	  <body> through BaseLayout's bodyClass, so nothing here is a decision they
-	  inherit.
+	  The ground every route opens on: white, Inter, black. The client portals
+	  used to override all three from a body class; they do not any more. The
+	  one page still allowed to change the ground under itself is a themed
+	  questionnaire, and it does it by re-pointing custom properties rather
+	  than by bringing a second set of element rules — see portal.css.
 
 	  `font-synthesis: none` is load-bearing rather than tidy. Only three
 	  weights of Inter are downloaded and WWBlock ships a single face, and
@@ -130,40 +132,6 @@
 	*/
 	.hero-video {
 		background-color: transparent;
-	}
-
-	/* ----------------------------------------------------------------------
-	   LEGACY headings, for the client portal and the questionnaire. Those pages
-	   were built against a base rule that set every heading in uppercase
-	   Montserrat, and they still expect it. Scoped to their two body classes so
-	   the marketing site is not dragged back into it.
-
-	   Uppercase is applied in CSS rather than in the markup so the underlying
-	   text stays sentence case for search engines and screen readers.
-	   ---------------------------------------------------------------------- */
-	.portal :is(h1, h2, h3, h4, h5, h6),
-	.q-page :is(h1, h2, h3, h4, h5, h6) {
-		font-family: var(--font-legacy-display);
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: var(--tracking-heading);
-	}
-
-	/* And their body copy, which used to come from the <body> rule above. */
-	.portal,
-	.q-page {
-		font-family: var(--font-legacy-body);
-	}
-
-	.portal :focus-visible,
-	.q-page :focus-visible {
-		outline-color: var(--color-state-current);
-	}
-
-	.portal ::selection,
-	.q-page ::selection {
-		background-color: var(--color-forest);
-		color: var(--color-cream);
 	}
 
 	/* ----------------------------------------------------------------------

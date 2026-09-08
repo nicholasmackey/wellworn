@@ -1,27 +1,26 @@
 /* ==========================================================================
    WELLWORN — DESIGN TOKENS
    --------------------------------------------------------------------------
-   Every value the site is allowed to use lives here. Two systems share the
-   file, and they are deliberately kept apart:
+   Every value the site is allowed to use lives here, and every route reads
+   the same list — the public pages and the /projects/* client portals and
+   questionnaires alike. The portals used to carry a palette and three
+   typefaces of their own; they do not any more. A client who has seen the
+   site should recognise their project page as the same studio, and the way
+   to guarantee that is to give the two pages one set of values rather than
+   two sets kept in step by hand.
 
-   1. The `--ww-*` system. The marketing site — homepage, and every public
-      page built after it. Editorial serif, restrained sans, mono labels,
-      black and white doing the work with one blue held in reserve.
+   The `--ww-*` system is the whole of it: display face, restrained sans,
+   mono labels, black and white doing the work with one blue held in reserve.
 
-   2. The legacy palette under `@theme`. The client portals and the
-      questionnaire are a working tool a client has already been sent a link
-      to, not marketing, and they are not part of this redesign. Their
-      palette, their three typefaces, and the nineteen semantic questionnaire
-      properties below are preserved exactly as they were.
-
-   Nothing in the marketing system reads a legacy token, and nothing in the
-   portal reads a `--ww-*` one. That is what lets either change without the
-   other noticing.
+   The portal pages add exactly one vocabulary on top — a status, in four
+   colours — and the nineteen semantic questionnaire properties at the foot
+   of the file, which are what lets a client theme recolour a form without a
+   component of its own.
    ========================================================================== */
 
 @theme {
 	/* ----------------------------------------------------------------------
-	   MARKETING TYPEFACES.
+	   TYPEFACES.
 
 	   Three families, three roles, and the whole site addresses them through
 	   these names — no component ever writes a family out. WWBlock is
@@ -43,7 +42,7 @@
 	--font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
 	/* ----------------------------------------------------------------------
-	   MARKETING COLOUR, registered with Tailwind so `text-ww-muted` and friends
+	   COLOUR, registered with Tailwind so `text-ww-muted` and friends
 	   exist for the occasional one-off in markup. The values themselves are
 	   declared once, in the :root block below, which is the source of truth;
 	   these only point at them. Do not paste a hex into this block.
@@ -62,25 +61,12 @@
 	--color-ww-hairline-light: var(--ww-hairline-light);
 
 	/* ----------------------------------------------------------------------
-	   LEGACY — the client portal palette, in the order it is meant to be
-	   reached for. Charcoal and cream are the portal; rust is its accent;
-	   forest and stone are held to small doses. Untouched by the redesign.
-	   ---------------------------------------------------------------------- */
-	--color-charcoal: #1f211f;
-	--color-cream: #f3f0e8;
-	--color-forest: #2e4033;
-	--color-stone: #a9a398;
-	--color-rust: #b85c3d;
+	   STATUS COLOUR, for the /projects/* portals and questionnaires.
 
-	/* The portal's own ground. White rather than cream, because the client
-	   co-brand lockup at the top of the page is supplied as artwork on white
-	   and any other ground would draw a visible box around it. */
-	--color-portal-paper: #ffffff;
-	/* The timeline's rail, and the ring on a marker that has not started. */
-	--color-portal-rail: #c9cbc8;
-
-	/* ----------------------------------------------------------------------
-	   LEGACY state colours, for the portals and nowhere else.
+	   The one vocabulary those pages need that the public pages have no use
+	   for. Everything else about them — typefaces, greys, hairlines, buttons,
+	   spacing, radii — comes from the tokens above, so these four are the
+	   only colours on a portal page besides the ink, the ground and the blue.
 
 	   Two values apiece. The plain value is the fill — the solid chip, the
 	   checkmark, the marker on the rail. The -deep value is that same hue
@@ -88,43 +74,41 @@
 	   allowed to use.
 
 	                    fill        white on fill    deep        on white
-	   current .......  #0197f6        3.11:1      #017ac7       4.56:1
+	   current .......  #006aff        4.60:1      #006aff       4.60:1
 	   complete ......  #20bf55        2.43:1      #17883c       4.54:1
 	   action ........  #ea9010        2.47:1      #b85c00       4.60:1
 	   blocked .......  #d92b1f        4.87:1      #c0281f       5.89:1
-	   upcoming ......  #6f7370        4.81:1      #5e625f       6.20:1
+
+	   `current` is the site's own blue rather than a blue of its own. There
+	   is one accent here, and a portal shipping a second one would be a
+	   second design system wearing the same wordmark. It clears 4.5:1 in both
+	   directions, so its fill and its deep are the same value.
+
+	   Written as hex rather than as var(--ww-blue) and friends because
+	   THEME_DEFAULTS in lib/questionnaire/theme.ts resolves these in node, at
+	   build time, to check a client's colours against the ground they will be
+	   drawn on — and var() means nothing there. A unit test pins the pair.
 	   ---------------------------------------------------------------------- */
-	--color-state-current: #0197f6;
-	--color-state-current-deep: #017ac7;
+	--color-state-current: #006aff;
+	--color-state-current-deep: #006aff;
 	--color-state-complete: #20bf55;
 	--color-state-complete-deep: #17883c;
 	--color-state-action: #ea9010;
 	--color-state-action-deep: #b85c00;
 	--color-state-blocked: #d92b1f;
 	--color-state-blocked-deep: #c0281f;
-	--color-state-upcoming: #6f7370;
-	--color-state-upcoming-deep: #5e625f;
 
-	/* ----------------------------------------------------------------------
-	   LEGACY typefaces, self-hosted from Fontsource; the @font-face rules are
-	   imported in BaseLayout.astro. Renamed from --font-display/--font-sans,
-	   which the marketing system now owns. The "Variable" suffix is part of
-	   the family name Fontsource registers — it must match exactly or the
-	   fallback silently wins. Russo One is static and ships one weight (400).
-	   ---------------------------------------------------------------------- */
-	--font-legacy-display: 'Montserrat Variable', ui-sans-serif, system-ui, sans-serif;
-	--font-legacy-body: 'Source Sans 3 Variable', ui-sans-serif, system-ui, sans-serif;
-	--font-russo: 'Russo One', var(--font-legacy-display);
-
-	/* Legacy brand letter-spacing. Wide tracking on small uppercase type. */
-	--tracking-heading: 0.04em;
-	--tracking-label: 0.14em;
-	--tracking-brand: 0.22em;
+	/* The three values from the palette above that the questionnaire's
+	   semantic defaults resolve to, in the same literal form and for the same
+	   reason. They mirror --ww-white, --ww-ink and --ww-ink-medium exactly. */
+	--color-portal-paper: #ffffff;
+	--color-portal-ink: #000000;
+	--color-portal-ink-medium: #333333;
 }
 
 :root {
 	/* ======================================================================
-	   MARKETING COLOUR — the real declarations.
+	   COLOUR — the real declarations.
 
 	   Black and white do the work. The blue is an accent and a signal, not a
 	   ground: it takes at most one action per screen and the odd link. A page
@@ -291,7 +275,7 @@
 }
 
 /* ==========================================================================
-   LEGACY — THE QUESTIONNAIRE'S SEMANTIC SURFACE.
+   THE QUESTIONNAIRE'S SEMANTIC SURFACE.
 
    Nineteen names, and every questionnaire component reads one of them rather
    than a palette token. That is what makes a themed questionnaire possible
@@ -299,8 +283,12 @@
    properties on the questionnaire's root element, and the same generic
    renderer picks them up.
 
-   The values here ARE the Wellworn questionnaire. A definition with no
-   `theme` block sets no properties at all and renders from this list.
+   Unthemed, every one of them resolves to the site's own values — white
+   ground, black type, black rules, the black filled action with its
+   ink-medium hover, the blue focus ring — so a questionnaire with no `theme`
+   block is the Wellworn design system and nothing else. The four status
+   colours are the exception, and the only place a portal page keeps a hue of
+   its own.
 
    This block and THEME_DEFAULTS in lib/questionnaire/theme.ts describe the
    same thing in two languages, so they have to agree. A unit test pins the
@@ -308,12 +296,12 @@
    ========================================================================== */
 :root {
 	--q-background: var(--color-portal-paper);
-	--q-text: var(--color-charcoal);
+	--q-text: var(--color-portal-ink);
 	--q-surface: var(--color-portal-paper);
-	--q-border: var(--color-charcoal);
-	--q-accent: var(--color-charcoal);
-	--q-accent-text: var(--color-cream);
-	--q-accent-hover: var(--color-forest);
+	--q-border: var(--color-portal-ink);
+	--q-accent: var(--color-portal-ink);
+	--q-accent-text: var(--color-portal-paper);
+	--q-accent-hover: var(--color-portal-ink-medium);
 	--q-focus: var(--color-state-current);
 	--q-control: var(--color-state-current);
 
@@ -331,5 +319,5 @@
 	   interpolate a custom property, so the whole url() is one — see
 	   `chevron()` in lib/questionnaire/theme.ts, which builds the themed
 	   version of this from a hex the schema has already constrained. */
-	--q-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%231f211f' stroke-width='1.5' stroke-linecap='square'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E");
+	--q-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23000000' stroke-width='1.5' stroke-linecap='square'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E");
 }

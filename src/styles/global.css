@@ -6,13 +6,17 @@
    are listed in is the order they cascade in.
 
      fonts.css       The @font-face rule for the self-hosted display family.
-     tokens.css      Every value the site is allowed to use. Both palettes,
-                     both type systems, spacing, radii, motion.
+     tokens.css      Every value the site is allowed to use. The palette, the
+                     type system, spacing, radii, motion — and the status
+                     colours the /projects/* routes add to them.
      base.css        Element defaults. Nothing that needs a class name.
-     components.css  The marketing furniture — type roles, container, section
-                     grounds, rules, buttons, media frames.
-     portal.css      The client portal and questionnaire, preserved from the
-                     previous build and scoped to their own body classes.
+     components.css  The furniture every page is built from — type roles,
+                     container, section grounds, rules, buttons, media frames.
+     reveal.css      The one text entrance: display headings arriving word by
+                     word, supporting copy arriving behind them.
+     portal.css      The /projects/* client portals and questionnaires: the
+                     few objects the public pages have no equivalent for, all
+                     of them built from the values above.
      utilities.css   Single-purpose helpers.
 
    Tailwind is imported first so its own layers are declared before anything
@@ -25,5 +29,6 @@
 @import './tokens.css';
 @import './base.css';
 @import './components.css';
+@import './reveal.css';
 @import './portal.css';
 @import './utilities.css';

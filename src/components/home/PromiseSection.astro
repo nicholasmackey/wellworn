@@ -7,6 +7,26 @@
  * photograph. Not a feature card, not a three-across icon grid, and nothing
  * with a border around it.
  *
+ * THE COMPOSITION. Copy on one side, a photographic field on the other. The
+ * field is not a picture in a frame: it runs the full depth of the band and
+ * takes a little over half the viewport, so the band reads as a room the copy
+ * is standing in rather than as text beside an illustration. The band's
+ * demonstration then floats on top of that field.
+ *
+ * A PANEL, NOT A STRIP. The band keeps the page's own vertical rhythm above
+ * and below it, so the photograph is bounded by the section that owns it and
+ * there is always ground between one band's picture and the next. Three
+ * separate compositions down the page, never one continuous column of
+ * touching photographs.
+ *
+ * THE ARRIVAL. The field opens as the band scrolls up: it starts short of its
+ * resting width, anchored to the page edge it will finish against, and grows
+ * inward toward the copy. A width rather than a scale, so `cover` re-crops on
+ * the way and the picture is disclosed instead of stretched. The
+ * demonstration on top holds its own size throughout and only slides with the
+ * middle of the field. It is tied to scroll position rather than played as an
+ * event, so it runs backwards on the way up; see promise-expand.client.ts.
+ *
  * The same component draws all three, but it is given enough to vary them so
  * they do not read as one thing stamped out three times: which side the
  * photograph takes, and which ground the band sits on. Down the page that
@@ -23,6 +43,7 @@ import LocalSearchDemo from './promises/LocalSearchDemo.astro';
 import ReputationDemo from './promises/ReputationDemo.astro';
 import ConversionDemo from './promises/ConversionDemo.astro';
 import './promises/demo.css';
+import WordReveal from '../WordReveal.astro';
 
 interface Props {
 	promise: PromiseBand;
@@ -40,14 +61,14 @@ const Heading = level;
 const headingId = promise.id ? `${promise.id}-heading` : undefined;
 
 /*
- * WHAT SITS IN THE PICTURE'S PLACE.
+ * WHAT FLOATS OVER THE PICTURE.
  *
- * Each band shows the outcome it is describing rather than a photograph of a
- * business: search results that find the bakery, a profile that gains a review
- * and a reply, a quote request that takes two fields. They are keyed off the
- * band's own id, so the section still does not know which of the three it is
- * drawing — a band with no demonstration of its own falls back to the
- * photograph in the data, which is why the import above stays.
+ * Each band shows the outcome it is describing rather than only a photograph
+ * of a business: search results that find the bakery, a profile that gains a
+ * review and a reply, a quote request that takes two fields. They are keyed
+ * off the band's own id, so the section still does not know which of the three
+ * it is drawing — a band with no demonstration of its own simply shows the
+ * photographic field on its own.
  */
 const DEMOS = {
 	'get-found': LocalSearchDemo,
@@ -62,55 +83,74 @@ const Demo = promise.id && promise.id in DEMOS ? DEMOS[promise.id as keyof typeo
 	class:list={['ww-section', 'ww-promise', promise.ground === 'cream' && 'ww-section-cream']}
 	id={promise.id}
 	aria-labelledby={headingId}
+	data-reveal-group
 >
-	<div class="ww-container">
-		<div class:list={['ww-promise-grid', promise.imageSide === 'left' && 'is-flipped']}>
-			<div class="ww-promise-copy">
-				<Heading id={headingId} class="ww-display-lg">{promise.heading}</Heading>
+	<div class:list={['ww-promise-grid', promise.imageSide === 'left' && 'is-flipped']}>
+		<div class="ww-promise-copy">
+			<Heading id={headingId} class="ww-display-lg" data-word-reveal>
+				<WordReveal text={promise.heading} />
+			</Heading>
 
-				{promise.body.map((paragraph) => <p class="ww-body-lg ww-measure">{paragraph}</p>)}
+			{
+				promise.body.map((paragraph, index) => (
+					<p class="ww-body-lg ww-measure" data-reveal-block style={`--wr-i:${index}`}>
+						{paragraph}
+					</p>
+				))
+			}
+		</div>
+
+		{/*
+		  THE FIELD. Two elements: the column the grid sizes, and the
+		  photograph inside it, which is the part that changes width as the
+		  band arrives. .ww-media supplies the clip and the neutral ground
+		  under a photograph that has not landed yet; the card radius is
+		  deliberately not here, because this one is a wall rather than a card.
+
+		  `sizes` follows the field, not the container: a little over half the
+		  viewport above the split, all of it below. The source photographs are
+		  tall, the field is often not, and cover throws away whichever axis is
+		  spare — so each band carries its own focal point, and none of the
+		  three is ever seen whole.
+
+		  Quality 68 rather than the 80 that reads as the safe default. These
+		  are dense, grainy documentary photographs and WebP spends enormously
+		  on that kind of detail. Check the build output before raising it.
+		*/}
+		<div
+			class="ww-promise-visual"
+			style={`--promise-focus:${promise.imageFocus ?? '50% 50%'};--promise-zoom:${promise.imageZoom ?? 1}`}
+			data-promise-field
+		>
+			<div class="ww-media ww-promise-photo">
+				<Image
+					src={promise.image}
+					alt={promise.imageAlt}
+					width={1600}
+					widths={[600, 900, 1200, 1600, 1924]}
+					sizes="(min-width: 1024px) 56vw, 100vw"
+					quality={68}
+					loading="lazy"
+					decoding="async"
+				/>
 			</div>
 
 			{
-				Demo ? (
+				Demo && (
 					/*
-					  The frame is the photograph's frame, unchanged: same class, same
-					  aspect ratios, same 50px geometry, same side of the split. Only
-					  what is drawn inside it is different. The ground goes in because
-					  the demonstration has to sit on the opposite surface to the band
-					  it is on, or its panels disappear into it.
+					  The demonstration keeps the frame it always had — same
+					  .ww-media clip, same 50px card geometry, same size
+					  container underneath it. All that changed is where the
+					  frame sits: over the photograph rather than in place of
+					  it. The ground goes in because the demonstration has to
+					  sit on the opposite surface to the band it is on, or its
+					  panels disappear into it.
 					*/
-					<div class="ww-media ww-media-card ww-promise-media wwd-frame" data-ground={promise.ground}>
+					<div class="ww-media ww-media-card ww-promise-demo wwd-frame" data-ground={promise.ground}>
 						<Demo ground={promise.ground} />
-					</div>
-				) : (
-					/*
-					  `sizes` is what stops a phone downloading a desktop-width crop.
-					  Below the split these run the full width of the container; above
-					  it they take a little under half of a 1200px column, so 560px is
-					  the widest they are ever painted at and the browser picks the
-					  candidate that matches its own DPR.
-
-					  Quality 68 rather than the 80 that reads as the safe default.
-					  These are dense documentary photographs and WebP spends
-					  enormously on that kind of detail. Check the build output before
-					  raising it.
-					*/
-					<div class="ww-media ww-media-card ww-promise-media">
-						<Image
-							src={promise.image}
-							alt={promise.imageAlt}
-							width={1200}
-							widths={[480, 720, 960, 1200]}
-							sizes="(min-width: 1024px) 560px, (min-width: 768px) 50vw, 100vw"
-							quality={68}
-							loading="lazy"
-							decoding="async"
-						/>
 					</div>
 				)
 			}
-
 		</div>
 	</div>
 </section>
@@ -120,6 +160,21 @@ const Demo = promise.id && promise.id in DEMOS ? DEMOS[promise.id as keyof typeo
 		display: grid;
 		gap: var(--space-lg);
 		align-items: center;
+	}
+
+	/* Below the split the grid is full-bleed so the photograph can be, which
+	   means the copy carries the gutter itself. */
+	.ww-promise-copy {
+		padding-inline: var(--gutter);
+	}
+
+	/* Both columns opt out of the automatic minimum size. Without it the
+	   field's own proportions become a floor on its width, and a grid item
+	   that will not go below 1020px takes the page off the side of a
+	   tablet. */
+	.ww-promise-copy,
+	.ww-promise-visual {
+		min-width: 0;
 	}
 
 	.ww-promise-copy > * + * {
@@ -133,81 +188,312 @@ const Demo = promise.id && promise.id in DEMOS ? DEMOS[promise.id as keyof typeo
 		margin-bottom: var(--space-md);
 	}
 
-	.ww-promise-media {
-		/* 4:3 on a phone. The source photographs run from tall portrait to wide
-		   landscape, and a common frame is what keeps three bands feeling like one
-		   set — the crop is centred, which every one of these images survives. */
-		aspect-ratio: 4 / 3;
+	/* --------------------------------------------------------------------
+	   THE PHOTOGRAPHIC FIELD
+	   -------------------------------------------------------------------- */
+	/* Whatever the field is doing mid-scroll, it is doing it inside its own
+	   band. Nothing here is allowed to reach the section above or below. */
+	.ww-promise {
+		overflow: clip;
+	}
+
+	.ww-promise-visual {
+		position: relative;
+
+		/* Tall on a phone. The demonstration is laid over the middle of it, so
+		   the field has to be deeper than the panel or there is no photograph
+		   left to see. */
+		aspect-ratio: 5 / 7;
 	}
 
 	/*
-	  The demonstrations are portrait interfaces — a list of results, a
-	  profile, a form — and the photograph's 4:3 phone frame is not tall
-	  enough to hold one without cutting the bottom off it. On a phone those
-	  bands take a square instead. Everything else about the band is
-	  unchanged, and above the split the picture's own proportions already
-	  suit them, so nothing changes there.
-	*/
-	@media (max-width: 767px) {
-		.wwd-frame {
-			aspect-ratio: 1 / 1;
-		}
+	  THE PHOTOGRAPH, one layer inside the column that places it.
 
+	  It is its own element because it is the only part of the band whose width
+	  changes as the band arrives. The column keeps the size the grid gave it,
+	  which is what lets the demonstration over the top hold a fixed width — and
+	  so a fixed type scale, since the panel's type is written in units of its
+	  own container — while the picture behind it opens.
+
+	  Containment is the same rule again, stated locally: neither the zoom past
+	  `cover` nor a width part way through its travel can escape this box.
+	*/
+	.ww-promise-photo {
+		position: absolute;
+		inset: 0;
+		contain: layout paint;
+	}
+
+	/*
+	  THE CROP, and it is the one thing the three photographs do not share.
+	  `cover` picks the region and the scale pushes past it, both about the same
+	  point, so a band is tuned with two numbers and the picture closes in on
+	  what is worth keeping instead of drifting off it.
+	*/
+	.ww-promise-visual :global(img) {
+		object-position: var(--promise-focus, 50% 50%);
+		transform: scale(calc(var(--promise-zoom, 1) * var(--promise-zoom-damp, 1)));
+		transform-origin: var(--promise-focus, 50% 50%);
+	}
+
+	/* --------------------------------------------------------------------
+	   THE DEMONSTRATION, FLOATING
+
+	   Absolutely positioned inside the field, which is what gives .wwd-frame
+	   the definite size its `container-type: size` needs. The insets are the
+	   composition: enough of the photograph has to survive around all four
+	   edges for the field to still read as a field.
+	   -------------------------------------------------------------------- */
+	.ww-promise-demo {
+		position: absolute;
+		inset: 50% var(--gutter) auto;
+		translate: 0 -50%;
 		/*
-		  Except the get found band, which is a phone rather than a screenful.
-		  A handset is 9:19.5, so a square frame can only hold a narrow one;
-		  the taller box is what keeps the type on its screen readable at
-		  390px. This is the only band that draws a device.
+		  THE PANEL'S PROPORTION, and it is not one number.
+
+		  The interface inside is written in em off a root that is 3.6% of the
+		  frame's width and capped at 16px. Below a frame of about 440px the
+		  type is still growing with the box, so a profile always needs a
+		  little over nine tenths of the frame's width in height and a square
+		  is the safe box. Past the cap the content stops growing and the box
+		  can be flatter than that — which is where the 8:7 below comes in.
 		*/
-		#get-found .wwd-frame {
-			aspect-ratio: 4 / 5;
+		aspect-ratio: var(--promise-demo-ratio, 1 / 1);
+	}
+
+	/* Except the get found band, which draws a handset rather than a panel and
+	   needs the height for it. */
+	#get-found .ww-promise-demo {
+		--promise-demo-ratio: 4 / 5;
+	}
+
+	@media (min-width: 768px) {
+		/* And the earn trust band, which is the tallest of the three: the
+		   profile gains a review and an owner's reply as it runs, and at full
+		   type size that is another hundred pixels of panel. */
+		#earn-trust .ww-promise-demo {
+			--promise-demo-ratio: 5 / 6;
 		}
 	}
 
 	@media (min-width: 768px) {
-		.ww-promise-grid {
-			grid-template-columns: 1fr 1fr;
-			gap: var(--space-xl);
-		}
-
 		/*
-		  The flip is done with grid-column rather than by reordering the DOM,
-		  which matters: the heading stays first in the source on every band, so a
-		  screen reader and a keyboard always meet the statement before the
-		  picture that illustrates it, whichever side the picture is drawn on.
+		  Still stacked here, but the field is wide now, so the panel stops
+		  taking the full measure of it and sits centred instead. The height is
+		  set outright rather than as a ratio: a ratio plus a floor transfers
+		  into a minimum width, and a minimum width is how a grid item ends up
+		  wider than the screen.
 		*/
-		.is-flipped .ww-promise-copy {
-			grid-column: 2;
-			grid-row: 1;
+		.ww-promise-visual {
+			aspect-ratio: auto;
+			height: clamp(620px, 72vh, 760px);
+
+			/*
+			  A wide field is already a hard crop — cover throws away a third
+			  of a portrait source to fill it — so the band's own zoom is
+			  pulled back to keep the picture off the soft edges of the frame.
+			*/
+			--promise-zoom-damp: 0.75;
 		}
 
-		.is-flipped .ww-promise-media {
-			grid-column: 1;
-			grid-row: 1;
-		}
-
-		.ww-promise-media {
-			aspect-ratio: 5 / 6;
+		.ww-promise-demo {
+			inset: 50% auto auto 50%;
+			translate: -50% -50%;
+			width: min(440px, calc(100% - var(--space-2xl) * 2));
 		}
 	}
 
 	@media (min-width: 1024px) {
-		/* Even halves, deliberately. An asymmetric split would have to be written
-		   twice — once each way — because the flipped bands put the picture in
-		   column one, and two proportions to keep in step is two chances for a
-		   band to end up the wrong way round. */
+		/*
+		  THE SPLIT, and the band keeps the page's vertical rhythm through it.
+		  The copy column used to carry that rhythm here so the photograph
+		  could run between the bands; the photograph is a panel now, so the
+		  padding goes back to .ww-section where the rest of the page takes it,
+		  and nothing in this file cancels it. Two full --section-y between any
+		  two pictures, on the ground of whichever band you are leaving.
+
+		  Three columns, and the first of them is the page's own left margin
+		  written out as a track: whatever the 1200px container would have
+		  left, floored at the gutter. That is what keeps this heading on the
+		  same line as every other heading on the page while the field beside
+		  it is measured off the viewport instead.
+		*/
 		.ww-promise-grid {
-			gap: var(--space-2xl);
+			gap: 0;
+			min-height: 820px;
+			grid-template-columns:
+				minmax(var(--gutter), calc((100% - var(--container-max)) / 2))
+				minmax(0, 1fr)
+				50%;
 		}
 
-		.ww-promise-media {
-			aspect-ratio: 4 / 5;
+		/*
+		  The flip is done with grid-column rather than by reordering the DOM,
+		  which matters: the heading stays first in the source on every band, so
+		  a screen reader and a keyboard always meet the statement before the
+		  picture that illustrates it, whichever side the picture is drawn on.
+		*/
+		.ww-promise-grid.is-flipped {
+			grid-template-columns:
+				50%
+				minmax(0, 1fr)
+				minmax(var(--gutter), calc((100% - var(--container-max)) / 2));
+		}
+
+		.ww-promise-copy {
+			grid-column: 2;
+			grid-row: 1;
+			padding-inline: 0 var(--space-xl);
+		}
+
+		.is-flipped .ww-promise-copy {
+			padding-inline: var(--space-xl) 0;
+		}
+
+		.ww-promise-visual {
+			grid-column: 3;
+			grid-row: 1;
+			align-self: stretch;
+			aspect-ratio: auto;
+			min-height: 0;
+			height: 100%;
+
+			/*
+			  THE TRAVEL, in three declarations, and every one of them is read
+			  twice — once by the photograph and once by the demonstration
+			  floating over it, which is the only way the two stay concentric
+			  while one of them is moving.
+
+			  --promise-expand is the scroll, written on this element by
+			  promise-expand.client.ts: 0 as the field crosses the bottom of
+			  the screen, 1 by the time it has settled. It is absent wherever
+			  there is nothing to animate — no script, reduced motion, a
+			  browser with no observer — and the fallback of 1 is the resting
+			  layout, so all three of those land on the finished composition
+			  rather than on a narrow field that never opens.
+
+			  --promise-field-w is where that leaves the photograph: from 72%
+			  of the column to all of it, floored so the field is never
+			  narrower than the panel it has to sit behind. The floor is what
+			  keeps the demonstration off the ground either side of it in the
+			  first frames, when the band is still below the fold.
+			*/
+			--promise-expand-start: 0.72;
+			--promise-demo-w: min(520px, calc(100% - var(--space-xl) * 2));
+			--promise-field-w: min(
+				100%,
+				max(
+					calc(
+						100% *
+							(var(--promise-expand-start) + (1 - var(--promise-expand-start)) *
+										var(--promise-expand, 1))
+					),
+					calc(var(--promise-demo-w) + var(--space-md) * 2)
+				)
+			);
+		}
+
+		.is-flipped .ww-promise-visual {
+			grid-column: 1;
+		}
+
+		/*
+		  The photograph, anchored to the edge of the page it finishes against
+		  and opening inward toward the copy. A width rather than a transform,
+		  which is the whole point of it: the box genuinely changes size, so
+		  `cover` re-crops every frame and more of the picture is disclosed as
+		  it goes. A scale can only enlarge what was already showing.
+		*/
+		.ww-promise-photo {
+			width: var(--promise-field-w);
+			inset-inline: auto 0;
+		}
+
+		.is-flipped .ww-promise-photo {
+			inset-inline: 0 auto;
+		}
+
+		/*
+		  Centred in the field, and it stays centred in the field while the
+		  field is still opening: the offset is half the width the photograph
+		  currently has, measured from the same edge the photograph is anchored
+		  to. Its own width is a share of the column, which does not move, so
+		  the panel and the interface inside it hold their size throughout and
+		  only slide. The inset either side is what stops the demonstration
+		  reading as a panel bolted to the viewport edge.
+		*/
+		.ww-promise-demo {
+			width: var(--promise-demo-w);
+			inset: 50% calc(var(--promise-field-w) / 2) auto auto;
+			translate: 50% -50%;
+		}
+
+		.is-flipped .ww-promise-demo {
+			inset: 50% auto auto calc(var(--promise-field-w) / 2);
+			translate: -50% -50%;
+		}
+	}
+
+	@media (min-width: 1280px) {
+		/*
+		  Past the type cap the two panels stop growing with the frame, so
+		  their depth is stated outright rather than derived from a ratio. A
+		  ratio here only buys empty ground under the last review. The handset
+		  band keeps its proportion: it is drawn to be cropped.
+		*/
+		#earn-trust .ww-promise-demo {
+			aspect-ratio: auto;
+			height: 570px;
+		}
+
+		#make-it-easy .ww-promise-demo {
+			aspect-ratio: auto;
+			height: 470px;
+		}
+
+		.ww-promise-grid {
+			grid-template-columns:
+				minmax(var(--gutter), calc((100% - var(--container-max)) / 2))
+				minmax(0, 1fr)
+				54%;
+		}
+
+		.ww-promise-grid.is-flipped {
+			grid-template-columns:
+				54%
+				minmax(0, 1fr)
+				minmax(var(--gutter), calc((100% - var(--container-max)) / 2));
+		}
+	}
+
+	@media (min-width: 1440px) {
+		.ww-promise-grid {
+			min-height: 900px;
+			grid-template-columns:
+				minmax(var(--gutter), calc((100% - var(--container-max)) / 2))
+				minmax(0, 1fr)
+				56%;
+		}
+
+		.ww-promise-grid.is-flipped {
+			grid-template-columns:
+				56%
+				minmax(0, 1fr)
+				minmax(var(--gutter), calc((100% - var(--container-max)) / 2));
+		}
+
+		/* Read by the demonstration's width and by the field's floor alike, so
+		   the wider panel widens the field it is guaranteed to sit inside. */
+		.ww-promise-visual {
+			--promise-demo-w: min(560px, calc(100% - var(--space-3xl) * 2));
 		}
 	}
 </style>
 
 <script>
 	import { initPromiseDemos } from './promises/promise-demos.client';
+	import { initPromiseExpand } from './promises/promise-expand.client';
 
 	initPromiseDemos();
+	initPromiseExpand();
 </script>

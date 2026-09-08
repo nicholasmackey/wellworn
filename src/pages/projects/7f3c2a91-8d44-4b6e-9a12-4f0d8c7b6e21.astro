@@ -1,18 +1,5 @@
 ---
 /*
- * The portal's three self-hosted typefaces, from node_modules. They used to be
- * imported by BaseLayout, which meant every marketing page downloaded them
- * too; the marketing site is on a different three families now, so these are
- * imported by the routes that actually use them.
- *
- * `wght.css` is the full weight axis in one file per subset; browsers fetch
- * only the subset they need via unicode-range. Russo One is static, one file
- * per subset at a single weight.
- */
-import '@fontsource-variable/montserrat/wght.css';
-import '@fontsource-variable/source-sans-3/wght.css';
-import '@fontsource/russo-one/400.css';
-/*
   Sweet Gems Boutique — the private client portal.
 
   Unlisted, not secret. The route is a UUID nobody can guess, the page is not
@@ -27,27 +14,28 @@ import '@fontsource/russo-one/400.css';
 
       Where is my project?        the stage, set in the site's display face
                                   directly under the masthead
-      Is anything needed of me?   the column of solid orange chips down the
-                                  right of the second band
+      Is anything needed of me?   the amber ACTION NEEDED beside each row of
+                                  the second band
       What exactly do I do?       the named actions beside them, each with its
                                   status and, once there is one, a link
       What has happened already?  the ticked steps inside the live phase
       What comes after this?      the four phases collapsed beneath it
 
-  Three bands, each opened by a 2px charcoal rule and a wide uppercase label.
-  That is the marketing site's own device — every section there opens with a
-  rule and a heading — carried over unchanged, and deliberately so. The rule
-  briefly took a state colour, so the band doing the asking opened in amber; the
-  trouble is that a rule is furniture and runs the full width of the page, so
-  colouring it spent the page's one signal on decoration. Every rule, divider
-  and hairline here is charcoal or grey, and the whole colour budget goes to the
-  chips, the checkmarks and the markers on the rail. Colour anywhere means a
-  status, which is what lets an 11px chip carry one.
+  Three bands, each opened by the site's own hairline and a mono uppercase
+  label. Nothing on this page is drawn from a palette or a type scale of its
+  own: it is the same three typefaces, the same greys, the same 1px rules, the
+  same pill actions and the same seven spacing steps as the public pages, and a
+  client who has read the site should land here and be in the same room.
 
-  The spacing is the site's rhythm at working scale. A marketing page is read
-  once at arm's length; this is read in a hurry, on a phone, to find one fact —
-  so the type is a step down, the rules are closer together, and every row that
-  carries a chip may wrap it onto its own line rather than shrink.
+  The one thing it adds is a status. Every rule, divider and hairline is grey,
+  and the whole colour budget goes to the chips, the checkmarks and the markers
+  on the rail — so colour anywhere on this page means a state, which is what
+  lets one small chip carry one.
+
+  What is narrower is the measure, not the design. A public page is read once at
+  arm's length; this is read in a hurry, on a phone, to find one fact — so the
+  column is 64rem rather than 1200px, and every row that carries a chip may wrap
+  it onto its own line rather than shrink.
 
   Every value comes from src/config/sweet-gems.json, and the two lists that could
   contradict each other — the checklist and "Your next steps" — are the same
@@ -141,73 +129,61 @@ const DETAILS: readonly Detail[] = [
 	title={project.projectName}
 	description={`Private project portal for ${project.projectName}.`}
 	noindex
-	webFonts={false}
-	bodyClass="portal"
-	themeColor="#FFFFFF"
+	themeColor="#ffffff"
 >
 	<ProjectMasthead project={project} slot="header" />
 	<PortalFooter slot="footer" />
 
-	<div class="portal-shell">
+	<div class="ww-doc">
 		{/*
 		  Band one: where the project is, and where it stands with the studio.
-		  The stage on the left in the display face, the four administrative
-		  facts on the right as a short table — big type against small data,
-		  which is the fastest pairing to read and the reason this band needs no
-		  heading of its own beyond the one for screen readers.
+		  The stage on the left in the display face, the administrative facts on
+		  the right as a short table — big type against small data, which is the
+		  fastest pairing to read and the reason this band needs no heading of its
+		  own beyond the one for screen readers.
 		*/}
-		<section class="portal-enter portal-enter-delay-2" aria-labelledby="overview-heading">
-			<span class="portal-rule" aria-hidden="true"></span>
+		<section class="ww-band ww-enter" style="--enter-i:2" aria-labelledby="overview-heading">
+			<span class="ww-band-rule" aria-hidden="true"></span>
 
-			<h2 id="overview-heading" class="sr-only">Project overview</h2>
+			<h2 id="overview-heading" class="ww-sr-only">Project overview</h2>
 
-			<div class="grid gap-8 pt-6 lg:grid-cols-[minmax(0,1fr)_21rem] lg:gap-14">
+			<div class="ww-overview">
 				<div>
-					{/* Charcoal, like the other two band labels, and with no marker beside
-					    it. It was blue with a blue square, which put a status colour on a
-					    label rather than on a status — and the thing it was marking is
-					    already named in the largest type on the page two lines below. The
-					    top of the page is black and white; the colour starts where the
-					    asking does. */}
-					<p class="eyebrow text-charcoal">Current stage</p>
+					{/* No marker beside it. It was blue with a blue square, which put a
+					    status colour on a label rather than on a status — and the thing
+					    it was marking is already named in the largest type on the page
+					    two lines below. The top of the page is black and white; the
+					    colour starts where the asking does. */}
+					<p class="ww-eyebrow ww-muted">Current stage</p>
 
-					<p class="display mt-3.5 text-[clamp(1.75rem,1.4rem+1.2vw,2.25rem)] leading-[1.05]">
-						{project.stage}
-					</p>
+					<p class="ww-display-md ww-stage">{project.stage}</p>
 
 					{
 						project.stageSummary && (
-							<p class="mt-4 max-w-[48ch] text-[1.0625rem] leading-relaxed text-charcoal/70">
-								{project.stageSummary}
-							</p>
+							<p class="ww-body-lg ww-muted ww-stage-summary">{project.stageSummary}</p>
 						)
 					}
 				</div>
 
 				{/*
 				  Name on the left, value on the right, one hairline per fact — the
-				  spec-sheet setting, which is the one that stays readable whether it is
-				  21rem wide on a laptop or the whole width of a phone.
+				  spec-sheet setting, which is the one that stays readable whether it
+				  is a column on a laptop or the whole width of a phone.
 
-				  The value carries the whole of the state, in the deep of its own hue and
-				  nothing else. There were small coloured dots here too, and they went for
-				  the same reason the ones in "Your next steps" did: a dot beside an orange
-				  word says the orange word twice. "TBD" and the date stay charcoal, because
-				  a date is not a state, and an unknown dressed in colour looks like a
-				  problem.
+				  The value carries the whole of the state, in the deep of its own hue
+				  and nothing else. There were small coloured dots here too, and they
+				  went for the same reason the ones in "Your next steps" did: a dot
+				  beside an orange word says the orange word twice. "TBD" and the date
+				  stay black, because a date is not a state, and an unknown dressed in
+				  colour looks like a problem.
 				*/}
-				<dl class="border-t border-charcoal/15 sm:max-w-[28rem] lg:max-w-none lg:pt-1">
+				<dl class="ww-facts">
 					{
 						DETAILS.map((detail) => (
-							<div class="flex items-baseline justify-between gap-4 border-b border-charcoal/12 py-2.5">
-								<dt class="eyebrow text-charcoal/55">{detail.label}</dt>
+							<div class="ww-fact">
+								<dt class="ww-eyebrow ww-muted">{detail.label}</dt>
 
-								<dd
-									class:list={[
-										'text-right text-[0.9375rem] leading-snug font-semibold',
-										DETAIL_TONE[detail.tone],
-									]}
-								>
+								<dd class:list={['ww-small', 'ww-fact-value', DETAIL_TONE[detail.tone]]}>
 									{detail.datetime ? (
 										<time datetime={detail.datetime}>{detail.value}</time>
 									) : (
@@ -222,27 +198,23 @@ const DETAILS: readonly Detail[] = [
 		</section>
 
 		{/*
-		  Band two: the only thing on the page asking for anything, and where nearly
-		  all of its colour lives. The emphasis is entirely in the chips — a column
-		  of solid orange down the right edge, one per row — and the rule above them
-		  is the same charcoal as every other rule on the page. A tinted rule was
-		  doing the same job less precisely: it coloured a whole band rather than
-		  the rows that actually need something.
+		  Band two: the only thing on the page asking for anything, and where
+		  nearly all of its colour lives. The emphasis is entirely in the amber
+		  beside each row; the rule above them is the same hairline as every other
+		  rule on the page. A tinted rule was doing the same job less precisely: it
+		  coloured a whole band rather than the rows that actually need something.
 
 		  The band empties itself. When the last client step is marked complete the
 		  copy changes and there is no list — which is a better thing for a client
 		  to find than a list that has quietly stopped being true.
 		*/}
-		<section
-			class="portal-enter portal-enter-delay-3 mt-11 sm:mt-13"
-			aria-labelledby="next-steps-heading"
-		>
-			<span class="portal-rule" aria-hidden="true"></span>
+		<section class="ww-band ww-enter" style="--enter-i:3" aria-labelledby="next-steps-heading">
+			<span class="ww-band-rule" aria-hidden="true"></span>
 
-			<div class="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2 pt-6">
-				<h2 id="next-steps-heading" class="eyebrow">Your next steps</h2>
+			<div class="ww-band-head">
+				<h2 id="next-steps-heading" class="ww-eyebrow">Your next steps</h2>
 
-				<p class="text-[1.0625rem] text-charcoal/70">
+				<p class="ww-body-lg ww-muted">
 					{
 						hasActions
 							? 'These items are needed to keep the project moving.'
@@ -253,7 +225,7 @@ const DETAILS: readonly Detail[] = [
 
 			{
 				hasActions && (
-					<ul class="mt-5 border-b border-charcoal/12">
+					<ul class="ww-list">
 						{nextSteps.map((step) => (
 							<ActionItem step={step} />
 						))}
@@ -268,18 +240,14 @@ const DETAILS: readonly Detail[] = [
 		  bordered panels stacked up is the look of software the studio bought
 		  rather than of a page it made.
 		*/}
-		<section
-			class="portal-enter portal-enter-delay-4 mt-11 sm:mt-13"
-			aria-labelledby="timeline-heading"
-		>
-			<span class="portal-rule" aria-hidden="true"></span>
+		<section class="ww-band ww-enter" style="--enter-i:4" aria-labelledby="timeline-heading">
+			<span class="ww-band-rule" aria-hidden="true"></span>
 
-			<div class="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2 pt-6">
-				<h2 id="timeline-heading" class="eyebrow">Project timeline</h2>
-
+			<div class="ww-band-head">
+				<h2 id="timeline-heading" class="ww-eyebrow">Project timeline</h2>
 			</div>
 
-			<ol class="mt-5 border-b border-charcoal/12">
+			<ol class="ww-list">
 				{
 					project.phases.map((phase, index) => (
 						<TimelinePhase phase={phase} index={index} total={project.phases.length} />
@@ -289,3 +257,100 @@ const DETAILS: readonly Detail[] = [
 		</section>
 	</div>
 </BaseLayout>
+
+<style>
+	/* Each band opens with a rule and a label, and the gap between them is the
+	   site's own 40px step rather than a rhythm of this page's own. */
+	.ww-band + .ww-band {
+		margin-top: var(--space-xl);
+	}
+
+	.ww-band-head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: var(--space-sm) var(--space-lg);
+		padding-top: var(--space-md);
+	}
+
+	/* A list of hairline rows. The bottom rule closes the band; every row draws
+	   its own top rule, so a row can be added or removed without either end of
+	   the list needing to know. */
+	.ww-list {
+		margin: var(--space-md) 0 0;
+		padding: 0;
+		border-bottom: 1px solid var(--ww-hairline);
+		list-style: none;
+	}
+
+	.ww-overview {
+		display: grid;
+		gap: var(--space-lg);
+		padding-top: var(--space-md);
+	}
+
+	.ww-stage {
+		margin-top: var(--space-sm);
+	}
+
+	.ww-stage-summary {
+		max-width: 48ch;
+		margin-top: var(--space-md);
+	}
+
+	.ww-facts {
+		margin: 0;
+		border-top: 1px solid var(--ww-hairline);
+	}
+
+	.ww-fact {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: var(--space-md);
+		padding-block: var(--space-sm);
+		border-bottom: 1px solid var(--ww-hairline);
+	}
+
+	.ww-fact-value {
+		margin: 0;
+		font-weight: 500;
+		text-align: right;
+	}
+
+	/* The status band's one job is to be read at a glance, so the state is
+	   carried by the word itself — see DETAIL_TONE in components/portal/state.ts.
+	   The two neutral tones are not colours: a date is a fact, and an unknown
+	   dressed in a hue would look like a problem. */
+	.tone-neutral {
+		color: var(--ww-ink);
+	}
+
+	.tone-inactive {
+		color: var(--ww-muted);
+	}
+
+	.tone-attention {
+		color: var(--color-state-action-deep);
+	}
+
+	.tone-settled {
+		color: var(--color-state-complete-deep);
+	}
+
+	.tone-blocked {
+		color: var(--color-state-blocked-deep);
+	}
+
+	@media (min-width: 1024px) {
+		.ww-overview {
+			grid-template-columns: minmax(0, 1fr) 21rem;
+			gap: var(--space-2xl);
+		}
+
+		.ww-facts {
+			padding-top: var(--space-xs);
+		}
+	}
+</style>

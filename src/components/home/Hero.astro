@@ -143,7 +143,11 @@ import ClientLogoCarousel from './ClientLogoCarousel.astro';
 
 		<div class="ww-hero-body">
 			<div class="ww-container">
-				<h1 class="ww-hero-heading">{HERO.heading}</h1>
+				<h1 class="ww-hero-heading">
+					<span class="ww-hero-heading-line">{HERO.heading[0]} </span><span
+						class="ww-hero-heading-line">{HERO.heading[1]}</span
+					>
+				</h1>
 
 				<p class="ww-body-lg ww-hero-lede">{HERO.body}</p>
 
@@ -349,6 +353,10 @@ import ClientLogoCarousel from './ClientLogoCarousel.astro';
 		max-width: 15ch;
 	}
 
+	.ww-hero-heading-line {
+		display: inline;
+	}
+
 	/*
 	  Secondary, and kept there. Body sans at 18px against a 52–92px serif, a
 	  narrow measure, and a full step of separation above it. It is not allowed
@@ -412,6 +420,10 @@ import ClientLogoCarousel from './ClientLogoCarousel.astro';
 			margin-inline: auto;
 		}
 
+		.ww-hero-heading-line {
+			display: block;
+		}
+
 		.ww-hero-lede {
 			margin-top: var(--space-md);
 			margin-inline: auto;
@@ -419,15 +431,7 @@ import ClientLogoCarousel from './ClientLogoCarousel.astro';
 		}
 	}
 
-	/*
-	  Wide enough for the headline to break in two rather than three. The
-	  measure is what decides the line count, not a <br>: at 92px "Good
-	  businesses deserve" is about 990px, so a container that can hold it takes
-	  two long lines and one that cannot takes three. 1200px of column can, from
-	  this breakpoint up; a 1024px laptop cannot, and gets three lines that
-	  still fill their frame. That is the responsive break the copy is allowed
-	  to have, and it is the only one.
-	*/
+	/* Give the two deliberate desktop lines their full measure on wide screens. */
 	@media (min-width: 1280px) {
 		.ww-hero-heading {
 			max-width: 26ch;
@@ -477,18 +481,18 @@ import ClientLogoCarousel from './ClientLogoCarousel.astro';
 
 		/*
 		  THE MARQUEE'S LATE ARRIVAL. It no longer rises with the copy; it waits
-		  out the 1.5s fade and two further seconds of settled hero, then comes
-		  up over a second — 3.5s to 4.5s.
+		  out the 1.5s fade and a further second and a half of settled hero, then
+		  comes up over a second — 3s to 4s.
 
 		  Only the OPACITY is delayed. The band's own translation lives on
 		  .ww-marquee-track inside the component and has been running since the
 		  document was parsed, untouched by anything here, so what appears at
-		  3.5s is a band already three and a half seconds into its travel rather
+		  3s is a band already three seconds into its travel rather
 		  than one starting from a standstill. That is the whole trick, and it is
 		  why this is a fade on the wrapper and not a play-state on the track.
 		*/
 		.ww-hero-logos {
-			animation: ww-hero-logos-in 1000ms var(--ease-out) 3500ms backwards;
+			animation: ww-hero-logos-in 1000ms var(--ease-out) 3000ms backwards;
 		}
 	}
 

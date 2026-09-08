@@ -11,10 +11,8 @@
  *
  * Without one, the page falls back to type: the Wellworn wordmark, then the
  * client's name — as their logo if the theme names one, and otherwise in the
- * display face. Most clients have no lockup, and inventing one out of two logos
- * side by side would look like a placeholder. The name in Russo One over a wide
- * uppercase title is the same lockup the submission email uses for its header,
- * which is a small consistency worth having.
+ * site's display face. Most clients have no lockup, and inventing one out of
+ * two logos side by side would look like a placeholder.
  *
  * A theme's logo goes exactly where that name would, under the Wellworn
  * wordmark rather than instead of it: stacked, in the order the relationship
@@ -49,67 +47,105 @@ const wordmark = theme?.wordmark === 'light' ? BRAND.wordmarkLight : BRAND.wordm
 const LOGO_HEIGHT = 44;
 ---
 
-<header>
-	<div class="pt-8 pb-7 sm:pt-11 sm:pb-9">
-		{
-			masthead ? (
-				<h1 class="portal-enter w-full lg:mx-auto lg:max-w-[64rem] lg:px-8">
-					<span
-						class="block overflow-hidden"
-						style={`aspect-ratio:${masthead.ratio ?? `${masthead.width}/${masthead.height}`}`}
-					>
-						<img
-							src={masthead.src}
-							alt={`Wellworn × ${client}`}
-							width={masthead.width}
-							height={masthead.height}
-							fetchpriority="high"
-							decoding="async"
-							class="h-full w-full object-cover object-center"
-						/>
-					</span>
-				</h1>
-			) : (
-				<div class="portal-shell text-center">
+<header class="ww-masthead">
+	{
+		masthead ? (
+			<h1 class="ww-enter ww-masthead-art">
+				<span
+					class="ww-media ww-masthead-frame"
+					style={`aspect-ratio:${masthead.ratio ?? `${masthead.width}/${masthead.height}`}`}
+				>
 					<img
-						src={wordmark}
-						alt="Wellworn"
-						width={wordmarkWidth}
-						height={WORDMARK_HEIGHT}
+						src={masthead.src}
+						alt={`Wellworn × ${client}`}
+						width={masthead.width}
+						height={masthead.height}
 						fetchpriority="high"
 						decoding="async"
-						class="portal-enter mx-auto"
-						style={`height:${WORDMARK_HEIGHT}px;width:auto`}
 					/>
+				</span>
+			</h1>
+		) : (
+			<div class="ww-doc ww-masthead-type">
+				<img
+					src={wordmark}
+					alt="Wellworn"
+					width={wordmarkWidth}
+					height={WORDMARK_HEIGHT}
+					fetchpriority="high"
+					decoding="async"
+					class="ww-enter ww-masthead-wordmark"
+					style={`height:${WORDMARK_HEIGHT}px;width:auto`}
+				/>
 
-					{theme?.logo ? (
-						<h1 class="portal-enter portal-enter-delay-1 mt-7">
-							<img
-								src={theme.logo}
-								alt={client}
-								height={LOGO_HEIGHT}
-								fetchpriority="high"
-								decoding="async"
-								class="mx-auto"
-								style={`height:${LOGO_HEIGHT}px;width:auto`}
-							/>
-						</h1>
-					) : (
-						<h1 class="display portal-enter portal-enter-delay-1 mt-7 text-[clamp(2rem,1.5rem+2.2vw,3rem)]">
-							{client}
-						</h1>
-					)}
-				</div>
-			)
-		}
+				{theme?.logo ? (
+					<h1 class="ww-enter ww-masthead-logo" style="--enter-i:1">
+						<img
+							src={theme.logo}
+							alt={client}
+							height={LOGO_HEIGHT}
+							fetchpriority="high"
+							decoding="async"
+							style={`height:${LOGO_HEIGHT}px;width:auto`}
+						/>
+					</h1>
+				) : (
+					<h1 class="ww-display-md ww-enter ww-masthead-name" style="--enter-i:1">
+						{client}
+					</h1>
+				)}
+			</div>
+		)
+	}
 
-		{/* What the page is, under whichever lockup was drawn. Centred with it,
-		    and the page turns left-aligned the moment the masthead ends — which is
-		    the portal's own behaviour. */}
-		<p
-			class="portal-enter portal-enter-delay-2 eyebrow mt-5 px-5 text-center text-(--q-text)/55 sm:mt-7 sm:px-8"
-		>
-			{title}
-		</p>
-	</div>
+	{/* What the page is, under whichever lockup was drawn. Centred with it, and
+	    the page turns left-aligned the moment the masthead ends — which is the
+	    portal's own behaviour. */}
+	<p class="ww-eyebrow ww-muted ww-enter ww-masthead-note" style="--enter-i:2">{title}</p>
 </header>
+
+<style>
+	.ww-masthead {
+		padding-block: var(--space-lg) var(--space-xl);
+	}
+
+	.ww-masthead-art {
+		width: 100%;
+	}
+
+	.ww-masthead-frame {
+		display: block;
+		background-color: transparent;
+	}
+
+	.ww-masthead-type {
+		text-align: center;
+	}
+
+	.ww-masthead-wordmark {
+		margin-inline: auto;
+	}
+
+	.ww-masthead-logo,
+	.ww-masthead-name {
+		margin-top: var(--space-lg);
+	}
+
+	.ww-masthead-logo img {
+		margin-inline: auto;
+	}
+
+	.ww-masthead-note {
+		margin-top: var(--space-md);
+		padding-inline: var(--gutter);
+		text-align: center;
+	}
+
+	@media (min-width: 1024px) {
+		.ww-masthead-art {
+			max-width: calc(64rem + var(--gutter) * 2);
+			margin-inline: auto;
+			padding-inline: var(--gutter);
+		}
+	}
+</style>

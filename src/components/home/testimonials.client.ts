@@ -5,24 +5,36 @@
  * Everything below follows from that, and from a short list of rules about how
  * playback is allowed to start and stop.
  *
- *   pointer enters a card      start it, and pause whatever else was playing
- *   pointer LEAVES a card      nothing at all
+ *   pointer enters a card      start it with sound, and pause whatever else was
+ *                              playing
+ *   pointer LEAVES a card      pause it, where it stands
  *   click a playing card       pause it
- *   click a paused card        play it
+ *   click a paused card        play it, with sound
  *   the play/pause button      the same, from the keyboard
- *   the sound button           unmute this clip, muting is per element
+ *   the sound button           mute or unmute this clip, and that choice sticks
  *
- * The second rule is the unusual one and it is deliberate. Hover starts a clip
- * because that is a cheap way to let someone sample three of them; leaving does
- * not stop it, because once a visitor is actually watching something, taking it
- * away the moment their pointer drifts is hostile. They stop it, or starting
- * another one stops it.
+ * Hover both starts and stops, which makes the pointer the whole interface: a
+ * visitor samples three clips by running the mouse along the row, and nothing
+ * keeps talking once they have moved on. Leaving PAUSES rather than resets, so
+ * coming back to a card picks the clip up where it was rather than making
+ * someone sit through the opening again.
  *
- * BROWSER AUTOPLAY. Every clip starts muted, because programmatic playback with
- * sound is blocked by every current browser outside a user gesture and a hover
- * is not one. `play()` returns a promise that REJECTS when a browser refuses,
- * and that rejection is caught rather than left to become an unhandled
- * rejection in the console — a refusal is a normal outcome here, not a fault.
+ * None of this applies to a touchscreen or to a keyboard, where there is no
+ * pointer to leave with: there a clip runs until it is stopped or another one
+ * takes over.
+ *
+ * SOUND IS THE DEFAULT. A testimonial is somebody talking, so a silent one is
+ * half a testimonial: playback is unmuted unless the visitor has pressed the
+ * sound control on that card, and that choice is remembered for the rest of the
+ * visit.
+ *
+ * BROWSER AUTOPLAY. A hover is not a user gesture, and a browser that has not
+ * yet seen one on this page refuses to start audio. That refusal arrives as a
+ * REJECTED promise from `play()`, so every start is a two-step: ask for sound,
+ * and on a refusal fall back to a muted start so the picture still moves. Both
+ * rejections are caught rather than left to become unhandled rejections in the
+ * console, because a refusal is a normal outcome here and not a fault. Once the
+ * visitor has clicked anything at all, the sound attempt begins to succeed.
  *
  * REDUCED MOTION. Hover does not start anything. A visitor who has asked for
  * less motion gets three still frames and has to press something.
@@ -35,6 +47,13 @@ interface Card {
 	readonly sound: HTMLButtonElement | null;
 	/** Used in the accessible name of both controls, e.g. "Play <label>". */
 	readonly label: string;
+	/**
+	 * Has this visitor asked for THIS clip to be silent? Not the same question
+	 * as `video.muted`, which also goes true when a browser refuses audio, and
+	 * which must not be mistaken for a preference. Only the sound control writes
+	 * here.
+	 */
+	silenced: boolean;
 }
 
 export function initTestimonials(scope: ParentNode = document): void {
@@ -65,11 +84,23 @@ export function initTestimonials(scope: ParentNode = document): void {
 	const play = (card: Card): void => {
 		if (active && active !== card) pause(active);
 		active = card;
-		// A refusal is an expected outcome — Low Power Mode on iOS, a data saver,
-		// a tab that has never been interacted with — and it leaves the poster up,
-		// which is the correct fallback. Swallow it rather than letting it surface
-		// as an unhandled rejection.
-		void card.video.play().catch(() => {});
+
+		// Ask for sound unless this card has been silenced by hand.
+		card.video.muted = card.silenced;
+
+		void card.video.play().catch(() => {
+			// Refused. Almost always the autoplay policy declining audio before the
+			// page has seen a gesture, so drop the sound and ask again: a moving
+			// silent clip is a great deal better than a still frame, and the sound
+			// control is right there to turn it back on.
+			if (card.video.muted) return;
+			card.video.muted = true;
+			// The second refusal is the real one — Low Power Mode on iOS, a data
+			// saver, a tab nobody has touched. It leaves the poster up, which is
+			// the correct fallback. Swallow it rather than letting it surface as an
+			// unhandled rejection.
+			void card.video.play().catch(() => {});
+		});
 	};
 
 	const toggle = (card: Card): void => {
@@ -113,16 +144,25 @@ export function initTestimonials(scope: ParentNode = document): void {
 			toggle: toggleBtn,
 			sound: root.querySelector<HTMLButtonElement>('[data-sound-toggle]'),
 			label: root.dataset.label ?? 'this testimonial',
+			silenced: false,
 		};
 		cards.push(card);
 
-		// Muted is set in the markup too. Setting it again from script covers the
-		// case where a browser has restored the element's state across a
-		// back/forward navigation, which does not re-read the attribute.
+		// The resting state is muted, which is what lets a clip be started at all
+		// before the page has seen a gesture; `play` lifts it. Muted is set in the
+		// markup too, and setting it again from script covers the case where a
+		// browser has restored the element's state across a back/forward
+		// navigation, which does not re-read the attribute.
 		video.muted = true;
 
 		if (hoverStartsPlayback) {
 			root.addEventListener('pointerenter', () => play(card));
+			/*
+			 * pointerleave, not pointerout: `out` also fires on the way into a
+			 * child, so the two controls sitting inside this element would each
+			 * pause the clip the moment the pointer crossed onto them.
+			 */
+			root.addEventListener('pointerleave', () => pause(card));
 		}
 
 		root.addEventListener('click', (event) => {
@@ -136,16 +176,19 @@ export function initTestimonials(scope: ParentNode = document): void {
 		toggleBtn.addEventListener('click', () => toggle(card));
 
 		/*
-		 * Sound is opt-in, per clip, and only ever from a real press. A browser
-		 * will honour an unmute inside a click even when it refused an unmuted
-		 * autoplay, which is why this is a button and not something hover does.
+		 * Sound is on by default, so this control is mostly a way to turn it OFF,
+		 * and the choice is per clip. It is also the reliable way back to audio
+		 * on a card the autoplay policy silenced: a browser honours an unmute
+		 * inside a click even when it refused an unmuted start on hover.
 		 */
 		card.sound?.addEventListener('click', () => {
-			video.muted = !video.muted;
+			card.silenced = !video.muted;
+			video.muted = card.silenced;
 			// Pressing the sound control on a stopped clip is a request to hear it,
 			// so start it. Doing nothing would leave someone pressing "Unmute" on
-			// silence.
-			if (video.muted) sync(card);
+			// silence. A press is a real gesture, so this is also the moment the
+			// browser stops refusing audio.
+			if (card.silenced) sync(card);
 			else play(card);
 		});
 

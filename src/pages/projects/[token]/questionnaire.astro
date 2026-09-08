@@ -1,18 +1,5 @@
 ---
 /*
- * The portal's three self-hosted typefaces, from node_modules. They used to be
- * imported by BaseLayout, which meant every marketing page downloaded them
- * too; the marketing site is on a different three families now, so these are
- * imported by the routes that actually use them.
- *
- * `wght.css` is the full weight axis in one file per subset; browsers fetch
- * only the subset they need via unicode-range. Russo One is static, one file
- * per subset at a single weight.
- */
-import '@fontsource-variable/montserrat/wght.css';
-import '@fontsource-variable/source-sans-3/wght.css';
-import '@fontsource/russo-one/400.css';
-/*
   The generic questionnaire route: /projects/<token>/questionnaire
 
   One page for every client. The token is an unguessable UUID carried in each
@@ -28,7 +15,8 @@ import '@fontsource/russo-one/400.css';
   index the page.
 
   Nothing about the Sweet Gems portal changes to accommodate this. It keeps its
-  literal-UUID filename and sits alongside untouched.
+  literal-UUID filename and sits alongside untouched — and the two are set in
+  the same system, so they look like one studio's work rather than two.
 */
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
@@ -72,22 +60,19 @@ if (theme && theme.notes.length > 0) {
 	title={`${questionnaire.client} ${questionnaire.title}`}
 	description={`Questionnaire for ${questionnaire.client}.`}
 	noindex
-	webFonts={false}
-	bodyClass="portal q-page"
+	bodyClass="q-page"
 	bodyStyle={themeStyle(theme)}
-	themeColor={theme?.background ?? '#FFFFFF'}
+	themeColor={theme?.background ?? '#ffffff'}
 >
 	<QuestionnaireMasthead questionnaire={questionnaire} theme={theme} slot="header" />
 	<PortalFooter slot="footer" />
 
-	<div class="portal-shell">
+	<div class="ww-doc">
 		{
 			questionnaire.intro.length > 0 && (
-				<div class="portal-enter portal-enter-delay-3 mb-12 flex flex-col gap-4 sm:mb-14">
+				<div class="ww-intro ww-enter" style="--enter-i:3">
 					{questionnaire.intro.map((paragraph) => (
-						<p class="max-w-[64ch] text-[1.0625rem] leading-relaxed text-(--q-text)/75">
-							{paragraph}
-						</p>
+						<p class="ww-body-lg ww-muted">{paragraph}</p>
 					))}
 				</div>
 			)
@@ -96,3 +81,13 @@ if (theme && theme.notes.length > 0) {
 		<Questionnaire questionnaire={questionnaire} />
 	</div>
 </BaseLayout>
+
+<style>
+	.ww-intro {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-md);
+		max-width: 64ch;
+		margin-bottom: var(--space-xl);
+	}
+</style>

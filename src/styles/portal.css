@@ -1,392 +1,359 @@
 /* ==========================================================================
    WELLWORN — THE CLIENT PORTAL AND THE QUESTIONNAIRE
    --------------------------------------------------------------------------
-   Preserved, not redesigned.
+   The /projects/* routes, set in the same system as every other page on this
+   site.
 
-   The /projects/* routes are a working tool a client has already been sent a
-   link to. They are not part of the marketing site, they are deliberately not
-   dressed as it, and this redesign has no business changing what a client
-   sees when they open a link we sent them last week. Everything below is
-   carried over from the previous build unchanged apart from two mechanical
-   renames: `font-display` became `font-legacy-display` and `font-sans` became
-   `font-legacy-body`, because the marketing system now owns those two names.
+   They used to be a separate design: their own palette, their own three
+   typefaces, their own buttons, and a base rule that put every heading on the
+   page into uppercase Montserrat. That was defensible while the marketing
+   site was something else, and it stopped being defensible the moment the
+   redesign landed — a client who has read the site and then opens the link we
+   sent them should be in the same room, not in a tool that happens to carry
+   the same wordmark.
 
-   The palette, the nineteen semantic questionnaire properties and the legacy
-   typefaces live in tokens.css alongside the marketing ones. The base element
-   rules these pages expect — uppercase Montserrat headings, the blue focus
-   ring, the forest selection — are scoped to `.portal` and `.q-page` in
-   base.css.
+   So there is nothing here that a public page could not also use, and nothing
+   that redeclares a value the foundation already owns. Type comes from the
+   .ww-* roles, colour from the --ww-* palette, rules from --ww-hairline,
+   actions from .ww-btn, spacing from the seven --space-* steps, and radii
+   from the four. What is left below is the handful of objects the public
+   pages genuinely do not have:
 
-   Nothing here reads a --ww-* token, and nothing on the marketing site reads
-   anything here. Dropped along the way, because the pages that used them are
-   gone: .wrapper, .field, .chip, .display-section/-statement/-item, the two
-   cream button variants, and the .rise-in / .scroll-settle scroll entrances.
+     the document column       narrower than .ww-container, because this is
+                               read the way a document is rather than toured
+     the band rule             the site's hairline, drawn as an element above
+                               the heading it opens rather than as a border
+     the status chip           the one object allowed to say a state
+     the questionnaire's       fields, choices, alert bands — a form this long
+       furniture               needs controls, and the site has none
+     the client theme          --q-* re-pointing the foundation's own tokens
+
+   THE THEME IS THE INTERESTING PART. A themed questionnaire does not bring a
+   second set of components; it re-points the tokens the foundation already
+   reads, so every .ww-* class on the page follows the client's colours
+   without knowing a theme exists. Unthemed, each substitution resolves to
+   exactly the value it replaces — the arithmetic is in the .q-page block —
+   so a questionnaire with no `theme` renders the foundation itself.
    ========================================================================== */
 
 @layer components {
-	/* Small uppercase label, for form fields, metadata, and the eyebrow over a
-	   section heading. Kept to the two sections that need naming — the work and
-	   the argument beneath it — rather than stamped on every heading on the
-	   page: an eyebrow over all of them is a label nobody reads, and the charcoal
-	   panels are already announced by their change of ground. Never rust on
-	   cream at this size; 12px needs 4.5:1 and rust reaches 4.0:1. The rule above
-	   it is where the accent goes. */
-	.eyebrow {
-		@apply font-legacy-display text-xs font-semibold uppercase tracking-label;
+	/* ======================================================================
+	   THE DOCUMENT COLUMN
+
+	   Narrower than .ww-container's 1200px, on the same gutters. A marketing
+	   page is read once at arm's length; this is read in a hurry, on a phone,
+	   to find one fact — and 64rem is where a line of project copy stays near
+	   90 characters and the whole status band still fits inside one glance.
+	   ====================================================================== */
+	.ww-doc {
+		width: 100%;
+		max-width: calc(64rem + var(--gutter) * 2);
+		margin-inline: auto;
+		padding-inline: var(--gutter);
 	}
 
-	/* ------------------------------------------------------------------------
-	   Display type — Russo One, for the hero and every section heading.
+	/* The rule that opens a band. The site's own 1px hairline — the same one
+	   that separates a pricing plan from the next — drawn as an element
+	   rather than as a border because it sits above the heading it introduces
+	   rather than around anything.
 
-	   Russo One ships one weight, so font-normal is load-bearing: the base
-	   heading rule asks for 600, which the browser would otherwise fake.
-	   tracking-normal exists for a related reason. The 0.04em in
-	   tracking-heading is there to open up small uppercase labels; at display
-	   size in a face this wide it only makes the block gappy.
-
-	   Sizes are fluid rather than stepped so the curve is continuous from a
-	   320px phone to the 1280px wrapper, and a tablet never lands on a size
-	   that was designed for something else. The three steps below hold the
-	   same proportion to each other at every width.
-	   ------------------------------------------------------------------------ */
-	.display {
-		@apply font-russo font-normal uppercase tracking-normal;
-		line-height: 0.92;
-		text-wrap: balance;
+	   It was a 2px bar in the old portal palette. Weight was doing the work
+	   colour should have done, and the page already has one object per band
+	   that is allowed to be loud: the chip. */
+	.ww-band-rule {
+		display: block;
+		height: 1px;
+		background-color: var(--ww-hairline);
 	}
 
-	.btn {
-		@apply inline-flex items-center justify-center gap-2 border px-6 py-3
-			font-legacy-display text-xs font-semibold uppercase tracking-label
-			transition-colors duration-200;
+	/* ======================================================================
+	   THE ENTRANCE
+
+	   The one piece of motion on these pages: the bands arrive in the order
+	   they are read. Set `--enter-i` on the element to place it in that
+	   order. Both duration and curve are the site's own, so this lands at the
+	   same speed as everything else that moves.
+	   ====================================================================== */
+	@media (prefers-reduced-motion: no-preference) {
+		.ww-enter {
+			animation: ww-enter var(--dur-slow) var(--ease-out) both;
+			animation-delay: calc(var(--enter-i, 0) * 90ms);
+		}
 	}
 
-	/* The primary fill. The portal is a light-ground page throughout, so the
-	   inverted cream pair this comment used to describe went with the old
-	   marketing site.
+	/* ======================================================================
+	   THE STATUS CHIP
 
-	   56px tall, 4px
-	   corners, the same side padding and the same label size. The height is fixed
-	   rather than derived from padding so it holds at 56px wherever it lands,
-	   whatever the font size around it. There is deliberately no size variant. A
-	   form submit that is wider than the button that sent someone to the form
-	   makes the same action look like two different ones, which is exactly what
-	   the old .btn-lg did.
+	   The only thing on a portal page allowed to say a state, and — with the
+	   timeline's markers and checkmarks — the only place colour appears at
+	   all. Everything around it is black, white and grey, which is what lets
+	   one small filled label carry a status.
 
-	   The outline pair carries the same geometry, which is the point: where the
-	   hero sets a primary and a secondary side by side, they have to be the same
-	   object in two weights. Only the fill says which one is the ask. */
-	.btn-primary,
-	.btn-outline,
-	.btn-destructive {
-		@apply h-14 rounded-sm px-7;
+	   A pill, like every other action-shaped object on the site, in the mono
+	   label face at the eyebrow's size and tracking. The colour arrives as a
+	   ground/ink pair looked up from the project data in
+	   components/portal/state.ts, so no component names a colour.
+
+	   `border: 1px solid transparent` is load-bearing rather than leftover:
+	   NEXT is an outlined chip, and without the same 1px on every one of them
+	   an outlined chip would stand 2px taller than the filled chip beside it
+	   — visible the moment a CURRENT and a NEXT land in the same column,
+	   which on this page they always do.
+
+	   whitespace-nowrap because ACTION NEEDED broken over two lines stops
+	   looking like a chip. Where the room is not there, the whole chip wraps
+	   onto its own line instead.
+	   ====================================================================== */
+	.ww-chip {
+		display: inline-flex;
+		align-items: center;
+		flex-shrink: 0;
+		gap: var(--space-xs);
+		padding: var(--space-xs) var(--space-sm);
+		border: 1px solid transparent;
+		border-radius: var(--radius-pill);
+		font-family: var(--font-mono);
+		font-size: var(--text-small);
+		font-weight: 500;
+		line-height: 1;
+		letter-spacing: var(--tracking-eyebrow);
+		text-transform: uppercase;
+		white-space: nowrap;
 	}
 
-	/* Charcoal rather than rust, which is the accent everywhere else on the
-	   page: a filled rust button cannot carry this label accessibly. The label
-	   is 12px, so it needs 4.5:1, and rust manages 4.0:1 under cream and 3.6:1
-	   under charcoal — fine for a rule, not for type. Forest can carry it
-	   (9.7:1), so green gets the hover instead, which is the one place a
-	   secondary accent belongs on a primary control. */
-	.btn-primary {
-		@apply border-charcoal bg-charcoal text-cream hover:border-forest hover:bg-forest;
+	/* A client's own action is quieter than a phase's state: the colour lives
+	   in the words alone, with no fill and no padding to force a new row. */
+	.ww-chip-quiet {
+		padding: 0;
+		border-color: transparent;
+		background-color: transparent;
 	}
 
-	.btn-outline {
-		@apply border-charcoal/25 text-charcoal hover:border-forest hover:bg-forest hover:text-cream;
+	/* The live phase keeps a solid centre while its halo breathes outward.
+	   Without motion preference it stays a static halo. The one piece of
+	   ambient colour on the page. */
+	.ww-marker-halo {
+		box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--ww-blue) 20%, transparent);
 	}
 
-	/* The one button on the site that destroys something, and so far the only
-	   one: "Clear answers" in the questionnaire's start-fresh dialog. Filled
-	   rather than outlined, because a destructive action confirmed in a modal is
-	   the ask of that modal — an outlined one beside an outlined Cancel would
-	   leave the reader to work out which button is which.
-
-	   state-blocked-deep rather than the state-blocked fill the chips use. This
-	   is a 12px uppercase label, which needs 4.5:1; the fill value reaches
-	   4.87:1 with white on it and the deep value 5.89:1, and on a control the
-	   reader has to read before pressing, the larger margin is the right one.
-
-	   Hover goes to charcoal rather than to a lighter red, which is the pattern
-	   btn-primary already sets by hovering to forest: the hover state is another
-	   colour from the palette, never a tint of the same one. Every red in the
-	   palette above state-blocked-deep is lighter, so a tint here would hand back
-	   contrast at the exact moment the pointer is on the button. */
-	.btn-destructive {
-		@apply border-state-blocked-deep bg-state-blocked-deep text-portal-paper
-			hover:border-charcoal hover:bg-charcoal;
+	@media (prefers-reduced-motion: no-preference) {
+		.ww-marker-halo {
+			animation: ww-marker-pulse 1.8s ease-out infinite;
+		}
 	}
 
-	/* ------------------------------------------------------------------------
-	   THE CLIENT PORTAL — the furniture the /projects/* pages are built from.
+	/* ======================================================================
+	   THE CLIENT THEME
 
-	   Deliberately little of it. The portal sets its own ground and its own
-	   accent and then uses the site's own parts for everything else: .eyebrow
-	   for the labels, .display for the headings, charcoal at reduced opacity for
-	   secondary copy. A portal that needed a component library of its own would
-	   be a second website wearing the same logo.
-	   ------------------------------------------------------------------------ */
+	   Set on <body> beside nothing else. A questionnaire may carry a small
+	   `theme` block — see lib/questionnaire/theme.ts — which arrives here as
+	   the nineteen --q-* properties and nothing more. Nothing in this block
+	   knows which client is being rendered, and nothing can.
 
-	/* Set on <body> via BaseLayout's bodyClass. The focus ring is recoloured
-	   from rust to the blue that means "active" everywhere else on this page:
-	   focus is an active state, and rust on a page with no other rust on it
-	   would be the one decorative colour in a scheme where colour means
-	   something. */
-	.portal {
-		@apply bg-portal-paper text-charcoal;
-	}
+	   The substitutions below are the whole mechanism. Each re-points a token
+	   the foundation already reads, so .ww-rule, .ww-btn, .ww-muted and the
+	   rest follow the theme without a variant of their own. The percentages
+	   are not approximations: on the default black-on-white pair every one of
+	   them computes to the exact foundation value it stands in for.
 
-	.portal :focus-visible {
-		@apply outline-state-current;
-	}
+	     --ww-hairline    ink at 20% on white .... #cccccc
+	     --ww-ink-medium  ink at 80% on white .... #333333
+	     --ww-muted       ink at 56% on white .... #707070
+	     --ww-disabled    ink at 40% on white .... #999999
+	     --ww-light       ink at  5% on white .... #f2f2f2
 
-	/* ------------------------------------------------------------------------
-	   THE QUESTIONNAIRE'S ROOT — where an optional client theme lands.
-
-	   Set on <body> beside .portal, and written after it in this layer so it
-	   wins: the portal supplies the ground and the focus ring for a page with no
-	   theme, and every property below resolves to exactly those values when
-	   nothing has overridden them on the element itself.
-
-	   Nothing here knows which client is being rendered, and nothing can. The
-	   only input is the custom properties, and the only thing that sets them is
-	   lib/questionnaire/theme.ts.
-	   ------------------------------------------------------------------------ */
+	   So an unthemed questionnaire is the design system itself, not a second
+	   rendering of it that happens to look similar.
+	   ====================================================================== */
 	.q-page {
+		--ww-white: var(--q-background);
+		--ww-ink: var(--q-text);
+		--ww-black: var(--q-text);
+		--ww-blue: var(--q-focus);
+		--ww-hairline: color-mix(in srgb, var(--q-text) 20%, var(--q-background));
+		--ww-ink-medium: color-mix(in srgb, var(--q-text) 80%, var(--q-background));
+		--ww-muted: color-mix(in srgb, var(--q-text) 56%, var(--q-background));
+		--ww-disabled: color-mix(in srgb, var(--q-text) 40%, var(--q-background));
+		--ww-light: color-mix(in srgb, var(--q-text) 5%, var(--q-background));
+
 		background-color: var(--q-background);
 		color: var(--q-text);
 	}
 
-	.q-page :focus-visible {
-		outline-color: var(--q-focus);
+	/* The section rule takes the theme's border colour rather than its type
+	   colour, since a client may set the two separately. */
+	.q-page .ww-band-rule {
+		background-color: color-mix(in srgb, var(--q-border) 20%, var(--q-background));
 	}
 
-	/* The section rule, the same device the portal opens a band with, in the
-	   theme's own border colour. */
-	.q-page .portal-rule {
-		background-color: var(--q-border);
+	/* The filled action. Same object as .ww-btn-dark and the same geometry —
+	   only the source of the colour changes, and unthemed the three values
+	   below are ink, white and ink-medium, which is what .ww-btn-dark already
+	   resolves to. */
+	.q-page .ww-btn-dark {
+		background-color: var(--q-accent);
+		border-color: var(--q-accent);
+		color: var(--q-accent-text);
 	}
 
-	/* The three buttons this page uses, re-pointed at the semantic variables.
-	   Same geometry, same weights, same hover behaviour — only the source of the
-	   colour changes, and unthemed every one of these resolves to the value it
-	   already had.
-
-	   The destructive button's hover is the page inverted rather than a fourth
-	   colour to check: ground on type is 4.5:1 by construction, because the
-	   resolver has already guaranteed type on ground. Unthemed that is white on
-	   charcoal, which is what it was. */
-	.q-page .btn-primary {
-		@apply border-(--q-accent) bg-(--q-accent) text-(--q-accent-text)
-			hover:border-(--q-accent-hover) hover:bg-(--q-accent-hover);
+	.q-page .ww-btn-dark:hover {
+		background-color: var(--q-accent-hover);
+		border-color: var(--q-accent-hover);
 	}
 
-	.q-page .btn-outline {
-		@apply border-(--q-border)/25 text-(--q-text) hover:border-(--q-accent-hover)
-			hover:bg-(--q-accent-hover) hover:text-(--q-accent-text);
+	.q-page .ww-btn-dark:active {
+		background-color: var(--q-accent-hover);
+		border-color: var(--q-accent-hover);
 	}
 
-	.q-page .btn-destructive {
-		@apply border-(--q-error-ink) bg-(--q-error-ink) text-(--q-error-on)
-			hover:border-(--q-text) hover:bg-(--q-text) hover:text-(--q-background);
+	/* The one button on the site that destroys something, and so far the only
+	   one: "Clear answers" in the questionnaire's start-fresh dialog. Filled
+	   rather than outlined, because a destructive action confirmed in a modal
+	   is the ask of that modal — an outlined one beside an outlined Cancel
+	   would leave the reader to work out which button is which.
+
+	   --q-error-ink rather than the fill the chips use: this is a label the
+	   reader has to read before pressing, and the deep value is the red the
+	   resolver has already held to 4.5:1 against this page's own ground.
+
+	   Hover goes to the page's ink rather than to a lighter red, which is the
+	   pattern .ww-btn-dark already sets: the hover state is another colour
+	   from the palette, never a tint of the same one. Every red above
+	   state-blocked-deep is lighter, so a tint here would hand back contrast
+	   at the exact moment the pointer is on the button. */
+	.ww-btn-danger {
+		background-color: var(--q-error-ink);
+		border-color: var(--q-error-ink);
+		color: var(--q-error-on);
 	}
 
-	/* Narrower than the marketing wrapper's 80rem, and tighter at the gutters.
-	   This is read the way a document is rather than the way a page is toured:
-	   64rem keeps a line of project copy near 90 characters at the widest and
-	   holds the whole status band inside one glance. */
-	.portal-shell {
-		@apply mx-auto w-full max-w-[64rem] px-5 sm:px-8;
+	.ww-btn-danger:hover {
+		background-color: var(--ww-ink);
+		border-color: var(--ww-ink);
+		color: var(--ww-white);
 	}
 
-	/* The rule that opens a section — the site's own device, carried over. On
-	   the marketing pages it is always rust; here it is always charcoal, on
-	   every band, without exception.
+	/* ======================================================================
+	   THE QUESTIONNAIRE'S FIELDS
 
-	   It was briefly a state colour, so that the band doing the asking opened
-	   in amber. That is the mistake this palette is built to avoid: a rule is
-	   furniture, it runs the full width of the page, and colouring furniture
-	   spends the one signal the page has on something that is not a status. The
-	   band that asks is now marked by the chips inside it — a column of solid
-	   orange down the right — which is both louder and more specific than a
-	   tinted line ever was. 2px so it reads as a rule rather than as a hairline
-	   that has gone wrong. */
-	.portal-rule {
-		@apply block h-0.5 w-full bg-charcoal;
-	}
+	   The public pages have no form, so this is the one part of these routes
+	   with nothing in the foundation to inherit. It is built from the same
+	   values regardless: Inter at the body sizes, the 10px input radius, the
+	   1px hairline, the 20px and 10px spacing steps.
 
-	/* The current phase keeps a solid center while its halo breathes outward.
-	   Without motion preference, this remains a static blue halo. */
-	.portal-current-marker {
-		box-shadow: 0 0 0 0.25rem rgb(1 151 246 / 20%);
-	}
+	   Two deliberate departures from the marketing pages, both because a
+	   questionnaire is filled in rather than read:
 
-	@media (prefers-reduced-motion: no-preference) {
-		.portal-enter {
-			animation: portal-enter 880ms cubic-bezier(0.22, 1, 0.36, 1) both;
-		}
+	   A question's label is sentence case at the heading size, not an
+	   eyebrow. "Is Avioric marine veteran owned?" in wide-tracked uppercase
+	   mono is unreadable — the label IS the question here, rather than a name
+	   for a box.
 
-		.portal-enter-delay-1 {
-			animation-delay: 110ms;
-		}
+	   Fields are boxed rather than underlined. A box says "put something
+	   here" at a glance and gives a bigger target on a phone.
 
-		.portal-enter-delay-2 {
-			animation-delay: 200ms;
-		}
+	   Colour still means status. Nothing here is tinted except an error.
+	   ====================================================================== */
 
-		.portal-enter-delay-3 {
-			animation-delay: 290ms;
-		}
-
-		.portal-enter-delay-4 {
-			animation-delay: 380ms;
-		}
-
-		.portal-current-marker {
-			animation: portal-current-pulse 1.8s ease-out infinite;
-		}
-	}
-
-	/* ------------------------------------------------------------------------
-	   The state chip. The only thing on a portal page allowed to say a status,
-	   and — with the timeline's markers and checkmarks — the only place colour
-	   appears at all.
-
-	   Solid fill, white label, 2px corners. The chip it replaced was a 12% tint
-	   inside a 45% border, which is the treatment that made the page look
-	   tentative: a washed ground and a coloured word ask to be interpreted,
-	   where a filled block simply is the status. Five saturated chips down a
-	   page reads as a dashboard only if everything around them is also
-	   coloured. Everything around these is black, white and grey, so they read
-	   as the one thing on the page with something to say.
-
-	   The colour arrives as ground/text classes looked up from the project data
-	   in src/components/portal/state.ts, so a status maps to a chip in one
-	   table and nothing in any component names a colour.
-
-	   `border border-transparent` is load-bearing rather than leftover. The
-	   filled chips need no border, but NEXT is an outlined chip, and without
-	   the same 1px on every one of them an outlined chip would stand 2px taller
-	   than the filled chip beside it — visible the moment a CURRENT and a NEXT
-	   land in the same column, which on this page they always do.
-
-	   11px rather than the eyebrow's 12, which is the floor: the portal is read
-	   on a phone more often than anywhere else, so the chip keeps label
-	   tracking and full-strength colour rather than shrinking further.
-	   leading-none and fixed padding give every chip the same 23px box, so a
-	   row of them sits on one line whatever it says. whitespace-nowrap because
-	   ACTION NEEDED broken over two lines stops looking like a chip — where the
-	   room is not there, the whole chip wraps to its own line instead.
-	   ------------------------------------------------------------------------ */
-	.portal-chip {
-		@apply inline-flex shrink-0 items-center gap-1.5 rounded-xs border border-transparent
-			px-2.5 py-[0.3125rem] font-legacy-display text-[0.6875rem] leading-none font-semibold
-			uppercase tracking-label whitespace-nowrap;
-	}
-
-	/* Client actions are quieter than phase states: the semantic amber lives in
-	   the words alone, with no filled box or padding to force a new row. */
-	.portal-chip--text {
-		@apply rounded-none border-0 bg-transparent p-0;
-	}
-
-	/* The contextual call to action on an action item — rendered only when that
-	   item has a URL, which today none of them do. Charcoal rather than orange:
-	   the chip beside it is already carrying the orange, and two orange objects
-	   in one row would leave neither of them meaning anything. Same geometry as
-	   .btn on the marketing site, at portal scale. */
-	.portal-cta {
-		@apply inline-flex h-9 items-center gap-2 rounded-xs border border-charcoal bg-charcoal px-4
-			font-legacy-display text-[0.6875rem] font-semibold uppercase tracking-label text-portal-paper
-			transition-colors duration-200 hover:border-charcoal/80 hover:bg-charcoal/80;
-	}
-
-	/* ------------------------------------------------------------------------
-	   THE QUESTIONNAIRE — the fields a /projects/*\/questionnaire page is built
-	   from.
-
-	   These exist because the old marketing site's field style could not be
-	   reused: it was a cream-on-charcoal underline built for a contact panel,
-	   and this page is charcoal on white.
-	   Everything else is the portal's own furniture — .portal-shell for the
-	   measure, .portal-rule to open a band, .eyebrow for labels, charcoal at
-	   reduced opacity for secondary copy.
-
-	   Two deliberate departures from the marketing site, both because a
-	   questionnaire is read differently from a page:
-
-	   A question's label is sentence case at 17px, not .eyebrow. The contact
-	   form's labels are single words ("Name", "Email") and wear 12px uppercase
-	   tracking well. "Is Avioric marine veteran owned?" does not — wide-tracked
-	   uppercase is unreadable at sentence length, and the label IS the question
-	   here rather than a name for a box.
-
-	   Fields are boxed rather than underlined. The rest of the portal is built
-	   from rules, and underlined inputs would match it more closely, but a
-	   twenty-question form is filled in rather than read: a box says "put
-	   something here" at a glance and gives a bigger, more obvious target on a
-	   phone. The boxes are hairline-thin and square-ish so they read as fields
-	   rather than as cards.
-
-	   Colour still means status. Nothing here is tinted except an error, which
-	   takes state-blocked-deep — 5.89:1 on white, the one red in the palette
-	   already documented as safe for small text.
-	   ------------------------------------------------------------------------ */
-
-	/* The question's own name. Sentence case, and the one piece of type on the
-	   page sized between body copy and a heading. */
+	/* The element that names a question, whatever it is set in. The type comes
+	   from .ww-heading beside it; what this class carries is the hook — the
+	   client script reads the question's own words out of it to build the error
+	   summary, and a `<legend>` and a `<label>` have to be findable the same
+	   way. See questionnaire.client.ts. */
 	.q-label {
-		@apply block text-[1.0625rem] leading-snug font-semibold text-(--q-text);
+		display: block;
 	}
 
-	/* "Required", beside the label. A word rather than an asterisk, which means
-	   nothing until a legend explains it, and charcoal rather than a colour: a
-	   required field is not a status, and spending a hue on one would undercut
-	   the rule that colour on a portal page always means something. */
+	/* "Required", beside the label. A word rather than an asterisk, which
+	   means nothing until a legend explains it, and grey rather than a
+	   colour: a required field is not a status, and spending a hue on one
+	   would undercut the rule that colour on these pages always means
+	   something. */
 	.q-required {
-		@apply ml-2 align-middle font-legacy-display text-[0.625rem] font-semibold uppercase
-			tracking-label text-(--q-text)/45;
+		margin-left: var(--space-sm);
+		font-family: var(--font-mono);
+		font-size: var(--text-small);
+		font-weight: 500;
+		letter-spacing: var(--tracking-eyebrow);
+		text-transform: uppercase;
+		vertical-align: middle;
+		color: var(--ww-muted);
 	}
 
 	/* The hint under a label. Never inside the <label> — see FieldShell. */
 	.q-help {
-		@apply mt-1.5 max-w-[62ch] text-[0.9375rem] leading-relaxed text-(--q-text)/60;
+		max-width: 62ch;
+		margin-top: var(--space-sm);
+		font-family: var(--font-sans);
+		font-size: var(--text-body);
+		line-height: var(--leading-body);
+		color: var(--ww-muted);
 	}
 
 	/* Every single-line control, the textarea and the select. One class, so a
 	   row of mixed field types lines up on the same edges and heights. */
 	.q-input {
-		@apply w-full rounded-xs border border-(--q-border)/25 bg-(--q-surface) px-3.5 py-2.5
-			text-[1.0625rem] leading-normal text-(--q-text) transition-colors duration-200
-			placeholder:text-(--q-text)/35 hover:border-(--q-border)/40 focus:border-(--q-border);
+		width: 100%;
+		padding: var(--space-sm) var(--space-md);
+		border: 1px solid var(--ww-hairline);
+		border-radius: var(--radius-input);
+		background-color: var(--q-surface);
+		color: var(--ww-ink);
+		font-family: var(--font-sans);
+		font-size: var(--text-body-lg);
+		line-height: var(--leading-body);
+		transition:
+			border-color var(--dur-fast) var(--ease-out),
+			background-color var(--dur-fast) var(--ease-out);
+	}
+
+	.q-input::placeholder {
+		color: var(--ww-disabled);
+	}
+
+	.q-input:hover {
+		border-color: var(--ww-muted);
+	}
+
+	.q-input:focus {
+		border-color: var(--ww-ink);
 	}
 
 	.q-input:disabled {
-		@apply cursor-not-allowed border-(--q-border)/12 text-(--q-text)/40;
+		cursor: not-allowed;
+		border-color: var(--ww-hairline);
+		background-color: var(--ww-light);
+		color: var(--ww-disabled);
+	}
+
+	/* An invalid control. The border carries it; the message underneath says
+	   what is wrong. Never colour alone. */
+	.q-input[aria-invalid='true'] {
+		border-color: var(--q-error);
 	}
 
 	/* Width is set per kind of answer rather than left at the shell's full
 	   64rem. A name, an email address or a phone number in a box a thousand
-	   pixels wide reads as a mistake — the eye has to travel the whole line to
-	   confirm there is nothing else in it, and the box no longer looks related
-	   to the ~62ch hint above it. A textarea keeps the full width, because a
-	   paragraph genuinely wants the room.
+	   pixels wide reads as a mistake — the eye has to travel the whole line
+	   to confirm there is nothing else in it. A textarea keeps the full
+	   width, because a paragraph genuinely wants the room.
 
-	   Both are `sm:` only. On a phone every field is the width of the page. */
-	.q-input--text {
-		@apply sm:max-w-[34rem];
+	   All of these are `sm:` only. On a phone every field is the width of the
+	   page. */
+	@media (min-width: 640px) {
+		.q-input--text,
+		.q-textarea,
+		.q-controls {
+			max-width: 34rem;
+		}
+
+		.q-input--narrow {
+			max-width: 14rem;
+		}
 	}
 
-	/* A number or a date does not need the width of a sentence either. */
-	.q-input--narrow {
-		@apply sm:max-w-[14rem];
-	}
-
-	/* Capped at the same measure as the text inputs and the option groups.
-	   A textarea left to fill the column runs past 90 characters, which is
-	   hard to read back and makes the form look like two different widths. */
 	.q-textarea {
-		@apply resize-y leading-relaxed sm:max-w-[34rem];
+		resize: vertical;
 	}
 
 	/* The chevron is painted rather than left to the platform, so the select
@@ -394,116 +361,158 @@
 	   arrow is a data URI because a CSS-drawn one cannot follow the box's
 	   padding as it wraps. */
 	.q-select {
-		@apply appearance-none bg-no-repeat pr-10;
+		appearance: none;
+		padding-right: var(--space-lg);
 		background-image: var(--q-chevron);
-		background-position: right 0.875rem center;
+		background-repeat: no-repeat;
+		background-position: right var(--space-md) center;
 		background-size: 0.75rem;
 	}
 
-	/* The measure every answer shares. Section rules and headings run the full
-	   64rem shell; the controls under them line up on one narrower edge, so the
-	   page reads as structure at one width and answers at another rather than as
-	   a stack of differently-sized boxes. */
-	.q-controls {
-		@apply sm:max-w-[34rem];
-	}
-
-	/* One option in a radio or checkbox group.
-	   A full-width row with a hairline under it — the same list rhythm the
-	   timeline's checklist is built from — rather than an inline pill. The whole
-	   row is the label, so the tap target is the width of the page. */
+	/* One option in a radio or checkbox group. A full-width row with a
+	   hairline under it — the same list rhythm the timeline's checklist is
+	   built from — rather than an inline pill. The whole row is the label, so
+	   the tap target is the width of the page. */
 	.q-choice {
-		@apply flex cursor-pointer items-start gap-3 border-b border-(--q-border)/10 py-3
-			text-[1.0625rem] leading-snug text-(--q-text) transition-colors duration-200
-			hover:bg-(--q-text)/[0.025];
+		display: flex;
+		align-items: flex-start;
+		gap: var(--space-sm);
+		padding-block: var(--space-sm);
+		border-bottom: 1px solid var(--ww-hairline);
+		font-family: var(--font-sans);
+		font-size: var(--text-body-lg);
+		line-height: var(--leading-heading);
+		cursor: pointer;
+		transition: background-color var(--dur-fast) var(--ease-out);
 	}
 
-	/* Native controls, given the portal's blue. accent-color is the whole
+	.q-choice:hover {
+		background-color: var(--ww-light);
+	}
+
+	/* The standalone acknowledgement. Rules above and below rather than a
+	   list row, because it is one statement and not a choice among several. */
+	.q-confirm {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--space-sm);
+		padding-block: var(--space-md);
+		border-block: 1px solid var(--ww-hairline);
+		font-family: var(--font-sans);
+		font-size: var(--text-body-lg);
+		line-height: var(--leading-heading);
+		cursor: pointer;
+	}
+
+	/* Native controls, given the page's own accent. accent-color is the whole
 	   treatment: a hand-built radio has to reimplement focus, indeterminate,
-	   forced-colors and high-contrast behaviour, and gets at least one of them
-	   wrong. */
+	   forced-colors and high-contrast behaviour, and gets at least one of
+	   them wrong. */
 	.q-box {
-		@apply mt-0.5 h-[1.125rem] w-[1.125rem] shrink-0 cursor-pointer;
+		width: 1.125rem;
+		height: 1.125rem;
+		margin-top: 0.1875rem;
+		flex-shrink: 0;
+		cursor: pointer;
 		accent-color: var(--q-control);
 	}
 
-	/* The standalone acknowledgement. Rules above and below rather than a list
-	   row, because it is one statement and not a choice among several. */
-	.q-confirm {
-		@apply flex cursor-pointer items-start gap-3 border-y border-(--q-border)/15 py-4
-			text-[1.0625rem] leading-snug text-(--q-text);
-	}
-
-	/* An error under a field. --q-error-ink is the status red the resolver has
-	   already held to 4.5:1 against this page's own ground, which is what small
-	   type needs; unthemed it is state-blocked-deep, the palette's one red that
-	   clears 4.5:1 on white. */
+	/* An error under a field. --q-error-ink is the status red the resolver
+	   has already held to 4.5:1 against this page's own ground, which is what
+	   small type needs. */
 	.q-error {
-		@apply mt-2 flex items-start gap-2 text-[0.9375rem] leading-snug font-semibold
-			text-(--q-error-ink);
+		display: flex;
+		align-items: flex-start;
+		gap: var(--space-xs);
+		margin-top: var(--space-sm);
+		font-family: var(--font-sans);
+		font-size: var(--text-small);
+		font-weight: 500;
+		line-height: var(--leading-heading);
+		color: var(--q-error-ink);
 	}
 
-	/* An invalid control. The border carries it; the message underneath says
-	   what is wrong. Never colour alone. */
-	.q-input[aria-invalid='true'] {
-		@apply border-(--q-error);
+	/* One line of the error summary: a link to the question that needs
+	   attention. Written here rather than as a class string in the client
+	   script, so the summary is styled by the same stylesheet as the page. */
+	.q-error-link {
+		font-family: var(--font-sans);
+		font-size: var(--text-small);
+		line-height: var(--leading-heading);
+		color: var(--q-error-ink);
+		text-decoration: underline;
+		text-underline-offset: 5px;
+		text-decoration-thickness: 1px;
 	}
 
-	/* ------------------------------------------------------------------------
+	.q-error-link:hover {
+		text-decoration-thickness: 2px;
+	}
+
+	/* ----------------------------------------------------------------------
 	   The three alert bands: the restore notice, the error summary, and the
 	   status line above the submit button.
 
-	   One shape — a 2px rule down the left edge and a 4% wash of the same colour
-	   — and the tone is the only thing that varies. The wash is a color-mix with
-	   transparent, so it lands as a tint of the semantic colour over whatever
-	   ground the page has, light or dark, with no second value to supply.
+	   One shape — a 2px rule down the left edge and a 4% wash of the same
+	   colour — and the tone is the only thing that varies. The wash is a
+	   color-mix with transparent, so it lands as a tint of the semantic
+	   colour over whatever ground the page has, light or dark, with no second
+	   value to supply.
+	   ---------------------------------------------------------------------- */
+	.q-band {
+		padding: var(--space-md);
+		border-left: 2px solid;
+		scroll-margin-top: var(--space-lg);
+	}
 
-	   The padding stays in the markup: the three bands are not the same size,
-	   and making them so would be a redesign rather than a refactor.
-	   ------------------------------------------------------------------------ */
 	.q-tone-info {
-		@apply border-(--q-info) bg-(--q-info)/[0.04];
+		border-color: var(--q-info);
+		background-color: color-mix(in srgb, var(--q-info) 4%, transparent);
 	}
 
 	.q-tone-warning {
-		@apply border-(--q-warning) bg-(--q-warning)/[0.04];
+		border-color: var(--q-warning);
+		background-color: color-mix(in srgb, var(--q-warning) 4%, transparent);
 	}
 
 	.q-tone-error {
-		@apply border-(--q-error) bg-(--q-error)/[0.04];
+		border-color: var(--q-error);
+		background-color: color-mix(in srgb, var(--q-error) 4%, transparent);
 	}
 
-	/* The restore notice speaks in two of them. A draft that came back whole is
-	   information; one the script had to migrate — dropping the answers to
-	   questions that changed — is a warning, and says so in colour as well as in
-	   words. The client script sets the attribute; the tone follows from it, so
-	   nothing in the script knows a colour. */
+	/* The restore notice speaks in two of them. A draft that came back whole
+	   is information; one the script had to migrate — dropping the answers to
+	   questions that changed — is a warning, and says so in colour as well as
+	   in words. The client script sets the attribute; the tone follows from
+	   it, so nothing in the script knows a colour. */
 	.q-restore[data-tone='warning'] {
-		@apply border-(--q-warning) bg-(--q-warning)/[0.04];
+		border-color: var(--q-warning);
+		background-color: color-mix(in srgb, var(--q-warning) 4%, transparent);
 	}
 
-	/* Space for the eye above a question the page has just scrolled to. The
-	   portal has no sticky header, so this is breathing room rather than
+	/* Space for the eye above a question the page has just scrolled to. These
+	   routes have no sticky header, so this is breathing room rather than
 	   clearance. */
 	.q-question {
-		scroll-margin-top: 2rem;
+		scroll-margin-top: var(--space-lg);
 	}
-
 }
 
-@keyframes portal-current-pulse {
+@keyframes ww-marker-pulse {
 	0%,
 	25% {
-		box-shadow: 0 0 0 0.25rem rgb(1 151 246 / 22%);
+		box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--ww-blue) 22%, transparent);
 	}
 
 	75%,
 	100% {
-		box-shadow: 0 0 0 0.75rem rgb(1 151 246 / 0%);
+		box-shadow: 0 0 0 0.75rem color-mix(in srgb, var(--ww-blue) 0%, transparent);
 	}
 }
 
-@keyframes portal-enter {
+/* Only a `from`: the resting state is the element exactly where the layout
+   leaves it, so an entrance that never runs leaves the page simply present. */
+@keyframes ww-enter {
 	from {
 		opacity: 0;
 		transform: translateY(0.375rem);

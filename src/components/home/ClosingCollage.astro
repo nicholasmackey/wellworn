@@ -25,6 +25,7 @@
 import { Image } from 'astro:assets';
 import { CONTACT_HREF, CTA_LABEL } from '../../config/site';
 import type { CollageTile } from '../../config/home';
+import WordReveal from '../WordReveal.astro';
 
 interface Props {
 	lines: readonly string[];
@@ -39,6 +40,17 @@ const { lines, tiles, id }: Props = Astro.props;
 const mobileTiles = tiles.filter((tile) => tile.mobile);
 const above = mobileTiles.slice(0, 2);
 const below = mobileTiles.slice(2);
+
+/*
+ * Where each line's stagger picks up. The three lines are three blocks on
+ * screen but one statement, and one statement should arrive as one sweep
+ * rather than as three that each start over — so the second line's first word
+ * carries on from wherever the first line's last word left off.
+ */
+const wordCounts = lines.map((line) => line.split(/\s+/).filter(Boolean).length);
+const lineStarts = wordCounts.map((_, index) =>
+	wordCounts.slice(0, index).reduce((total, count) => total + count, 0),
+);
 ---
 
 <section class="ww-section-dark ww-closing" id={id} aria-labelledby="closing-heading">
@@ -105,9 +117,9 @@ const below = mobileTiles.slice(2);
 			  trust.Make it easy to do business." The spans are display: block, so
 			  the space is invisible on screen and audible where it matters.
 			*/}
-			{lines.map((line) => (
+			{lines.map((line, index) => (
 				<>
-					<span>{line}</span>{' '}
+					<span data-word-reveal><WordReveal text={line} start={lineStarts[index]} /></span>{' '}
 				</>
 			))}
 		</h2>
@@ -161,7 +173,7 @@ const below = mobileTiles.slice(2);
 	  rather than where the measure happens to run out — the statement is three
 	  sentences and it has to read as three.
 	*/
-	.ww-closing-heading span {
+	.ww-closing-heading > span {
 		display: block;
 	}
 

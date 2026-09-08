@@ -2,7 +2,7 @@
 /**
  * THE HOMEPAGE.
  *
- * Thirteen sections in a fixed order, and this file composes them. It holds no
+ * Twelve sections in a fixed order, and this file composes them. It holds no
  * copy of its own: every word on the page comes from config/home.ts or
  * config/site.ts, and every piece of layout comes from a component under
  * components/home/. If something on the page needs changing, one of those two
@@ -11,37 +11,34 @@
  * THE ARGUMENT, in order:
  *   promise (the hero, with the client marquee composited on its bottom
  *   edge) → proof (testimonials) → the three things a website owes a business
- *   → how we build → what it costs → what else we do → why any of it matters →
- *   the ask.
+ *   → how we build → what it costs → what else we do → the ask.
  *
  * THE GROUNDS alternate down the page and are most of what gives it depth,
  * since there are no shadows anywhere: white, white, white, cream, white, cream
- * for the services, then black through pricing and the extra services, back to
- * white for the philosophy statement, and black again for the close and the
- * footer. Two black runs, and both of them are where the page is asking for
- * something.
+ * for the services, then black from pricing all the way down through the extra
+ * services, the close, and the footer. The page turns black exactly where it
+ * starts asking for something, and stays there.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Hero from '../components/home/Hero.astro';
 import VideoTestimonials from '../components/home/VideoTestimonials.astro';
 import PromiseSection from '../components/home/PromiseSection.astro';
-import ServicesAccordion from '../components/home/ServicesAccordion.astro';
+import ServiceCards from '../components/home/ServiceCards.astro';
 import PricingSection from '../components/home/PricingSection.astro';
 import AdditionalServices from '../components/home/AdditionalServices.astro';
-import PhilosophySection from '../components/home/PhilosophySection.astro';
 import ClosingCollage from '../components/home/ClosingCollage.astro';
 import {
 	ADDITIONAL,
 	ADDITIONAL_SERVICES,
 	CLOSING,
 	COLLAGE,
-	PLANS,
 	PRICING,
 	PROMISES,
-	SERVICES,
+	SERVICE_RAIL,
 	SERVICES_INTRO,
 	TESTIMONIALS,
+	TESTIMONIALS_HEADING,
 } from '../config/home';
 ---
 
@@ -68,7 +65,11 @@ import {
 	  what the work did — and sending "Work" to the client marquee in the hero
 	  would land a visitor on a strip of marks with nothing to read.
 	*/}
-	<VideoTestimonials testimonials={TESTIMONIALS} id="work" />
+	<VideoTestimonials
+		testimonials={TESTIMONIALS}
+		heading={TESTIMONIALS_HEADING}
+		id="work"
+	/>
 
 	{/*
 	  5, 6, 7. Get found. Earn trust. Make it easy to do business.
@@ -79,10 +80,10 @@ import {
 	{PROMISES.map((promise) => <PromiseSection promise={promise} />)}
 
 	{/* 8 */}
-	<ServicesAccordion
+	<ServiceCards
 		heading={SERVICES_INTRO.heading}
 		body={SERVICES_INTRO.body}
-		services={SERVICES}
+		services={SERVICE_RAIL}
 		id="services"
 	/>
 
@@ -90,8 +91,15 @@ import {
 	<PricingSection
 		eyebrow={PRICING.eyebrow}
 		heading={PRICING.heading}
+		upfront={PRICING.upfront}
+		monthly={PRICING.monthly}
 		body={PRICING.body}
-		plans={PLANS}
+		features={PRICING.features}
+		closing={PRICING.closing}
+		portrait={PRICING.portrait}
+		portraitAlt={PRICING.portraitAlt}
+		ownerName={PRICING.ownerName}
+		ownerRole={PRICING.ownerRole}
 		id="pricing"
 	/>
 
@@ -101,9 +109,6 @@ import {
 		body={ADDITIONAL.body}
 		services={ADDITIONAL_SERVICES}
 	/>
-
-	{/* 11 */}
-	<PhilosophySection />
 
 	{/* 12 */}
 	<ClosingCollage lines={CLOSING.lines} tiles={COLLAGE} />

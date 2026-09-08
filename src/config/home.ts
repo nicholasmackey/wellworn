@@ -20,6 +20,7 @@
  */
 
 import type { Point } from './site'
+import { SERVICES } from './site'
 
 /* Real photography. Four pictures of people and places doing actual work. */
 import bakeryImage from '../assets/bakery.jpg'
@@ -28,10 +29,42 @@ import figureItOutImage from '../assets/figure-it-out.jpg'
 import houseDuskImage from '../assets/hero-house-dusk.jpg'
 import heroPoster from '../assets/hero-poster.jpg'
 
+/* The owner, and the only portrait on the site. The pricing section is where
+   the page names a price, and a price is easier to trust from a face than from
+   a card, so this is the one place a photograph of a person is used. */
+import nicholasPortrait from '../assets/nicholas-mackey-owner.jpg'
+
+/* The three promise bands. Each one is a soft, grainy, deliberately abstract
+   detail shot of the trade its demonstration is about — the pastries behind
+   the bakery search, the roof behind the review, the workshop behind the quote
+   request. They are painted as a full-height field with the demonstration
+   floating on top, so they are cropped hard and none of the three is ever seen
+   whole. Portrait sources, because the field they fill is tall. */
+import bakerySearchImage from '../assets/promises/bakery-search.png'
+import roofingReviewImage from '../assets/promises/roofing-review.png'
+import cedarQuoteImage from '../assets/promises/cedar-request-quote.png'
+
+/* Testimonial poster frames, each one lifted from its own clip so the still and
+   the first painted frame of the video are the same picture. */
+import davisPoster from '../assets/testimonials/davis.jpg'
+import avioricPoster from '../assets/testimonials/avioric.jpg'
+import veilPoster from '../assets/testimonials/veil.jpg'
+
+/* The three client marks that sit in the corner of those clips. Every file in
+   assets/logos/clients is already drawn in white, which is what the overlay
+   wants, so no colour variant and no filter is involved. */
+import davisLogo from '../assets/logos/clients/davis.svg'
+import avioricLogo from '../assets/logos/clients/avioric.svg'
+import veilLogo from '../assets/logos/clients/veil.svg'
+
+/* Screenshots of finished client work. Real sites, captured as they ship, and
+   the only things on the service rail that are allowed to stand as proof of
+   what a finished Wellworn project looks like. */
+import davisSite from '../assets/projects/davis-01.png'
+import veilSite from '../assets/projects/veil-01.png'
+import veilPhone from '../assets/projects/veil-02.png'
+
 /* Generated placeholders, awaiting real frames. */
-import testimonial01 from '../assets/placeholder/testimonial-01.jpg'
-import testimonial02 from '../assets/placeholder/testimonial-02.jpg'
-import testimonial03 from '../assets/placeholder/testimonial-03.jpg'
 import contractorTruck from '../assets/placeholder/contractor-truck.jpg'
 import engravingWorkshop from '../assets/placeholder/engraving-workshop.jpg'
 import donutPackaging from '../assets/placeholder/donut-packaging.jpg'
@@ -42,7 +75,7 @@ import signage from '../assets/placeholder/signage.jpg'
    ========================================================================== */
 
 export const HERO = {
-  heading: 'Good businesses deserve good websites.',
+  heading: ['Local businesses', 'deserve good websites.'] as const,
   body: 'We build websites for small businesses that want to get found, earn trust, and make it easy for customers to do business with them.',
 
   /**
@@ -115,10 +148,9 @@ export interface ClientLogo {
  * marquee paints them white over the hero footage with a filter, so one file
  * works on either ground.
  */
-const LOGO_MODULES = import.meta.glob<{ default: ImageMetadata }>(
-  '../assets/logos/clients/*.svg',
-  { eager: true },
-)
+const LOGO_MODULES = import.meta.glob<{ default: ImageMetadata }>('../assets/logos/clients/*.svg', {
+  eager: true,
+})
 
 /**
  * The business name, from the filename: cadence.svg reads "Cadence", and a
@@ -127,7 +159,11 @@ const LOGO_MODULES = import.meta.glob<{ default: ImageMetadata }>(
  * component problem.
  */
 function businessNameFrom(path: string): string {
-  const base = path.split('/').pop()?.replace(/\.svg$/, '') ?? ''
+  const base =
+    path
+      .split('/')
+      .pop()
+      ?.replace(/\.svg$/, '') ?? ''
   return base
     .split('-')
     .filter(Boolean)
@@ -161,50 +197,109 @@ export interface Testimonial {
   readonly posterAlt: string
   /** The client's mark, in white, for the bottom-left overlay. */
   readonly logoSrc: string
+  /**
+   * The mark's intrinsic size, taken from the file rather than typed in, so the
+   * corner reserves the right box before the SVG lands. Same reason ClientLogo
+   * carries them.
+   */
+  readonly logoWidth: number
+  readonly logoHeight: number
   readonly logoAlt: string
+  /**
+   * Where to hold the picture when the card's frame is narrower or shorter than
+   * the clip is, which it always is: a CSS object-position, applied to the
+   * poster and the video together so the two never disagree. Omitted means
+   * dead centre, which is right for a subject sitting in the middle of the
+   * frame and wrong for one sitting high in it.
+   */
+  readonly focal?: string
   /**
    * Names the clip for a screen reader and for the play/pause control, which
    * would otherwise be three buttons all called "Play". No quote and no
    * customer name: neither has been supplied, and neither will be invented.
    */
   readonly label: string
+  /**
+   * PLACEHOLDER COPY. The three clips are real and the businesses are real;
+   * the written quote, the speaker's name and the star rating under each one
+   * are not, because none has been supplied. They are here so the layout is
+   * built and reviewed against the shape of the real thing, and they are data
+   * rather than markup so replacing them is an edit to this file and nothing
+   * else.
+   */
+  readonly quote: string
+  readonly name: string
+  readonly business: string
+  /** Whole stars out of five. */
+  readonly rating: number
 }
 
 /**
  * Exactly three, which is what the grid is built around.
  *
- * PLACEHOLDER, all of it. The clips are generated six-second stand-ins with no
- * audio track and the posters are generated frames that say so. Swap the file
- * paths and the four strings beside them; the player does not care what it is
- * playing.
+ * Real clients, real clips, real audio. Each poster is a frame lifted from the
+ * clip beside it, so the still the card shows is a frame the video paints
+ * anyway and there is no cut when playback starts.
  *
- * When the real clips arrive they want the same encode constraint the hero is
- * under — H.264 High@4.0, refs capped at 4 — or iOS will refuse them.
+ * The clips are served from public/ because Astro's asset pipeline does not
+ * transcode video. They are encoded to the same constraint the hero is under,
+ * H.264 High@4.0 with refs capped at 4, or iOS refuses them.
  */
+/**
+ * The one line over the section. Plain, spoken, and making no claim the clips
+ * do not make themselves: it says who is talking and leaves the talking to
+ * them.
+ */
+export const TESTIMONIALS_HEADING = "Here's what folks have to say about working with us."
+
 export const TESTIMONIALS: readonly Testimonial[] = [
   {
     videoSrc: '/videos/testimonial-01.mp4',
-    poster: testimonial01,
-    posterAlt: 'Placeholder frame for the first client testimonial.',
-    logoSrc: '/images/logos/client-01-white.svg',
-    logoAlt: 'Client logo placeholder 01',
-    label: 'Client testimonial 01',
+    poster: davisPoster,
+    posterAlt: 'Two men outdoors under a tree on a bright day, talking to camera.',
+    logoSrc: davisLogo.src,
+    logoWidth: davisLogo.width,
+    logoHeight: davisLogo.height,
+    logoAlt: 'Davis',
+    /* Both faces sit high in a tall phone frame, so a centred crop takes the
+       top of the nearer man's head off. */
+    focal: '50% 15%',
+    label: 'the Davis testimonial',
+    quote:
+      'PLACEHOLDER: one or two lines on what changed for the business after the site went live.',
+    name: 'PLACEHOLDER Name',
+    business: 'Davis',
+    rating: 5,
   },
   {
     videoSrc: '/videos/testimonial-02.mp4',
-    poster: testimonial02,
-    posterAlt: 'Placeholder frame for the second client testimonial.',
-    logoSrc: '/images/logos/client-02-white.svg',
-    logoAlt: 'Client logo placeholder 02',
-    label: 'Client testimonial 02',
+    poster: avioricPoster,
+    posterAlt: 'A man in a cap and dark hooded sweatshirt talking to camera indoors.',
+    logoSrc: avioricLogo.src,
+    logoWidth: avioricLogo.width,
+    logoHeight: avioricLogo.height,
+    logoAlt: 'Avioric',
+    label: 'the Avioric testimonial',
+    quote:
+      'PLACEHOLDER: one or two lines on what changed for the business after the site went live.',
+    name: 'PLACEHOLDER Name',
+    business: 'Avioric',
+    rating: 5,
   },
   {
     videoSrc: '/videos/testimonial-03.mp4',
-    poster: testimonial03,
-    posterAlt: 'Placeholder frame for the third client testimonial.',
-    logoSrc: '/images/logos/client-03-white.svg',
-    logoAlt: 'Client logo placeholder 03',
-    label: 'Client testimonial 03',
+    poster: veilPoster,
+    posterAlt: 'A woman in an olive sweater talking to camera in front of a blue wall hanging.',
+    logoSrc: veilLogo.src,
+    logoWidth: veilLogo.width,
+    logoHeight: veilLogo.height,
+    logoAlt: 'Veil',
+    label: 'the Veil testimonial',
+    quote:
+      'PLACEHOLDER: one or two lines on what changed for the business after the site went live.',
+    name: 'PLACEHOLDER Name',
+    business: 'Veil',
+    rating: 5,
   },
 ]
 
@@ -227,6 +322,19 @@ export interface PromiseBand {
   readonly image: ImageMetadata
   readonly imageAlt: string
   /**
+   * `object-position` for the photograph, because the field it fills is a
+   * different shape on every screen and centring these three throws away the
+   * part of each one worth keeping. Written as a percentage pair.
+   */
+  readonly imageFocus?: string
+  /**
+   * How far past `cover` the photograph is pushed, as a scale about that same
+   * focal point. `cover` alone barely crops a portrait source in a portrait
+   * field; these are atmosphere rather than subject, and they want to be in
+   * close enough that no one reads them as an illustration.
+   */
+  readonly imageZoom?: number
+  /**
    * Which side the photograph takes on a desktop split. Alternated down the
    * page so three bands built from the same parts do not read as one component
    * stamped out three times.
@@ -244,9 +352,13 @@ export const PROMISES: readonly PromiseBand[] = [
       'When someone searches for what you do, your business should have a fighting chance of showing up.',
       'We build with search, local visibility, and the way real customers look for businesses in mind.',
     ],
-    image: houseDuskImage,
+    image: bakerySearchImage,
     imageAlt:
-      'A house at dusk with its windows and porch lit, photographed from the street at the end of a working day.',
+      'Trays of cinnamon rolls resting on a bakery worktable, shot close and shallow so the room falls away behind them.',
+    /* Down and right, onto the tray. The top-left of the frame is an
+       out-of-focus wall the picture can afford to lose. */
+    imageFocus: '60% 95%',
+    imageZoom: 1.55,
     imageSide: 'right',
     ground: 'white',
   },
@@ -257,8 +369,13 @@ export const PROMISES: readonly PromiseBand[] = [
       'People are checking you out before they ever call, visit, or buy.',
       'Your website should make them feel like they found the right place.',
     ],
-    image: customerImage,
-    imageAlt: 'A shopkeeper leaning over the counter to hand something to a customer.',
+    image: roofingReviewImage,
+    imageAlt: 'A roofer setting battens across a run of dark roof sheets, seen close over their shoulder.',
+    /* Right and down, so the run of roof and the timber battens fill the
+       field and the roofer stays a shoulder and an arm rather than a
+       portrait. */
+    imageFocus: '95% 70%',
+    imageZoom: 1.4,
     imageSide: 'left',
     ground: 'cream',
   },
@@ -269,8 +386,12 @@ export const PROMISES: readonly PromiseBand[] = [
       'Your customers shouldn’t have to hunt for your services, your hours, your phone number, or what to do next.',
       'We make the path from finding you to becoming a customer obvious.',
     ],
-    image: bakeryImage,
-    imageAlt: 'A baker working at a bench, shaping dough with both hands.',
+    image: cedarQuoteImage,
+    imageAlt: 'A carpenter guiding a length of timber along a saw rail in a workshop.',
+    /* Low and slightly right: the timber, the rail, the hand and the blue
+       work shirt, with the head already outside the crop. */
+    imageFocus: '55% 100%',
+    imageZoom: 1.45,
     imageSide: 'right',
     ground: 'white',
   },
@@ -295,76 +416,228 @@ export const SERVICES_INTRO = {
  * content.
  */
 export type { Point }
-export { SERVICES } from './site'
+export { SERVICES }
+
+/* --------------------------------------------------------------------------
+   THE PROOF ON EACH CARD.
+
+   The rail shows the work rather than describing it, so every card needs a
+   picture and, on three of them, something drawn that moves. All five are
+   configured here and nothing about them is written into the component: swap
+   a `background` for a real photograph, set a `link` when a case study
+   finally exists, drop `placeholder` when a real frame lands, and the markup
+   does not change.
+
+   WHAT IS ALLOWED IN HERE. Screenshots of sites we actually built, the names
+   of clients we actually have, and descriptions of what is visible in the
+   frame. No rankings, no ratings, no scores, no traffic, no revenue, and no
+   testimonial that was not given. Two of the five carry the existing promise
+   demonstrations, which are drawn interfaces with invented businesses on
+   them — their copy says what the demonstration shows and claims nothing
+   about a client.
+   -------------------------------------------------------------------------- */
+
+/** What is drawn on top of a card's background when it opens. */
+export type ServicePanel =
+  /* The get found sequence, from the promise band, deferred until the card
+     is the open one. */
+  | 'local-search'
+  /* The reputation sequence, likewise. */
+  | 'reputation'
+  /* A handset with a real screenshot on its screen. */
+  | 'device'
+  /* A client's old mark wiped through to the redrawn one. */
+  | 'brand'
+
+export interface ServiceProof {
+  /**
+   * The card's ground, collapsed and expanded. On the cards with no panel
+   * this IS the proof — the Davis screenshot is the finished website — so it
+   * carries real alt text. On the cards that draw a panel over it, it is
+   * context and the panel does the talking.
+   */
+  readonly background: ImageMetadata
+  /** Empty where the picture is a marked stand-in or pure ground. */
+  readonly backgroundAlt: string
+  /** Where to hold the crop, as a CSS object-position. Cards are narrow. */
+  readonly focal?: string
+  /** What is drawn over the background when the card opens. */
+  readonly panel?: ServicePanel
+  /** The screen inside a `device` panel. A real capture, or nothing. */
+  readonly screen?: ImageMetadata
+  readonly screenAlt?: string
+  /** The client or project this card is showing. Omitted on the two demos. */
+  readonly label?: string
+  /** One or two short lines, shown only when the card is open. */
+  readonly proof: string
+  /**
+   * A case study, where one exists. None does yet, so none is set — the card
+   * simply renders without the link rather than pointing at a page that is
+   * not there.
+   */
+  readonly link?: { readonly label: string; readonly href: string }
+  /**
+   * True while the picture is a generated stand-in rather than client work.
+   * Nothing in the copy leans on it, so replacing the file is the whole job.
+   */
+  readonly placeholder?: boolean
+}
+
+export interface ServiceCard extends Point {
+  /** Fragment-safe id, used to tie the button to the panel it opens. */
+  readonly id: string
+  readonly proof: ServiceProof
+}
+
+/**
+ * Keyed by the service title, which is the only stable name SERVICES has.
+ * A title with no entry here would render as a card with no proof, which is
+ * why the assembly below throws instead.
+ */
+const PROOF: Readonly<Record<string, ServiceProof>> = {
+  'Web Design': {
+    background: davisSite,
+    backgroundAlt:
+      'The Davis Property Works website: a headline reading “Need work done around your home? Call Davis.” over a photograph of the owner at his truck.',
+    /* The headline and the logo sit in the top-left quarter of the capture,
+       and a card is a tall crop of a wide screenshot, so the frame is held
+       there rather than at its centre. */
+    focal: '22% 18%',
+    label: 'Davis Property Works',
+    proof: 'A landscaping and handyman business in Forney, Texas. Designed and built end to end.',
+  },
+
+  Development: {
+    background: veilSite,
+    backgroundAlt: 'The Veil website on a desktop screen, white type on black.',
+    focal: '50% 30%',
+    panel: 'device',
+    screen: veilPhone,
+    screenAlt: 'The same Veil site on a phone, showing the month calendar and recent entries.',
+    label: 'Veil',
+    proof:
+      'The same build on a phone and on a desktop. One site, laid out for whatever it lands on.',
+  },
+
+  'Local SEO': {
+    background: bakeryImage,
+    backgroundAlt: '',
+    panel: 'local-search',
+    proof:
+      'What getting found looks like: a search nearby, and the business people are looking for where they can see it.',
+  },
+
+  'Reviews & Reputation': {
+    background: customerImage,
+    backgroundAlt: '',
+    panel: 'reputation',
+    proof:
+      'A review arrives and gets answered, so the next person checking you out sees both halves of it.',
+  },
+
+  'Brand Refreshes': {
+    /* The proof itself is the panel: Hood's old logo wiped through to the
+       brand we drew for them. Keep the marked placeholder out of the card. */
+    background: signage,
+    backgroundAlt: '',
+    placeholder: true,
+    panel: 'brand',
+    label: 'Hood',
+    proof:
+      'Logo, type and colour put back together, and carried through to the signs and packaging.',
+  },
+}
+
+/**
+ * SERVICES with its proof attached, in the order SERVICES lists them. The
+ * page hands this to the rail and the rail renders what it is given.
+ */
+export const SERVICE_RAIL: readonly ServiceCard[] = SERVICES.map((service) => {
+  const proof = PROOF[service.title]
+  if (!proof) throw new Error(`No proof configured for service “${service.title}”.`)
+
+  return {
+    ...service,
+    id: service.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, ''),
+    proof,
+  }
+})
 
 /* ==========================================================================
    9 — PRICING
    ========================================================================== */
 
-/** One line in a plan. */
-export interface PlanFeature {
-  readonly label: string
-  /**
-   * The capability underneath the label, where the label is a summary of
-   * something more specific. Set on two rows only, and it exists to make the
-   * plan concrete without changing a word of the visible plan language: what
-   * "Search setup" and "Updates + support" actually mean.
-   */
-  readonly detail?: string
-}
-
-export interface Plan {
-  readonly name: string
-  /** The small label above the name. Only one plan carries one. */
-  readonly badge?: string
-  readonly body: string
-  readonly price: string
-  readonly features: readonly PlanFeature[]
-  /** A line under the features. Only the first plan carries one. */
-  readonly note?: string
-}
-
 export const PRICING = {
   eyebrow: 'Pricing',
-  heading: 'A website that earns its keep.',
-  body: 'Straightforward pricing. No giant upfront bill, no hidden hosting fees, and no getting left on your own after launch.',
-} as const
 
-/**
- * Two plans. There is no third, there is no enterprise tier, and there is no
- * "most popular" label — the only badge on this page is the one below, and it
- * says BEST VALUE.
- */
-export const PLANS: readonly Plan[] = [
-  {
-    name: 'Website',
-    body: 'Everything a small business needs to get online and stay there.',
-    price: '$175/mo.',
-    features: [
-      { label: 'Design + development' },
-      { label: 'Hosting + SSL' },
-      { label: 'Mobile optimization' },
-      { label: 'Forms + analytics' },
-      { label: 'Search setup', detail: 'Google Search Console' },
-      { label: 'Updates + support', detail: 'Ongoing maintenance' },
-    ],
-    note: '30-day money-back guarantee',
-  },
-  {
-    name: 'Website + Growth',
-    badge: 'Best value',
-    body: 'Your website, plus the tools that help turn more customers into business.',
-    price: '$297/mo.',
-    features: [
-      { label: 'Everything in Website' },
-      { label: 'Review requests' },
-      { label: 'Review monitoring' },
-      { label: 'Missed-call text back' },
-      { label: 'Google Business help' },
-      { label: 'Local visibility tools' },
-    ],
-  },
-]
+  /**
+   * Two lines, and they are set as two lines rather than left to wrap. The
+   * break is the argument — a better website, and then the objection it
+   * answers — so it is written here instead of being whatever the column
+   * width happens to produce.
+   */
+  heading: ['A better website.', 'Without the big upfront bill.'],
+
+  upfront: '$0 down.',
+  monthly: '$175 a month.',
+
+  /**
+   * The lede, as two paragraphs rather than one. The first answers the money
+   * objection — nothing up front, no second bill — and the second names, in
+   * one breath, everything the one payment covers. The grid under it then
+   * takes those five words and gives each of them a line, which is the whole
+   * argument of this section: not $175 for a website, but $175 for all of it.
+   */
+  body: [
+    'Launch a professional website for your business with no upfront cost and no separate hosting bill.',
+    'Your website, hosting, updates, maintenance, and support are all included in one simple monthly payment.',
+  ],
+
+  /**
+   * Six, in two columns of three. Four read as a short list of features; six
+   * reads as an inventory, and the length of the inventory beside the one
+   * figure above it is the point being made.
+   */
+  features: [
+    {
+      title: 'Website Design + Development',
+      body: 'Designed and built specifically around your business.',
+    },
+    {
+      title: 'Hosting Included',
+      body: 'No separate hosting account, setup fee, or surprise bill.',
+    },
+    {
+      title: 'Unlimited Edits',
+      body: 'Need something changed? Send it over. Updates are included.',
+    },
+    {
+      title: 'Direct Support',
+      body: 'Work directly with the person who built your website when you need help.',
+    },
+    {
+      title: 'Ongoing Website Maintenance',
+      body: 'We keep your website updated, working properly, and taken care of.',
+    },
+    {
+      title: 'Built for Better Results',
+      body: 'Fast, mobile-friendly, and structured to help customers find and use your site.',
+    },
+  ],
+
+  /* The line that has to land. It restates the figure after the inventory,
+     so the last thing read is the price attached to all of it. */
+  closing: '$0 down. No hidden setup fees. Everything above is included for $175/month.',
+
+  /* Who is behind the price. */
+  portrait: nicholasPortrait,
+  portraitAlt: 'Nicholas Mackey, the owner of Wellworn.',
+  ownerName: 'Nicholas Mackey',
+  ownerRole: 'Owner / Software Engineer',
+} as const
 
 /* ==========================================================================
    10 — NEED MORE THAN A WEBSITE
@@ -373,11 +646,9 @@ export const PLANS: readonly Plan[] = [
 export interface AdditionalService {
   readonly title: string
   /**
-   * Where a price would go. Reviews & Reputation says which plan it is part of
-   * rather than repeating $297: the plan directly above already sells that
-   * offer at that price, and printing the figure twice would read as two
-   * different ways to buy the same thing. Local SEO has no price because none
-   * has been set, and none is invented here.
+   * Where a price would go. Reviews & Reputation names the recurring plan it
+   * belongs to rather than repeating its price on the homepage. Local SEO has
+   * no price because none has been set, and none is invented here.
    */
   readonly price?: string
   /** A paragraph, for the entries that take prose rather than a list. */
@@ -395,16 +666,9 @@ export const ADDITIONAL = {
 /**
  * Three entries, and the first one needs explaining.
  *
- * Reviews & Reputation is the same offer Website + Growth sells, at the same
- * price, two screens further down the page. Presenting it here as a separate
- * $297/month product would put two prices on one thing and leave a reader
- * working out which of them they are being asked to pay. So the plan above is
- * the primary presentation and this entry is the additional explanation the
- * plan's six words cannot carry: what "Review requests" and "Google Business
- * help" actually amount to. Its price slot names the plan instead of repeating
- * the figure.
- *
- * The price has not been changed. It appears once, on the plan.
+ * Reviews & Reputation belongs to Website + Growth on the standalone pricing
+ * page. This homepage row names that plan instead of repeating its price and
+ * uses the available room to explain what the short feature names amount to.
  */
 export const ADDITIONAL_SERVICES: readonly AdditionalService[] = [
   {
@@ -436,22 +700,6 @@ export const ADDITIONAL_SERVICES: readonly AdditionalService[] = [
     body: 'Logo cleanup, typography, colors, and the pieces your business needs to look consistent online and off.',
   },
 ]
-
-/* ==========================================================================
-   11 — YOUR WEBSITE SHOULD EARN ITS KEEP
-   ========================================================================== */
-
-export const PHILOSOPHY = {
-  heading: 'Your website should earn its keep.',
-  body: [
-    'Looking good matters.',
-    'But a good website should also help bring people in, answer their questions, build confidence, and make running your business a little easier.',
-    'That’s what we build.',
-  ],
-  image: figureItOutImage,
-  imageAlt:
-    'Two people working through something together at a table, one of them talking, a laptop open between them.',
-} as const
 
 /* ==========================================================================
    12 — CLOSING COLLAGE
@@ -515,14 +763,86 @@ export const CLOSING = {
  */
 export const COLLAGE: readonly CollageTile[] = [
   // Left edge, top to bottom.
-  { src: bakeryImage, note: 'baker at work', top: 4, left: 2, w: 15, ar: '4 / 5', rotate: -3, mobile: true },
-  { src: signage, note: 'shop signage (placeholder)', top: 46, left: 4, w: 13, ar: '1 / 1', rotate: 2.5, mobile: false },
-  { src: contractorTruck, note: 'contractor truck (placeholder)', top: 72, left: 14, w: 16, ar: '4 / 3', rotate: -2, mobile: true },
+  {
+    src: bakeryImage,
+    note: 'baker at work',
+    top: 4,
+    left: 2,
+    w: 15,
+    ar: '4 / 5',
+    rotate: -3,
+    mobile: true,
+  },
+  {
+    src: signage,
+    note: 'shop signage (placeholder)',
+    top: 46,
+    left: 4,
+    w: 13,
+    ar: '1 / 1',
+    rotate: 2.5,
+    mobile: false,
+  },
+  {
+    src: contractorTruck,
+    note: 'contractor truck (placeholder)',
+    top: 72,
+    left: 14,
+    w: 16,
+    ar: '4 / 3',
+    rotate: -2,
+    mobile: true,
+  },
   // Top and bottom, just clear of the statement's measure.
-  { src: customerImage, note: 'counter service', top: 2, left: 18, w: 11, ar: '1 / 1', rotate: 3, mobile: false },
-  { src: donutPackaging, note: 'donut packaging (placeholder)', top: 76, left: 34, w: 13, ar: '4 / 3', rotate: 2, mobile: false },
+  {
+    src: customerImage,
+    note: 'counter service',
+    top: 2,
+    left: 18,
+    w: 11,
+    ar: '1 / 1',
+    rotate: 3,
+    mobile: false,
+  },
+  {
+    src: donutPackaging,
+    note: 'donut packaging (placeholder)',
+    top: 76,
+    left: 34,
+    w: 13,
+    ar: '4 / 3',
+    rotate: 2,
+    mobile: false,
+  },
   // Right edge, top to bottom.
-  { src: engravingWorkshop, note: 'engraving workshop (placeholder)', top: 3, left: 66, w: 13, ar: '4 / 5', rotate: -2.5, mobile: false },
-  { src: houseDuskImage, note: 'finished property at dusk', top: 40, left: 82, w: 15, ar: '4 / 3', rotate: -3, mobile: true },
-  { src: figureItOutImage, note: 'working it out together', top: 70, left: 68, w: 14, ar: '1 / 1', rotate: 2.5, mobile: true },
+  {
+    src: engravingWorkshop,
+    note: 'engraving workshop (placeholder)',
+    top: 3,
+    left: 66,
+    w: 13,
+    ar: '4 / 5',
+    rotate: -2.5,
+    mobile: false,
+  },
+  {
+    src: houseDuskImage,
+    note: 'finished property at dusk',
+    top: 40,
+    left: 82,
+    w: 15,
+    ar: '4 / 3',
+    rotate: -3,
+    mobile: true,
+  },
+  {
+    src: figureItOutImage,
+    note: 'working it out together',
+    top: 70,
+    left: 68,
+    w: 14,
+    ar: '1 / 1',
+    rotate: 2.5,
+    mobile: true,
+  },
 ]

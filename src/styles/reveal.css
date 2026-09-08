@@ -1,0 +1,91 @@
+/* ==========================================================================
+   WELLWORN — THE TEXT ENTRANCE
+   --------------------------------------------------------------------------
+   One entrance, used by every major display heading below the hero and by the
+   supporting copy under it. Nothing else on the page moves on arrival.
+
+   TWO SHAPES, and the difference between them is the hierarchy:
+
+     the heading   splits into words, each one lifting a fraction of its own
+                   type size into place, a beat behind the word before it. See
+                   WordReveal.astro for the split and reveal.client.ts for the
+                   trigger.
+     the copy      moves as one block, a little later and a little less, so
+                   the heading stays the event and the paragraph is what
+                   follows it.
+
+   WHY THE `html[data-text-reveal]` GUARD. The starting state is hidden, and a
+   heading that ships hidden is a heading that never arrives if the script
+   does not. The attribute is set by a three-line inline script in the head of
+   BaseLayout — so with JavaScript off, or motion turned down, or the module
+   bundle failing to land (the script takes the attribute back off after three
+   seconds if nothing has claimed it), none of these rules ever match and the
+   text is simply where the layout puts it.
+   ========================================================================== */
+
+:root {
+	/* The curve is a deceleration: quick away from the start, long and soft
+	   into the finish. Deliberately not --ease-out, which is the site's curve
+	   for controls answering a pointer; this is copy arriving. */
+	--wr-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+	--wr-dur: 560ms;
+	--wr-stagger: 42ms;
+	/* Relative to the word's own type size, so a display line and a smaller
+	   heading travel the same distance in proportion rather than in pixels. */
+	--wr-lift: 0.45em;
+
+	--wr-block-dur: 520ms;
+	--wr-block-lift: 12px;
+	/* Long enough that the heading is unmistakably first, short enough that
+	   the two still read as one arrival. */
+	--wr-block-delay: 160ms;
+	--wr-block-stagger: 90ms;
+}
+
+/* Set unconditionally: an inline-block word wraps and lays out identically to
+   the text node it replaced, so the line breaks are the same whether or not
+   the entrance ever runs. */
+.ww-word {
+	display: inline-block;
+}
+
+html[data-text-reveal] [data-word-reveal] .ww-word {
+	opacity: 0;
+	transform: translateY(var(--wr-lift));
+}
+
+html[data-text-reveal] [data-word-reveal].is-revealed .ww-word {
+	opacity: 1;
+	transform: none;
+	transition:
+		opacity var(--wr-dur) var(--wr-ease),
+		transform var(--wr-dur) var(--wr-ease);
+	transition-delay: calc(var(--wr-i, 0) * var(--wr-stagger));
+}
+
+html[data-text-reveal] [data-reveal-block] {
+	opacity: 0;
+	transform: translateY(var(--wr-block-lift));
+}
+
+html[data-text-reveal] [data-reveal-block].is-revealed {
+	opacity: 1;
+	transform: none;
+	transition:
+		opacity var(--wr-block-dur) var(--wr-ease),
+		transform var(--wr-block-dur) var(--wr-ease);
+	transition-delay: calc(var(--wr-block-delay) + var(--wr-i, 0) * var(--wr-block-stagger));
+}
+
+/* base.css already collapses transition durations here. This is the other
+   half of it: without these, a heading would still be laid out from its
+   hidden state and snap rather than simply be present. */
+@media (prefers-reduced-motion: reduce) {
+	html[data-text-reveal] [data-word-reveal] .ww-word,
+	html[data-text-reveal] [data-reveal-block] {
+		opacity: 1;
+		transform: none;
+		transition: none;
+	}
+}

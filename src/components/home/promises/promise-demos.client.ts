@@ -20,8 +20,11 @@
  *   the reveals    a block that arrives mid-sequence animates its own height
  *                  (0fr to 1fr) so the stack below drifts rather than jumps.
  *
- * WHEN IT RUNS. Once, when the frame is meaningfully in view — not on load,
- * where it would be over before it was seen, and not on every scroll past.
+ * WHEN IT RUNS. Once, when the frame is meaningfully in view and the band's
+ * own heading and copy have finished arriving — not on load, where it would be
+ * over before it was seen, and not on every scroll past. The heading is the
+ * claim and this is what backs it up, so the two are consecutive rather than
+ * simultaneous; the wait is afterTextReveal, in components/reveal.client.ts.
  * The observer releases the element as soon as it has fired. What is left
  * afterwards is the successful final state, which is the state that matters:
  * trusted, contacted.
@@ -30,6 +33,8 @@
  * and the counters are written at their finished values. base.css already
  * collapses the transitions themselves.
  */
+
+import { afterTextReveal } from '../../reveal.client';
 
 /** How far into the frame counts as "meaningfully in view". */
 const VISIBLE_RATIO = 0.4;
@@ -118,12 +123,31 @@ function run(demo: Demo, instant: boolean): void {
 	});
 }
 
+/** Every demonstration that has been set up, so a caller can start one. */
+const registry = new WeakMap<HTMLElement, Demo>();
+
+/**
+ * Play one demonstration, once, whatever decided it was time.
+ *
+ * The service rail needs this for the same reason the search frame does: its
+ * copy sits inside a card that is closed on arrival, so an observer would run
+ * the sequence long before anyone opened the card. A frame marked
+ * `data-deferred` is skipped by the observer below and started from here.
+ */
+export function startPromiseDemo(root: HTMLElement): void {
+	if (root.dataset.demoPlayed === '') return;
+	const demo = registry.get(root);
+	if (!demo) return;
+	root.dataset.demoPlayed = '';
+
+	run(demo, window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+
 export function initPromiseDemos(scope: ParentNode = document): void {
 	const roots = Array.from(scope.querySelectorAll<HTMLElement>('[data-demo]'));
 	if (roots.length === 0) return;
 
 	const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-	const demos = new Map<HTMLElement, Demo>();
 
 	const observer = reduced
 		? null
@@ -134,8 +158,10 @@ export function initPromiseDemos(scope: ParentNode = document): void {
 						/* Once. A demonstration that replays itself every time it
 						   scrolls past stops being a demonstration. */
 						observer?.unobserve(entry.target);
-						const demo = demos.get(entry.target as HTMLElement);
-						if (demo) run(demo, false);
+						const root = entry.target as HTMLElement;
+						/* And then a beat behind the band's own copy — the heading is
+						   the claim, and this is the thing that backs it up. */
+						afterTextReveal(root, () => startPromiseDemo(root));
 					});
 				},
 				{ threshold: VISIBLE_RATIO },
@@ -149,10 +175,9 @@ export function initPromiseDemos(scope: ParentNode = document): void {
 		const steps = TIMELINES[name];
 		if (!steps) return;
 
-		const demo: Demo = { root, name, steps };
-		demos.set(root, demo);
+		registry.set(root, { root, name, steps });
 
-		if (reduced) run(demo, true);
-		else observer?.observe(root);
+		if (reduced) startPromiseDemo(root);
+		else if (root.dataset.deferred !== '') observer?.observe(root);
 	});
 }

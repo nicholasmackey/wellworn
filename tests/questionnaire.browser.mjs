@@ -135,7 +135,7 @@ try {
 		tokenFields: document.querySelectorAll('[name="cf-turnstile-response"]').length,
 		honeypot: document.querySelector('[name="_gotcha"]')?.value,
 		honeypotHidden: !document.querySelector('[name="_gotcha"]')?.getClientRects().length,
-		securitySectionHeading: [...document.querySelectorAll('[data-questionnaire] .eyebrow')]
+		securitySectionHeading: [...document.querySelectorAll('[data-questionnaire] .ww-eyebrow')]
 			.some((element) => element.textContent.trim().toLowerCase() === 'security check')
 	}))()`)
 	assert.equal(loaded.sections, 8)
@@ -186,10 +186,16 @@ try {
 		12,
 	)
 
+	/* Stamp the document that is about to go, and wait for one without the
+	   stamp. Waiting on the restored value alone is a race the old page wins:
+	   it also has '12' in that field, so the condition is already true while
+	   the reload is still in flight, and the assertions below then run against
+	   a document that has not been parsed yet. */
+	await devtools.evaluate(`window.__beforeReload = true`)
 	await devtools.command('Page.reload', { ignoreCache: true })
 	await waitFor(
 		devtools,
-		`document.readyState === 'complete' && document.querySelector('#q-years-in-business')?.value === '12'`,
+		`!window.__beforeReload && document.readyState === 'complete' && document.querySelector('#q-years-in-business')?.value === '12'`,
 	)
 	const restored = await devtools.evaluate(`(() => ({
 		notice: !document.querySelector('#questionnaire-restored').hidden,
@@ -376,10 +382,11 @@ try {
 	assert.ok(!Number.isNaN(Date.parse(receipt.submittedAt)))
 
 	/* A return visit: the completed state, not a blank form. */
+	await devtools.evaluate(`window.__beforeReload = true`)
 	await devtools.command('Page.reload', { ignoreCache: true })
 	await waitFor(
 		devtools,
-		`document.readyState === 'complete' && document.querySelector('[data-questionnaire]')?.hidden === true`,
+		`!window.__beforeReload && document.readyState === 'complete' && document.querySelector('[data-questionnaire]')?.hidden === true`,
 	)
 	const returning = await devtools.evaluate(`(() => ({
 		formHidden: document.querySelector('[data-questionnaire]').hidden,

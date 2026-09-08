@@ -1,0 +1,642 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import WordReveal from '../components/WordReveal.astro';
+import { CONTACT_HREF, CTA_LABEL } from '../config/site';
+
+const websiteFeatures = [
+	{
+		title: 'Design + development',
+		body: 'Built around your business, your customers, and what they need from you.',
+	},
+	{
+		title: 'Hosting included',
+		body: 'No separate hosting bill to worry about.',
+	},
+	{
+		title: 'Updates + support',
+		body: 'Need something changed? Just ask.',
+	},
+	{
+		title: 'Ongoing maintenance',
+		body: 'We keep things running so your website doesn’t become another thing on your list.',
+	},
+	{
+		title: 'Built for search',
+		body: 'Fast pages, clean structure, mobile-friendly design, and the technical basics search engines need.',
+	},
+	{
+		title: 'Forms + analytics',
+		body: 'Make it easy for customers to reach you and see how people are using your site.',
+	},
+] as const;
+
+const growthFeatures = [
+	{
+		title: 'Everything in Website',
+		body: 'The full website plan, hosting, maintenance, updates, and support included.',
+	},
+	{
+		title: 'Automated review requests',
+		body: 'Ask happy customers for a review at the right time.',
+	},
+	{
+		title: 'Email + text follow-ups',
+		body: 'Keep requests moving with simple, thoughtful reminders.',
+	},
+	{
+		title: 'Review monitoring',
+		body: 'Know when a new review comes in without having to keep checking.',
+	},
+	{
+		title: 'Missed-call text back',
+		body: 'Give callers an immediate way to keep the conversation going.',
+	},
+	{
+		title: 'Google Business help',
+		body: 'Keep the details customers see accurate and useful.',
+	},
+	{
+		title: 'Local visibility tools',
+		body: 'Get a clearer view of how your business shows up nearby.',
+	},
+] as const;
+
+const localSeoServices = [
+	'Google Business Profile management',
+	'Local search optimization',
+	'Service and location pages',
+	'Search performance monitoring',
+	'Ongoing improvements',
+] as const;
+
+const faqs = [
+	{
+		question: 'What does $0 down mean?',
+		answer: 'You don’t pay a large upfront design fee before we start.',
+	},
+	{
+		question: 'What’s included in the website price?',
+		answer:
+			'Design, development, hosting, maintenance, updates, search setup, forms, analytics, and support.',
+	},
+	{
+		question: 'Can I add more later?',
+		answer: 'Yes. Reviews, Local SEO, and brand work can be added when your business needs them.',
+	},
+] as const;
+---
+
+<BaseLayout
+	title="Pricing"
+	description="Straightforward website pricing for small businesses, with hosting, support, maintenance, and room to add growth services when you need them."
+>
+	<section class="ww-section ww-section-cream ww-pricing-hero" aria-labelledby="pricing-page-heading">
+		<div class="ww-container" data-reveal-group>
+			<p class="ww-eyebrow ww-muted">Pricing</p>
+
+			<h1 id="pricing-page-heading" class="ww-display-xl" data-word-reveal>
+				<WordReveal text="Start with the website. Add more when you need it." />
+			</h1>
+
+			<p class="ww-body-lg ww-measure ww-muted" data-reveal-block>
+				Every business needs something a little different. Start with the website, then add the help
+				that makes sense for where your business is going.
+			</p>
+		</div>
+	</section>
+
+	<div class="ww-offer-nav-shell" data-offer-nav-shell>
+		<div class="ww-container">
+			<nav class="ww-offer-nav" aria-label="Pricing options">
+				<a href="#website" aria-current="true" data-offer-link>Website</a>
+				<a href="#website-growth" data-offer-link>Website + Growth</a>
+				<a href="#more-services" data-offer-link>More services</a>
+			</nav>
+		</div>
+	</div>
+
+	<section class="ww-section-dark ww-plans" aria-label="Recurring website plans">
+		<article id="website" class="ww-section ww-price-plan" data-offer-target>
+			<div class="ww-container">
+				<div class="ww-plan-intro" data-reveal-group>
+					<div>
+						<h2 class="ww-display-lg" tabindex="-1" data-offer-heading data-word-reveal>
+							<WordReveal text="Website" />
+						</h2>
+
+						<div class="ww-plan-price" aria-label="$0 down. $175 per month." data-reveal-block>
+							<p class="ww-plan-upfront" aria-hidden="true">$0 down.</p>
+							<p class="ww-display-md ww-plan-monthly" aria-hidden="true">$175/month.</p>
+						</div>
+					</div>
+
+					<div class="ww-plan-summary" data-reveal-block style="--wr-i:1">
+						<p class="ww-body-lg ww-muted">
+							Everything you need for a website that looks good, works well, and stays taken care of.
+						</p>
+						<a href={CONTACT_HREF} class="ww-btn ww-btn-blue">{CTA_LABEL}</a>
+					</div>
+				</div>
+
+				<ul class="ww-plan-features">
+					{
+						websiteFeatures.map((feature) => (
+							<li>
+								<h3 class="ww-heading">{feature.title}</h3>
+								<p class="ww-body ww-muted">{feature.body}</p>
+							</li>
+						))
+					}
+				</ul>
+
+				<p class="ww-heading ww-plan-note">
+					<span aria-hidden="true">✓</span>
+					30-day money-back guarantee
+				</p>
+			</div>
+		</article>
+
+		<article id="website-growth" class="ww-section ww-price-plan" data-offer-target>
+			<div class="ww-container">
+				<div class="ww-plan-intro" data-reveal-group>
+					<div>
+						<p class="ww-eyebrow ww-plan-badge">Best value</p>
+						<h2 class="ww-display-lg" tabindex="-1" data-offer-heading data-word-reveal>
+							<WordReveal text="Website + Growth" />
+						</h2>
+
+						<div class="ww-plan-price" aria-label="$0 down. $297 per month." data-reveal-block>
+							<p class="ww-plan-upfront" aria-hidden="true">$0 down.</p>
+							<p class="ww-display-md ww-plan-monthly" aria-hidden="true">$297/month.</p>
+						</div>
+					</div>
+
+					<div class="ww-plan-summary" data-reveal-block style="--wr-i:1">
+						<p class="ww-body-lg ww-muted">
+							Everything in Website, plus tools that help turn more customers into business.
+						</p>
+						<a href={CONTACT_HREF} class="ww-btn ww-btn-blue">{CTA_LABEL}</a>
+					</div>
+				</div>
+
+				<ul class="ww-plan-features">
+					{
+						growthFeatures.map((feature) => (
+							<li>
+								<h3 class="ww-heading">{feature.title}</h3>
+								<p class="ww-body ww-muted">{feature.body}</p>
+							</li>
+						))
+					}
+				</ul>
+			</div>
+		</article>
+	</section>
+
+	<section
+		id="more-services"
+		class="ww-section ww-section-cream ww-more-services"
+		aria-labelledby="more-services-heading"
+		data-offer-target
+	>
+		<div class="ww-container">
+			<header class="ww-more-services-head" data-reveal-group>
+				<p class="ww-eyebrow ww-muted">More services</p>
+				<h2
+					id="more-services-heading"
+					class="ww-display-lg"
+					tabindex="-1"
+					data-offer-heading
+					data-word-reveal
+				>
+					<WordReveal text="More help when your business needs it." />
+				</h2>
+			</header>
+
+			<div class="ww-service-list">
+				<article class="ww-service-row">
+					<div>
+						<h3 class="ww-display-md">Local SEO</h3>
+						<p class="ww-body-lg ww-muted">For businesses that want to go further in local search.</p>
+					</div>
+
+					<div class="ww-service-detail">
+						<ul>
+							{localSeoServices.map((service) => <li class="ww-body">{service}</li>)}
+						</ul>
+						<a href={CONTACT_HREF} class="ww-btn ww-btn-dark">Talk to us about Local SEO</a>
+					</div>
+				</article>
+
+				<article class="ww-service-row">
+					<div>
+						<h3 class="ww-display-md">Brand Refreshes</h3>
+						<p class="ww-body-lg ww-muted">
+							For businesses that are good at what they do but don’t quite look it yet.
+						</p>
+					</div>
+
+					<div class="ww-service-detail">
+						<p class="ww-body-lg">
+							Logo cleanup, typography, colors, and the pieces your business needs to look consistent
+							wherever customers find you.
+						</p>
+						<p class="ww-eyebrow ww-muted ww-service-price">Priced by project</p>
+						<a href={CONTACT_HREF} class="ww-btn ww-btn-dark">Talk to us</a>
+					</div>
+				</article>
+			</div>
+		</div>
+	</section>
+
+	<section class="ww-section ww-reassurance" aria-labelledby="reassurance-heading">
+		<div class="ww-container">
+			<header class="ww-reassurance-head" data-reveal-group>
+				<p class="ww-eyebrow ww-muted">Good to know</p>
+				<h2 id="reassurance-heading" class="ww-display-lg" data-word-reveal>
+					<WordReveal text="Straight answers before we get started." />
+				</h2>
+			</header>
+
+			<dl class="ww-faq-list">
+				{
+					faqs.map((faq) => (
+						<div class="ww-faq-row">
+							<dt class="ww-heading">{faq.question}</dt>
+							<dd class="ww-body-lg ww-muted">{faq.answer}</dd>
+						</div>
+					))
+				}
+			</dl>
+		</div>
+	</section>
+
+	<section class="ww-section ww-section-dark ww-pricing-close" aria-labelledby="pricing-close-heading">
+		<div class="ww-container" data-reveal-group>
+			<h2 id="pricing-close-heading" class="ww-display-xl" data-word-reveal>
+				<WordReveal text="Ready for a website that works as hard as you do?" />
+			</h2>
+
+			<div class="ww-pricing-close-detail">
+				<p class="ww-body-lg ww-muted" data-reveal-block>
+					Tell us about your business. We’ll help you figure out what makes sense.
+				</p>
+				<a href={CONTACT_HREF} class="ww-btn ww-btn-blue">{CTA_LABEL}</a>
+			</div>
+		</div>
+	</section>
+</BaseLayout>
+
+<style>
+	.ww-pricing-hero .ww-container > * + * {
+		margin-top: var(--space-lg);
+	}
+
+	.ww-pricing-hero h1 {
+		max-width: 14ch;
+	}
+
+	.ww-pricing-hero p:last-child {
+		max-width: 54ch;
+	}
+
+	.ww-offer-nav-shell {
+		position: sticky;
+		top: var(--header-h);
+		z-index: 20;
+		padding-block: var(--space-sm);
+		background-color: rgb(255 255 255 / 94%);
+		border-block: 1px solid var(--ww-hairline-light);
+	}
+
+	@supports (backdrop-filter: blur(12px)) {
+		.ww-offer-nav-shell {
+			background-color: rgb(255 255 255 / 86%);
+			backdrop-filter: blur(12px);
+		}
+	}
+
+	.ww-offer-nav {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		padding: var(--space-xs);
+		background-color: var(--ww-light);
+		border-radius: var(--radius-pill);
+	}
+
+	.ww-offer-nav a {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 40px;
+		padding-inline: var(--space-sm);
+		border-radius: var(--radius-pill);
+		font-family: var(--font-sans);
+		font-size: var(--text-small);
+		font-weight: 500;
+		line-height: 1.15;
+		text-align: center;
+		text-decoration: none;
+		transition:
+			background-color var(--dur-fast) var(--ease-out),
+			color var(--dur-fast) var(--ease-out);
+	}
+
+	.ww-offer-nav a:hover {
+		color: var(--ww-blue);
+	}
+
+	.ww-offer-nav a[aria-current='true'] {
+		background-color: var(--ww-blue);
+		color: var(--ww-white);
+	}
+
+	.ww-price-plan {
+		scroll-margin-top: calc(var(--header-h) + 62px);
+	}
+
+	.ww-price-plan + .ww-price-plan {
+		border-top: 1px solid var(--ww-hairline-dark);
+	}
+
+	.ww-plan-intro {
+		display: grid;
+		gap: var(--space-xl);
+	}
+
+	.ww-plan-badge {
+		margin-bottom: var(--space-md);
+		color: var(--ww-white);
+	}
+
+	.ww-plan-price {
+		margin-top: var(--space-xl);
+	}
+
+	.ww-plan-upfront {
+		font-family: var(--font-display);
+		font-size: var(--text-display-xxl);
+		font-weight: 400;
+		line-height: 0.9;
+		letter-spacing: var(--tracking-display);
+	}
+
+	.ww-plan-monthly {
+		margin-top: var(--space-md);
+		color: var(--ww-disabled);
+	}
+
+	.ww-plan-summary {
+		max-width: 46ch;
+	}
+
+	.ww-plan-summary .ww-btn {
+		display: flex;
+		width: 100%;
+		margin-top: var(--space-lg);
+	}
+
+	.ww-plan-features {
+		display: grid;
+		margin: var(--space-2xl) 0 0;
+		padding: var(--space-lg) 0 0;
+		border-top: 1px solid var(--ww-hairline-dark);
+		list-style: none;
+	}
+
+	.ww-plan-features li {
+		padding-block: var(--space-lg);
+		border-top: 1px solid var(--ww-hairline-dark);
+	}
+
+	.ww-plan-features li:first-child {
+		padding-top: 0;
+		border-top: 0;
+	}
+
+	.ww-plan-features p {
+		max-width: 42ch;
+		margin-top: var(--space-sm);
+	}
+
+	.ww-plan-note {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+		padding-top: var(--space-xl);
+		border-top: 1px solid var(--ww-hairline-dark);
+	}
+
+	.ww-plan-note span {
+		color: var(--ww-blue);
+	}
+
+	.ww-more-services {
+		scroll-margin-top: calc(var(--header-h) + 62px);
+	}
+
+	.ww-more-services-head > * + * {
+		margin-top: var(--space-md);
+	}
+
+	.ww-more-services-head h2 {
+		max-width: 16ch;
+	}
+
+	.ww-service-list {
+		margin-top: var(--space-2xl);
+		border-top: 1px solid var(--ww-hairline);
+	}
+
+	.ww-service-row {
+		display: grid;
+		gap: var(--space-lg);
+		padding-block: var(--space-xl);
+		border-bottom: 1px solid var(--ww-hairline);
+	}
+
+	.ww-service-row > div:first-child p {
+		max-width: 38ch;
+		margin-top: var(--space-md);
+	}
+
+	.ww-service-detail ul {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.ww-service-detail li {
+		padding-block: var(--space-sm);
+		border-top: 1px solid var(--ww-hairline);
+	}
+
+	.ww-service-detail li:first-child {
+		padding-top: 0;
+		border-top: 0;
+	}
+
+	.ww-service-detail .ww-btn {
+		display: flex;
+		width: 100%;
+		margin-top: var(--space-lg);
+	}
+
+	.ww-service-price {
+		margin-top: var(--space-lg);
+	}
+
+	.ww-reassurance-head > * + * {
+		margin-top: var(--space-md);
+	}
+
+	.ww-reassurance-head h2 {
+		max-width: 16ch;
+	}
+
+	.ww-faq-list {
+		margin: var(--space-2xl) 0 0;
+		border-top: 1px solid var(--ww-hairline);
+	}
+
+	.ww-faq-row {
+		display: grid;
+		gap: var(--space-md);
+		padding-block: var(--space-xl);
+		border-bottom: 1px solid var(--ww-hairline);
+	}
+
+	.ww-faq-row dd {
+		max-width: 52ch;
+		margin: 0;
+	}
+
+	.ww-pricing-close h2 {
+		max-width: 14ch;
+	}
+
+	.ww-pricing-close-detail {
+		margin-top: var(--space-xl);
+	}
+
+	.ww-pricing-close-detail p {
+		max-width: 44ch;
+	}
+
+	.ww-pricing-close-detail .ww-btn {
+		display: flex;
+		width: 100%;
+		margin-top: var(--space-lg);
+	}
+
+	@media (min-width: 768px) {
+		.ww-offer-nav {
+			width: min(100%, 680px);
+			margin-inline: auto;
+		}
+
+		.ww-offer-nav a {
+			min-height: 44px;
+			padding-inline: var(--space-md);
+			font-size: var(--text-body);
+		}
+
+		.ww-plan-intro,
+		.ww-service-row,
+		.ww-faq-row {
+			grid-template-columns: 1fr 1fr;
+			gap: var(--space-3xl);
+		}
+
+		.ww-plan-summary {
+			align-self: end;
+		}
+
+		.ww-plan-summary .ww-btn,
+		.ww-service-detail .ww-btn,
+		.ww-pricing-close-detail .ww-btn {
+			display: inline-flex;
+			width: auto;
+		}
+
+		.ww-plan-features {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			column-gap: var(--space-2xl);
+		}
+
+		.ww-plan-features li:nth-child(2) {
+			padding-top: 0;
+			border-top: 0;
+		}
+
+		.ww-pricing-close-detail {
+			display: flex;
+			align-items: end;
+			justify-content: space-between;
+			gap: var(--space-xl);
+		}
+
+		.ww-pricing-close-detail .ww-btn {
+			flex-shrink: 0;
+			margin-top: 0;
+		}
+	}
+
+	@media (min-width: 1024px) {
+		.ww-plan-features {
+			column-gap: var(--space-3xl);
+		}
+	}
+</style>
+
+<script>
+	const offerLinks = Array.from(
+		document.querySelectorAll<HTMLAnchorElement>('[data-offer-link]'),
+	);
+	const offerTargets = Array.from(
+		document.querySelectorAll<HTMLElement>('[data-offer-target]'),
+	);
+
+	function markCurrent(id: string): void {
+		for (const link of offerLinks) {
+			if (link.hash === `#${id}`) link.setAttribute('aria-current', 'true');
+			else link.removeAttribute('aria-current');
+		}
+	}
+
+	for (const link of offerLinks) {
+		link.addEventListener('click', (event) => {
+			const target = document.querySelector<HTMLElement>(link.hash);
+			const heading = target?.querySelector<HTMLElement>('[data-offer-heading]');
+			if (!target || !heading) return;
+
+			event.preventDefault();
+			history.pushState(null, '', link.hash);
+			markCurrent(target.id);
+			const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+				? 'auto'
+				: 'smooth';
+			target.scrollIntoView({ behavior, block: 'start' });
+			heading.focus({ preventScroll: true });
+		});
+	}
+
+	if ('IntersectionObserver' in window) {
+		const observer = new IntersectionObserver(
+			(entries) => {
+				const visible = entries
+					.filter((entry) => entry.isIntersecting)
+					.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+				if (visible) markCurrent((visible.target as HTMLElement).id);
+			},
+			{ rootMargin: '-25% 0px -60% 0px' },
+		);
+
+		for (const target of offerTargets) observer.observe(target);
+	}
+
+	if (window.location.hash) {
+		const activeTarget = document.querySelector<HTMLElement>(window.location.hash);
+		if (activeTarget?.matches('[data-offer-target]')) markCurrent(activeTarget.id);
+	}
+</script>

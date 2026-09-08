@@ -1,0 +1,613 @@
+---
+/**
+ * BUILT AROUND YOUR BUSINESS — the five services, as a proof rail.
+ *
+ * The cards used to carry a number, a title and a line of copy. They now carry
+ * the work: a finished client site, the same build on a phone and a desktop,
+ * the local search sequence, the reputation sequence, and the brand frame. One
+ * card is open at a time and the open one is two and a quarter times the width
+ * of a shut one; the other four stay legible at their titles.
+ *
+ * WHAT MOVES, AND HOW. The rail is a flex line and the whole animation is one
+ * property: `flex-grow`, 1 on a shut card and --wwr-grow on the open one, over
+ * --wwr-dur on the site's own ease-out. Nothing is measured and nothing is set
+ * in script. The same declaration drives the stacked layout — a column of flex
+ * items grows in height on exactly the same terms — so a phone gets the
+ * identical behaviour from one `flex-direction` and two numbers.
+ *
+ * NOTHING REFLOWS WHILE IT MOVES. The panel and the proof copy are laid out at
+ * --wwr-open-w, the width the card will have when it is open, derived from the
+ * rail's own width rather than the card's current one. A demonstration is
+ * therefore not being resized underneath itself for 620ms and a paragraph does
+ * not rewrap on every frame; a shut card simply clips them. The one thing that
+ * does reflow is the title, which is the one thing that has to be readable at
+ * both widths.
+ *
+ * WHAT IS ON THE CARDS. See SERVICE_RAIL in config/home.ts. Every picture,
+ * label, line and link is configured there and this file renders whatever it
+ * is handed, so real assets swap in without a change here.
+ *
+ * ACCESSIBILITY. Each card's title is a real button with aria-expanded, and
+ * the proof it opens is a region it aria-controls. The button's ::after
+ * stretches over the whole card so the pointer target is the card, while the
+ * accessible name stays the service title alone. A shut proof region is
+ * `inert`, so a screen reader is not read all five at once, and that is the
+ * state the server renders for the four that start shut.
+ */
+import { Image } from 'astro:assets';
+import type { ServiceCard } from '../../config/home';
+import SmartphoneFrame from '../SmartphoneFrame.astro';
+import LocalSearchDemo from './promises/LocalSearchDemo.astro';
+import ReputationDemo from './promises/ReputationDemo.astro';
+import BrandRefresh from './promises/BrandRefresh.astro';
+import './promises/demo.css';
+import WordReveal from '../WordReveal.astro';
+
+interface Props {
+	heading: string;
+	body: readonly string[];
+	services: readonly ServiceCard[];
+	id?: string;
+}
+
+const { heading, body, services, id }: Props = Astro.props;
+
+/* Web Design opens the rail: first in the data, first on the page, and the one
+   card whose proof is simply the finished website. */
+const INITIAL = 0;
+---
+
+<section class="ww-section ww-services" id={id} aria-labelledby="services-heading">
+	<div class="ww-container">
+		<div class="ww-services-intro">
+			<h2 id="services-heading" class="ww-display-lg" data-word-reveal>
+				<WordReveal text={heading} />
+			</h2>
+
+			<div class="ww-services-intro-body">
+				{
+					body.map((paragraph, index) => (
+						<p class="ww-body-lg ww-measure" data-reveal-block style={`--wr-i:${index}`}>
+							{paragraph}
+						</p>
+					))
+				}
+			</div>
+		</div>
+
+		{/*
+		  Still a list, and still `role="list"`, because removing the bullets in
+		  CSS takes the list semantics with it in Safari. The entrance is on the
+		  rail rather than on the cards: it is one object, and reveal.css's rule
+		  carries a `transition` shorthand that would overwrite the one that
+		  opens a card.
+		*/}
+		<ul class="wwr-rail" role="list" data-service-rail data-reveal-block>
+			{
+				services.map((service, index) => {
+					const { proof } = service;
+					const proofId = `service-${service.id}-proof`;
+					const open = index === INITIAL;
+
+					return (
+						<li class="wwr-item" data-rail-item data-active={open ? '' : undefined}>
+							<div class="wwr-card">
+								<div class="wwr-bg">
+									{!proof.placeholder && (
+										<Image
+											src={proof.background}
+											alt={proof.backgroundAlt}
+											width={1200}
+											widths={[360, 480, 720, 960, 1200]}
+											sizes="(min-width: 1024px) 420px, 100vw"
+											quality={80}
+											loading="lazy"
+											decoding="async"
+											style={proof.focal ? `object-position:${proof.focal}` : undefined}
+										/>
+									)}
+								</div>
+
+								{/* Two layers. The lower one is always on and is what the
+								    title is legible against; the upper one is the quiet, and
+								    it is what lifts when the card opens. */}
+								<div class="wwr-scrim" aria-hidden="true" />
+								<div class="wwr-quiet" aria-hidden="true" />
+
+								{proof.panel === 'local-search' && (
+									<div class="wwr-panel ww-media wwd-frame" data-panel="local-search">
+										<LocalSearchDemo defer />
+									</div>
+								)}
+
+								{proof.panel === 'reputation' && (
+									<div
+										class="wwr-panel ww-media wwd-frame"
+										data-panel="reputation"
+										data-ground="white"
+									>
+										<ReputationDemo ground="white" defer />
+									</div>
+								)}
+
+								{proof.panel === 'brand' && (
+									<div class="wwr-panel ww-media wwd-frame" data-panel="brand">
+										<BrandRefresh />
+									</div>
+								)}
+
+								{/* No frame and no ground: the handset stands directly on the
+								    card so the desktop capture stays behind it. That pairing
+								    is the proof. */}
+								{proof.panel === 'device' && proof.screen && (
+									<div class="wwr-panel wwr-device" data-panel="device">
+										<SmartphoneFrame>
+											<Image
+												src={proof.screen}
+												alt={proof.screenAlt ?? ''}
+												width={720}
+												widths={[360, 540, 720]}
+												sizes="240px"
+												quality={80}
+												loading="lazy"
+												decoding="async"
+											/>
+										</SmartphoneFrame>
+									</div>
+								)}
+
+								<div class="wwr-body">
+									<h3 class="wwr-title">
+										<button
+											type="button"
+											class="wwr-trigger"
+											aria-expanded={open ? 'true' : 'false'}
+											aria-controls={proofId}
+											data-rail-trigger
+										>
+											{service.title}
+										</button>
+									</h3>
+
+									<div class="wwr-reveal" id={proofId} inert={open ? undefined : true}>
+										<div class="wwr-reveal-clip">
+											<div class="wwr-proof">
+												{proof.label && <p class="wwr-label">{proof.label}</p>}
+												<p class="wwr-proof-text">{proof.proof}</p>
+												{proof.link && (
+													<a class="wwr-link" href={proof.link.href}>
+														{proof.link.label}
+													</a>
+												)}
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</li>
+					);
+				})
+			}
+		</ul>
+	</div>
+</section>
+
+<style>
+	.ww-services {
+		background-color: var(--ww-cream);
+	}
+
+	.ww-services-intro {
+		margin-bottom: var(--space-xl);
+	}
+
+	.ww-services-intro-body {
+		margin-top: var(--space-md);
+	}
+
+	.ww-services-intro-body > * + * {
+		margin-top: var(--space-sm);
+	}
+
+	@media (min-width: 1024px) {
+		/* The statement and its explanation side by side, which keeps the top of
+		   the section from being a tall stack of text before the first card. */
+		.ww-services-intro {
+			display: grid;
+			grid-template-columns: 5fr 6fr;
+			gap: var(--space-2xl);
+			align-items: end;
+			margin-bottom: var(--space-2xl);
+		}
+
+		.ww-services-intro-body {
+			margin-top: 0;
+		}
+	}
+
+	/* ======================================================================
+	   THE RAIL
+
+	   --wwr-share is the fraction of the free space the open card takes, and
+	   it is the one number that has to be kept in step with --wwr-grow:
+
+	       share = grow / (4 + grow)
+
+	   It is written out rather than derived because --wwr-open-w has to be
+	   worked out in the stylesheet — a card cannot measure itself while it is
+	   moving — and dividing by a custom property in calc() is not something to
+	   rely on. Change one, change the other.
+	   ====================================================================== */
+	.wwr-rail {
+		/* The rail is the query container the cards take their open width from.
+		   Its own width does not change while a card is opening, which is the
+		   whole point. */
+		container-type: inline-size;
+
+		/* Stacked. 6 rather than the desktop 2.25 because a card in a column
+		   needs a screenful, not a wider strip: the demonstrations are drawn
+		   at the height they are given, and a shallow one has nowhere to
+		   stand. Four shut cards at 84px still leave the rail shorter than the
+		   five fixed-height cards it replaced. */
+		--wwr-grow: 6;
+		--wwr-share: 0.6;
+		--wwr-gap: var(--space-sm);
+		--wwr-pad: var(--space-md);
+		--wwr-h: 880px;
+		/* Height kept clear under the panel for the title and the proof copy.
+		   A fixed figure, so the panel is a fixed box. */
+		--wwr-body: 148px;
+		--wwr-open-w: calc(100cqw - 2 * var(--wwr-pad));
+
+		/* In the 500-700ms band, on the site's own curve. */
+		--wwr-dur: 620ms;
+
+		display: flex;
+		flex-direction: column;
+		gap: var(--wwr-gap);
+		height: var(--wwr-h);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	@media (min-width: 1024px) {
+		.wwr-rail {
+			--wwr-grow: 2.25;
+			--wwr-share: 0.36;
+			--wwr-h: clamp(460px, 46vw, 600px);
+			--wwr-body: 164px;
+			--wwr-open-w: calc((100cqw - 4 * var(--wwr-gap)) * var(--wwr-share) - 2 * var(--wwr-pad));
+
+			flex-direction: row;
+		}
+	}
+
+	@media (min-width: 1280px) {
+		.wwr-rail {
+			--wwr-gap: var(--space-md);
+		}
+	}
+
+	/*
+	  The whole animation. flex-basis stays at 0 so the widths are the grow
+	  values in proportion: four shut cards at 1 and one open card at 2.25 put
+	  the open one at 2.25x a shut one, exactly.
+	*/
+	.wwr-item {
+		flex: 1 1 0;
+		min-width: 0;
+		min-height: 0;
+		transition: flex-grow var(--wwr-dur) var(--ease-out);
+	}
+
+	.wwr-item[data-active] {
+		flex-grow: var(--wwr-grow);
+	}
+
+	/*
+	  isolation, plus negative z-index on everything behind the words, is what
+	  lets the title button stretch over the card: the picture, the scrims and
+	  the panel all sit behind the card's own in-flow content, so the button's
+	  ::after — which resolves against this box — covers every one of them
+	  without a z-index race.
+
+	  SQUARE. The rail deliberately does not take --radius-card. Five hard
+	  rectangles butted up against each other read as one band of pictures
+	  rather than as five separate objects, and a shut card is 180px wide —
+	  a 50px radius on that is most of the card. The rest of the page keeps
+	  the 50px geometry; this section is the exception, and the frames drawn
+	  inside a card follow it.
+	*/
+	.wwr-card {
+		position: relative;
+		isolation: isolate;
+		overflow: hidden;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+		padding: var(--wwr-pad);
+		background-color: var(--ww-ink);
+		color: var(--ww-white);
+	}
+
+	@media (min-width: 1024px) {
+		.wwr-card {
+			padding-bottom: var(--space-lg);
+		}
+	}
+
+	.wwr-bg {
+		position: absolute;
+		inset: 0;
+		z-index: -3;
+		background-color: var(--ww-ink);
+	}
+
+	.wwr-bg :global(img) {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	/* Always on, bottom-weighted: this is what the title is legible against,
+	   open or shut. */
+	.wwr-scrim {
+		position: absolute;
+		inset: 0;
+		z-index: -2;
+		background: linear-gradient(
+			to top,
+			rgb(0 0 0 / 76%) 0%,
+			rgb(0 0 0 / 44%) 42%,
+			rgb(0 0 0 / 22%) 100%
+		);
+	}
+
+	/* The quiet. A shut card is a dark rectangle with a title on it, and
+	   opening it is largely this layer getting out of the way. */
+	.wwr-quiet {
+		position: absolute;
+		inset: 0;
+		z-index: -2;
+		background-color: rgb(0 0 0 / 60%);
+		transition: opacity var(--wwr-dur) var(--ease-out);
+	}
+
+	.wwr-item[data-active] .wwr-quiet {
+		opacity: 0;
+	}
+
+	/* ======================================================================
+	   THE PANEL — whatever is drawn over the picture when the card opens.
+
+	   Laid out at the open width and between two fixed insets, so its box
+	   never changes size: the demonstrations inside are container-sized, and a
+	   container that resized for 620ms would re-derive their type on every
+	   frame of it.
+	   ====================================================================== */
+	.wwr-panel {
+		position: absolute;
+		border-radius: 0;
+		z-index: -1;
+		top: var(--wwr-pad);
+		left: var(--wwr-pad);
+		width: var(--wwr-open-w);
+		bottom: var(--wwr-body);
+		opacity: 0;
+		transform: translateY(14px);
+		transition:
+			opacity var(--wwr-dur) var(--ease-out),
+			transform var(--wwr-dur) var(--ease-out);
+	}
+
+	.wwr-item[data-active] .wwr-panel {
+		opacity: 1;
+		transform: none;
+		/* A beat behind the width, so the card is most of the way open before
+		   what is inside it arrives. */
+		transition-delay: 140ms;
+	}
+
+	/* The previous Hood mark is also the closed card's thumbnail. Unlike the
+	   animated demos, this static panel can safely size with the card while it
+	   opens. Keeping it visible gives the oval mark a clear first frame before
+	   the timed brand reveal begins. */
+	@media (min-width: 1024px) {
+		.wwr-panel[data-panel='brand'] {
+			right: var(--wwr-pad);
+			width: auto;
+			opacity: 1;
+			transform: none;
+			transition: none;
+		}
+	}
+
+	/*
+	  The reputation profile is drawn from its frame's own size, and the frame
+	  it gets here is shorter in proportion than the one the promise band gives
+	  it — a card leaves room for a title and two lines under the panel. Left
+	  alone it sets its type from the width, runs past the bottom of the panel
+	  and cuts a review in half. A slightly smaller step puts the whole profile
+	  back inside the box at both layouts.
+	*/
+	.wwr-panel[data-panel='reputation'] :global(.wwd) {
+		font-size: clamp(8px, min(3.2cqw, 3.2cqh), 14px);
+	}
+
+	/* The handset stands on the card rather than in a frame, so it needs a
+	   size container of its own for the device to measure against. */
+	.wwr-device {
+		container-type: size;
+	}
+
+	/*
+	  SmartphoneFrame derives the whole device from 2.9cqh, which makes it a
+	  little over one and a half times the height of its container — the search
+	  demonstration wants that, because it is pushed into and clipped. Here the
+	  whole handset has to be visible, and 0.6 is the constant that turns 1.5
+	  container heights into 0.9 of one.
+	*/
+	.wwr-device :global(.ww-phone) {
+		transform: scale(0.6);
+		transform-origin: 50% 0;
+	}
+
+	.wwr-device :global(.ww-phone-content img) {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		object-position: 50% 0;
+	}
+
+	/* ======================================================================
+	   THE WORDS
+	   ====================================================================== */
+	.wwr-body {
+		/* Deliberately not positioned: the title button's ::after has to resolve
+		   against the card, not against this. */
+		min-width: 0;
+	}
+
+	.wwr-title {
+		margin: 0;
+		font-family: var(--font-sans);
+		font-size: clamp(1rem, 0.72rem + 0.62vw, 1.25rem);
+		font-weight: 600;
+		line-height: var(--leading-heading);
+		letter-spacing: -0.01em;
+		/* The safety valve. A shut card is about 140px of column and
+		   "Development" is one unbreakable word: between 1024px and 1280px it
+		   is a few pixels wider than the space, and a hyphen is a better answer
+		   than a word running out of the card. */
+		hyphens: auto;
+	}
+
+	/* A real button, carrying the service title and nothing else, with the
+	   whole card as its hit area. */
+	.wwr-trigger {
+		display: block;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: inherit;
+		text-align: left;
+		cursor: pointer;
+	}
+
+	.wwr-trigger::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+	}
+
+	/*
+	  NO RING. Not on focus and not on the open card: a rectangle drawn round
+	  a card is the loudest thing in a band of five, and the open card is
+	  already unmistakable — it is two and a quarter times the width of its
+	  neighbours, its picture has come up out of the dark, and it is the only
+	  one carrying copy.
+
+	  Keyboard focus still has to show somewhere, so it shows on the title,
+	  which is the thing actually focused. On a wide screen focus opens the
+	  card as well, and the opening is most of the answer; in the stacked
+	  layout, where focus does not open anything, this rule is the whole of it.
+	*/
+	.wwr-trigger:focus-visible {
+		outline: none;
+		text-decoration: underline;
+		text-decoration-color: var(--ww-blue);
+		text-decoration-thickness: 2px;
+		text-underline-offset: 6px;
+	}
+
+	/*
+	  The disclosure. 0fr to 1fr, so the title is carried up by the copy
+	  arriving under it rather than jumping to a new place.
+	*/
+	.wwr-reveal {
+		display: grid;
+		grid-template-rows: 0fr;
+		transition: grid-template-rows var(--wwr-dur) var(--ease-out);
+	}
+
+	.wwr-item[data-active] .wwr-reveal {
+		grid-template-rows: 1fr;
+	}
+
+	.wwr-reveal-clip {
+		overflow: hidden;
+		min-height: 0;
+	}
+
+	/* Laid out at the open width, like the panel, so the paragraph is not
+	   rewrapping on every frame. A shut card clips it. */
+	.wwr-proof {
+		width: var(--wwr-open-w);
+		padding-top: var(--space-sm);
+		opacity: 0;
+		transform: translateY(10px);
+		transition:
+			opacity var(--wwr-dur) var(--ease-out),
+			transform var(--wwr-dur) var(--ease-out);
+	}
+
+	.wwr-item[data-active] .wwr-proof {
+		opacity: 1;
+		transform: none;
+		transition-delay: 180ms;
+	}
+
+	.wwr-label {
+		margin: 0 0 var(--space-xs);
+		font-family: var(--font-mono);
+		font-size: var(--text-eyebrow);
+		font-weight: 500;
+		line-height: 1.2;
+		letter-spacing: var(--tracking-eyebrow);
+		text-transform: uppercase;
+		color: rgb(255 255 255 / 68%);
+	}
+
+	.wwr-proof-text {
+		margin: 0;
+		font-family: var(--font-sans);
+		font-size: var(--text-small);
+		line-height: var(--leading-body);
+		color: rgb(255 255 255 / 82%);
+		text-wrap: pretty;
+	}
+
+	/*
+	  The other place the blue is spent. White words, because blue on this
+	  ground is not a legible colour to set type in; the rule underneath is the
+	  blue. It lifts above the button's hit area so it is actually clickable.
+	*/
+	.wwr-link {
+		position: relative;
+		z-index: 1;
+		display: inline-block;
+		margin-top: var(--space-sm);
+		font-family: var(--font-sans);
+		font-size: var(--text-small);
+		font-weight: 500;
+		color: var(--ww-white);
+		text-decoration: underline;
+		text-decoration-color: var(--ww-blue);
+		text-decoration-thickness: 2px;
+		text-underline-offset: 5px;
+	}
+
+	.wwr-link:hover {
+		text-decoration-color: var(--ww-white);
+	}
+</style>
+
+<script>
+	import { initServiceRail } from './service-rail.client';
+
+	initServiceRail();
+</script>

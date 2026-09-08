@@ -7,15 +7,15 @@
  * service list rather than as more plans: hairline-separated rows, the name on
  * the left, what it covers on the right, and no boxes anywhere.
  *
- * On the Reviews & Reputation row: the plan two screens up already sells that
- * offer, at $297, as Website + Growth. Printing the same figure again here as
- * though it were a separate product would give the page two prices for one
- * thing. So this row explains what is inside that plan and names it in the
- * slot where a price would go. The price itself has not changed and is not
- * repeated. See the note over ADDITIONAL_SERVICES in config/home.ts.
+ * On the Reviews & Reputation row: the standalone pricing page sells that
+ * offer as Website + Growth. This row explains what is inside it and names the
+ * plan in the slot where a price would go, without turning the homepage's one
+ * website offer back into a comparison table. See ADDITIONAL_SERVICES in
+ * config/home.ts.
  */
 import { CONTACT_HREF } from '../../config/site';
 import type { AdditionalService } from '../../config/home';
+import WordReveal from '../WordReveal.astro';
 
 interface Props {
 	heading: string;
@@ -30,9 +30,11 @@ const { heading, body, services, id }: Props = Astro.props;
 <section class="ww-section ww-section-dark ww-more" id={id} aria-labelledby="more-heading">
 	<div class="ww-container">
 		<header class="ww-more-head">
-			<h2 id="more-heading" class="ww-display-lg">{heading}</h2>
+			<h2 id="more-heading" class="ww-display-lg" data-word-reveal>
+				<WordReveal text={heading} />
+			</h2>
 
-			<p class="ww-body-lg ww-measure ww-muted">{body}</p>
+			<p class="ww-body-lg ww-measure ww-muted" data-reveal-block>{body}</p>
 		</header>
 
 		<div class="ww-more-list">

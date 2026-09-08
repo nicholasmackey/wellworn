@@ -14,10 +14,28 @@
  * The zoom is a transform on a device laid out at its FINAL size, so the state
  * that holds is untransformed and the type in it is rasterised sharp.
  *
- * Every business here is invented, and so is every number beside it. Nothing
- * on this screen is a real listing or a real ranking.
+ * THE CHROME IS GOOGLE'S. The mark, the search field, the result tabs and the
+ * Places header are dressed to read as a search result page at a glance, so
+ * nobody has to be told what they are looking at. Everything below the chrome
+ * is ours: the businesses, the ratings and the ranking are all invented, and
+ * nothing on this screen is a real listing or a real search.
  */
 import SmartphoneFrame from '../../SmartphoneFrame.astro';
+
+interface Props {
+	/**
+	 * Hold the sequence back for whoever placed the frame to start.
+	 *
+	 * The promise band leaves this off: scrolling the band into view is
+	 * exactly when the search should run. The service rail sets it, because
+	 * its copy of the frame sits inside a card that is closed until someone
+	 * opens it, and a sequence that played on the way past would be over by
+	 * then. See startLocalSearch in local-search.client.ts.
+	 */
+	defer?: boolean;
+}
+
+const { defer = false }: Props = Astro.props;
 
 interface Result {
 	readonly name: string;
@@ -47,6 +65,10 @@ const RESULTS: readonly Result[] = [
 	{ name: 'Twelve Grain Co.', rating: '4.1', fill: '82%', reviews: '44', meta: 'Bakery · Open · 2.3 mi' },
 ];
 
+/* The result tabs, as a search page has them. The first one is the one the
+   page is on, and none of them do anything. */
+const TABS: readonly string[] = ['All', 'Maps', 'Images', 'News', 'Videos'];
+
 /* The typed query. The client script swaps the tail for a coarse locality when
    one can be inferred from the browser's own time zone; it never asks for a
    location. This is what renders without JavaScript, and what a crawler sees. */
@@ -56,6 +78,7 @@ const QUERY = 'best bakery near me';
 <div
 	class="wws"
 	data-local-search
+	data-deferred={defer ? '' : undefined}
 	data-query={QUERY}
 	role="img"
 	aria-label="A local search for “best bakery near me” on a phone. Four nearby bakeries are listed, and the featured one, Rise &amp; Rye Bakehouse, has risen to the first result with a five star rating."
@@ -63,13 +86,39 @@ const QUERY = 'best bakery near me';
 	<SmartphoneFrame>
 		<div class="wws-app">
 			<div class="wws-searchbar">
-				<svg class="wws-glass" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-					<circle cx="7" cy="7" r="4.75" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
-					<path d="M10.5 10.5 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
-					></path>
-				</svg>
+				<img class="wws-mark" src="/images/brand/google-g.svg" alt="" aria-hidden="true" />
 				<span class="wws-query"><span data-typed>{QUERY}</span><i class="wws-caret" aria-hidden="true"></i></span>
+
+				<span class="wws-tools" aria-hidden="true">
+					{/* The microphone and the lens, in the colours they are drawn in. */}
+					<svg class="wws-tool" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+						<path fill="#4285f4" d="M12 2.5a2.6 2.6 0 0 1 2.6 2.6v1.4H9.4V5.1A2.6 2.6 0 0 1 12 2.5Z"></path>
+						<path fill="#ea4335" d="M9.4 6.5h5.2v2.6H9.4z"></path>
+						<path fill="#fbbc04" d="M9.4 9.1h5.2v2.6H9.4z"></path>
+						<path fill="#34a853" d="M9.4 11.7h5.2v.6a2.6 2.6 0 0 1-5.2 0v-.6Z"></path>
+						<path
+							fill="#5f6368"
+							d="M6.2 11.2a.85.85 0 0 1 1.7 0 4.1 4.1 0 0 0 8.2 0 .85.85 0 0 1 1.7 0 5.8 5.8 0 0 1-4.95 5.72V19h-1.7v-2.08A5.8 5.8 0 0 1 6.2 11.2Z"
+						></path>
+					</svg>
+
+					<svg class="wws-tool" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+						<g fill="none" stroke="#5f6368" stroke-width="1.9" stroke-linecap="round">
+							<path d="M4 8.5V6a2 2 0 0 1 2-2h2.5"></path>
+							<path d="M20 8.5V6a2 2 0 0 0-2-2h-2.5"></path>
+							<path d="M4 15.5V18a2 2 0 0 0 2 2h2.5"></path>
+							<path d="M20 15.5V18a2 2 0 0 1-2 2h-2.5"></path>
+						</g>
+						<circle cx="12" cy="12" r="3.1" fill="#4285f4"></circle>
+					</svg>
+				</span>
 			</div>
+
+			<nav class="wws-tabs" aria-hidden="true">
+				{TABS.map((tab, i) => <span class:list={['wws-tab', i === 0 && 'is-current']}>{tab}</span>)}
+			</nav>
+
+			<p class="wws-places" aria-hidden="true">Places</p>
 
 			<ul class="wws-results" data-results>
 				{
@@ -122,14 +171,28 @@ const QUERY = 'best bakery near me';
 		transform: none;
 	}
 
+	/*
+	  The screen's own corner radius is large, so the interface is inset well
+	  clear of it — tight to the glass, a card's own small radius sits inside
+	  the sweep of the phone's and both of them read as mistakes.
+
+	  The colours below are the search page's, kept local to this block: they
+	  are a costume for one screenshot and have no business in the site's
+	  tokens.
+	*/
 	.wws-app {
+		--g-ink: #202124;
+		--g-gray: #5f6368;
+		--g-hairline: #dadce0;
+		--g-blue: #1a73e8;
+
 		height: 100%;
-		padding: 0.5em 1.1em 0;
+		padding: 0.9em 1.5em 0;
 		display: flex;
 		flex-direction: column;
-		gap: 0.85em;
 		font-size: 1em;
-		color: var(--ww-ink);
+		font-family: Roboto, Arial, var(--font-sans), sans-serif;
+		color: var(--g-ink);
 	}
 
 	/* --------------------------------------------------------------------
@@ -139,28 +202,42 @@ const QUERY = 'best bakery near me';
 		flex: none;
 		display: flex;
 		align-items: center;
-		gap: 0.55em;
-		padding: 0.7em 1em;
+		gap: 0.6em;
+		padding: 0.62em 0.9em;
 		border-radius: var(--radius-pill);
 		background-color: var(--ww-white);
-		border: 1px solid var(--ww-hairline-light);
-		color: var(--ww-muted);
+		border: 1px solid var(--g-hairline);
+		box-shadow: 0 0.08em 0.4em rgb(32 33 36 / 12%);
+		color: var(--g-gray);
 		overflow: hidden;
 	}
 
-	.wws-glass {
+	.wws-mark {
 		flex: none;
-		width: 1.05em;
-		height: 1.05em;
+		width: 1.3em;
+		height: 1.3em;
 	}
 
 	.wws-query {
 		display: flex;
 		align-items: center;
+		flex: 1 1 auto;
 		min-width: 0;
 		font-size: 0.9em;
-		color: var(--ww-ink);
+		color: var(--g-ink);
 		white-space: nowrap;
+	}
+
+	.wws-tools {
+		flex: none;
+		display: flex;
+		align-items: center;
+		gap: 0.55em;
+	}
+
+	.wws-tool {
+		width: 1.05em;
+		height: 1.05em;
 	}
 
 	/* The caret only exists while the query is being written. Before the
@@ -171,7 +248,7 @@ const QUERY = 'best bakery near me';
 		width: 0.09em;
 		height: 1.05em;
 		margin-left: 0.12em;
-		background-color: var(--ww-blue);
+		background-color: var(--g-blue);
 	}
 
 	.wws.is-typing .wws-caret {
@@ -191,8 +268,42 @@ const QUERY = 'best bakery near me';
 	}
 
 	/* --------------------------------------------------------------------
+	   THE TABS. Chrome, and read as chrome: the hairline under them runs the
+	   full width of the glass, which is why they carry the app's padding
+	   back out as a negative margin.
+	   -------------------------------------------------------------------- */
+	.wws-tabs {
+		flex: none;
+		display: flex;
+		gap: 1.35em;
+		margin: 0.85em -1.5em 0;
+		padding: 0 1.5em;
+		border-bottom: 1px solid var(--g-hairline);
+		font-size: 0.72em;
+		color: var(--g-gray);
+		white-space: nowrap;
+	}
+
+	.wws-tab {
+		padding-bottom: 0.75em;
+		border-bottom: 0.22em solid transparent;
+	}
+
+	.wws-tab.is-current {
+		color: var(--g-blue);
+		border-bottom-color: var(--g-blue);
+	}
+
+	/* --------------------------------------------------------------------
 	   THE LIST
 	   -------------------------------------------------------------------- */
+	.wws-places {
+		flex: none;
+		margin: 0.9em 0 0.55em;
+		font-size: 0.78em;
+		color: var(--g-gray);
+	}
+
 	.wws-results {
 		list-style: none;
 		margin: 0;
@@ -205,7 +316,7 @@ const QUERY = 'best bakery near me';
 
 	.wws-result {
 		background-color: var(--ww-white);
-		border: 1px solid var(--ww-hairline-light);
+		border: 1px solid var(--g-hairline);
 		border-radius: var(--radius-input);
 		padding: 0.75em 0.9em;
 		opacity: 0;
@@ -237,7 +348,7 @@ const QUERY = 'best bakery near me';
 	  life. A ring, not a fill.
 	*/
 	.wws.is-listed .wws-result.is-featured {
-		border-color: var(--ww-blue);
+		border-color: var(--g-blue);
 	}
 
 	.wws-name {
@@ -261,7 +372,7 @@ const QUERY = 'best bakery near me';
 
 	.wws-meta {
 		font-size: 0.78em;
-		color: var(--ww-muted);
+		color: var(--g-gray);
 	}
 
 	.wws-result-meta {
@@ -275,7 +386,7 @@ const QUERY = 'best bakery near me';
 		display: inline-block;
 		letter-spacing: 0.05em;
 		white-space: nowrap;
-		color: var(--ww-hairline);
+		color: var(--g-hairline);
 	}
 
 	.wws-stars > span {

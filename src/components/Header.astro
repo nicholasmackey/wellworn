@@ -10,9 +10,9 @@
  * navigation bar that needs its own navigation.
  *
  * Below the `lg` breakpoint the three words fold into a panel behind a
- * toggle. The action does not fold with them: "Start a project" stays in the
- * bar at every width, because the one thing a visitor might want to do from
- * anywhere on the page should never be two taps away.
+ * toggle. The action does not fold with them: on the ordinary white bar,
+ * "Start a project" stays visible at every width. The transparent overlay
+ * omits it until the bar's white surface appears.
  *
  * TWO MODES, one bar. By default it is that white bar, sticky, with a hairline
  * under it. With `overlay` it is fixed and transparent and sits ON the page's
@@ -202,18 +202,11 @@ const { class: className = '', overlay = false }: Props = Astro.props;
 		opacity: 0.7;
 	}
 
-	/* The action inverts with the bar: a black pill on dark footage is a hole,
-	   and the reference puts the light pill in this position over media. It
-	   goes back to black the moment the white surface arrives. */
-	.ww-header[data-overlay]:not([data-solid]) .ww-header-cta {
-		background-color: var(--ww-white);
-		border-color: var(--ww-white);
-		color: var(--ww-ink);
-	}
-
-	.ww-header[data-overlay]:not([data-solid]) .ww-header-cta:hover {
-		background-color: var(--ww-light);
-		border-color: var(--ww-light);
+	/* With no navbar surface, omit the action altogether. Opening the mobile
+	   panel gives the bar a white surface too, so that state is excluded. */
+	.ww-header[data-overlay]:not([data-solid]):not(:has(.ww-header-panel[data-open]))
+		.ww-header-cta {
+		display: none;
 	}
 
 	/*
@@ -345,6 +338,21 @@ const { class: className = '', overlay = false }: Props = Astro.props;
 	@media (min-width: 1024px) {
 		.ww-header-nav {
 			display: block;
+			flex: 1;
+			min-width: 0;
+		}
+
+		/* Keep the links grouped at the right edge. When the solid bar reveals its
+		   CTA, flexbox gives that action its width and shifts this group left. */
+		.ww-header-nav ul {
+			justify-content: flex-end;
+		}
+
+		/* With no CTA or menu toggle on desktop, remove their empty wrapper too so
+		   the last nav item reaches the right edge of the content container. */
+		.ww-header[data-overlay]:not([data-solid]):not(:has(.ww-header-panel[data-open]))
+			.ww-header-actions {
+			display: none;
 		}
 	}
 
@@ -469,8 +477,8 @@ const { class: className = '', overlay = false }: Props = Astro.props;
 		list-style: none;
 	}
 
-	/* Hairline-separated rows, the same device the pricing plans and the service
-	   accordion are built from. */
+	/* Hairline-separated rows, the same device the pricing plans are built
+	   from. */
 	.ww-header-panel li + li {
 		border-top: 1px solid var(--ww-hairline-light);
 	}

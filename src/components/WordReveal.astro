@@ -1,0 +1,49 @@
+---
+/**
+ * A LINE OF DISPLAY COPY, SPLIT INTO WORDS.
+ *
+ * Goes inside the heading, not around it: the element that carries
+ * `data-word-reveal` is the heading itself, so what is observed and what is
+ * styled is the real element and no wrapper is added to the layout.
+ *
+ *   <h2 class="ww-display-lg" data-word-reveal>
+ *     <WordReveal text={heading} />
+ *   </h2>
+ *
+ * WHAT A SCREEN READER GETS. The sentence, once, as a sentence. The word
+ * spans are inside an aria-hidden wrapper and the whole string is repeated in
+ * a visually hidden span beside them, so the accessible name of a heading is
+ * what it always was — which matters here, because several of these headings
+ * are the target of an aria-labelledby on their section.
+ *
+ * WHAT THE LAYOUT GETS. The same line breaks. The words are separated by
+ * ordinary whitespace text nodes and each one is inline-block, so every break
+ * opportunity the original text had is still there and no `<br>` is invented.
+ *
+ * `start` continues the stagger across a heading written as more than one
+ * line — the closing statement is three of these and reads as one sweep.
+ */
+interface Props {
+	/** The line. Split on whitespace; nothing else is interpreted. */
+	text: string;
+	/** The stagger index the first word takes. */
+	start?: number;
+}
+
+const { text, start = 0 }: Props = Astro.props;
+
+const words = text.split(/\s+/).filter(Boolean);
+---
+
+<span class="ww-sr-only">{text}</span><span aria-hidden="true">{
+	/* One line, and it has to stay one line: whitespace inside a word's own
+	   span would render as a space beside the word, and the single `{' '}`
+	   between the spans is the only gap the line is meant to have. */
+	words.map((word, index) => (<><span class="ww-word" style={`--wr-i:${start + index}`}>{word}</span>{' '}</>))
+}</span>
+
+<script>
+	import { initReveal } from './reveal.client';
+
+	initReveal();
+</script>

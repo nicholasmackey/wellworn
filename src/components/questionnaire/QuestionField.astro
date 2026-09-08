@@ -143,7 +143,7 @@ const placeholder =
 
 	{
 		question.type === 'number' && (
-			<div class="flex items-center gap-3">
+			<div class="q-number">
 				<input
 					id={id}
 					name={question.id}
@@ -160,9 +160,7 @@ const placeholder =
 				/>
 				{/* The unit sits beside the box rather than inside the label, so the
 				    label stays the question and the box stays the answer. */}
-				{question.unit && (
-					<span class="shrink-0 text-[0.9375rem] text-(--q-text)/60">{question.unit}</span>
-				)}
+				{question.unit && <span class="ww-body ww-muted q-unit">{question.unit}</span>}
 			</div>
 		)
 	}
@@ -211,7 +209,7 @@ const placeholder =
 
 	{
 		isGroup && (
-			<div class="q-controls border-t border-(--q-border)/10">
+			<div class="q-controls q-choices">
 				{choices.map((choice) => (
 					<label class="q-choice">
 						<input
@@ -257,3 +255,23 @@ const placeholder =
 		)
 	}
 </FieldShell>
+
+<style>
+	/* A number and its unit on one line, the unit reading as a note on the box
+	   rather than as part of the answer. */
+	.q-number {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+	}
+
+	.q-unit {
+		flex-shrink: 0;
+	}
+
+	/* The group's own top rule. Every choice draws the one under it, so the list
+	   closes itself however many options there are. */
+	.q-choices {
+		border-top: 1px solid var(--ww-hairline);
+	}
+</style>

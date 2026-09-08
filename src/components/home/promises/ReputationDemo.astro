@@ -19,9 +19,15 @@
  */
 interface Props {
 	ground: 'white' | 'cream';
+	/**
+	 * Hold the sequence back for whoever placed the frame to start. Set by the
+	 * service rail, whose copy of this sits inside a card that is closed until
+	 * it is opened. See startPromiseDemo in promise-demos.client.ts.
+	 */
+	defer?: boolean;
 }
 
-const { ground }: Props = Astro.props;
+const { ground, defer = false }: Props = Astro.props;
 
 interface Review {
 	readonly author: string;
@@ -38,7 +44,13 @@ const REVIEWS: readonly Review[] = [
 ];
 ---
 
-<div class="wwd wwd-rep" data-demo="reputation" data-ground={ground} data-step="0">
+<div
+	class="wwd wwd-rep"
+	data-demo="reputation"
+	data-deferred={defer ? '' : undefined}
+	data-ground={ground}
+	data-step="0"
+>
 	<div
 		class="wwd-stage"
 		role="img"

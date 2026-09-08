@@ -9,17 +9,18 @@
  * steps into the later phases whenever it suits. Five phases each showing eight
  * tasks is not a timeline; it is a spreadsheet with a heading.
  *
- * A row rather than a card. The whole timeline is one column of rules — the
- * same furniture the marketing site builds its sections from — because five
+ * A row rather than a card. The whole timeline is one column of hairlines — the
+ * site's only structural device besides a change of ground — because five
  * bordered panels stacked up is the look of software the studio bought rather
  * than of a page it made.
  *
  * The rail is built out of flex rather than absolute positioning: a spacer, the
- * marker, then a segment taking the rest of the row. `-my` cancels the row's
- * own padding so each segment runs edge to edge and meets its neighbour
- * exactly, and the first and last are simply left unpainted rather than
- * measured around. The spacer's height is the one measured number here — it
- * drops the marker onto the centre of the phase title's first line.
+ * marker, then a segment taking the rest of the row. The negative margin
+ * cancels the row's own padding so each segment runs edge to edge and meets its
+ * neighbour exactly, and the first and last are simply left unpainted rather
+ * than measured around. The spacer's height is the one derived number here — it
+ * drops the marker onto the centre of the phase title's first line, and it is
+ * written in terms of the type token so it follows the heading as that scales.
  */
 import type { ProjectPhase } from '../../config/project';
 import { PHASE_CHIP, PHASE_MARK } from './state';
@@ -44,17 +45,14 @@ const isCurrent = phase.status === 'current';
 const steps = isCurrent ? (phase.steps ?? []) : [];
 ---
 
-<li
-	class="grid grid-cols-[1.25rem_minmax(0,1fr)] gap-x-4 border-t border-charcoal/12 py-6 sm:grid-cols-[1.5rem_minmax(0,1fr)] sm:gap-x-5 sm:py-7"
->
+<li class="ww-phase">
 	{/* The rail. Hidden from assistive tech: it is a picture of the sequence,
 	    and the sequence is already said by the numbers and the chips. */}
-	<div class="col-start-1 -my-6 flex flex-col items-center sm:-my-7" aria-hidden="true">
-		<span class:list={['h-[1.6875rem] w-px shrink-0 sm:h-[1.9375rem]', index > 0 && 'bg-portal-rail']}
-		></span>
+	<div class="ww-phase-rail" aria-hidden="true">
+		<span class:list={['ww-phase-lead', index > 0 && 'is-drawn']}></span>
 
-		<span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
-			<span class:list={['flex items-center justify-center rounded-full', PHASE_MARK[phase.status]]}>
+		<span class="ww-phase-slot">
+			<span class:list={['ww-phase-mark', PHASE_MARK[phase.status]]}>
 				{
 					phase.status === 'complete' && (
 						<svg
@@ -64,7 +62,7 @@ const steps = isCurrent ? (phase.steps ?? []) : [];
 							stroke-width="2.5"
 							stroke-linecap="round"
 							stroke-linejoin="round"
-							class="h-2 w-2 text-portal-paper"
+							class="ww-phase-tick"
 						>
 							<path d="m2.5 7.5 3 3 6-7" />
 						</svg>
@@ -73,57 +71,52 @@ const steps = isCurrent ? (phase.steps ?? []) : [];
 			</span>
 		</span>
 
-		<span class:list={['w-px flex-1', index < total - 1 && 'bg-portal-rail']}></span>
+		<span class:list={['ww-phase-tail', index < total - 1 && 'is-drawn']}></span>
 	</div>
 
-	<div class="col-start-2">
+	<div class="ww-phase-body">
 		{/* Number, name and chip on one line, wrapping where the room runs out.
-		    Russo One at 17px, which is the site's own heading face at the size a
-		    working document wants — the same object as a section heading on the
-		    marketing page, three steps down. .display carries line-height 0.92
-		    for hero type, so it is reopened here or a wrapped name touches. */}
-		<div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-			<h3 id={phase.id} class="display flex items-baseline gap-3 text-[1.0625rem] leading-[1.15]">
-				<span class="text-charcoal/40 tabular-nums">{ordinal}</span>
+		    The site's heading role, which is the same object a section heading on
+		    a public page is, one step down from the display tier. */}
+		<div class="ww-phase-head">
+			<h3 id={phase.id} class="ww-heading ww-phase-title">
+				<span class="ww-phase-ordinal">{ordinal}</span>
 				<span>{phase.title}</span>
 			</h3>
 
 			<StateChip label={chip.label} variant={chip.variant} />
 		</div>
 
-		<p class="mt-2 max-w-[70ch] leading-relaxed text-charcoal/70">{phase.description}</p>
+		<p class="ww-body ww-muted ww-phase-summary">{phase.description}</p>
 
 		{
 			steps.length > 0 && (
-				<ul class="mt-5 border-t border-charcoal/10">
+				<ul class="ww-steps">
 					{steps.map((step) => {
 						const done = step.status === 'complete';
 						const blocked = step.status === 'blocked';
 						const overdue = step.status === 'overdue';
 
 						return (
-							<li class="border-b border-charcoal/10 py-2.5">
-								<span class="flex min-w-0 items-start gap-3">
+							<li class="ww-step">
+								<span class="ww-step-row">
 									{/* One box for every marker, so each label starts on the
 									    same left edge whatever state its step is in.
 
 									    Only two of the four carry colour, and both have earned
 									    it: a green tick for work that is finished, a blue ring
 									    for work happening right now. A pending step and a step
-									    the client owes get the same hollow charcoal circle —
-									    the ACTION NEEDED chip at the other end of the row is
-									    what separates them — so the left margin stays quiet
-									    and the eye can run down the ticks to see how far the
-									    phase has actually got.
+									    the client owes get the same hollow circle — the ACTION
+									    NEEDED chip at the other end of the row is what
+									    separates them — so the left margin stays quiet and the
+									    eye can run down the ticks to see how far the phase has
+									    actually got.
 
 									    The tick is drawn at 2.25 rather than 2. Green this
-									    saturated is lighter on white than the charcoal around
-									    it, and a hairline stroke would read as faint where a
+									    saturated is lighter on white than the ink around it,
+									    and a hairline stroke would read as faint where a
 									    slightly heavier one reads as definite. */}
-									<span
-										class="mt-[0.1875rem] flex h-4 w-4 shrink-0 items-center justify-center"
-										aria-hidden="true"
-									>
+									<span class="ww-step-mark" aria-hidden="true">
 										{done ? (
 											<svg
 												viewBox="0 0 14 14"
@@ -132,30 +125,34 @@ const steps = isCurrent ? (phase.steps ?? []) : [];
 												stroke-width="2.25"
 												stroke-linecap="round"
 												stroke-linejoin="round"
-												class="h-4 w-4 text-state-complete"
+												class="ww-step-tick"
 											>
 												<path d="m2 7.5 3.25 3.25L12 3.5" />
 											</svg>
 										) : blocked || overdue ? (
-											<span class="h-2.5 w-2.5 rounded-full bg-state-blocked" />
+											<span class="ww-step-dot is-blocked" />
 										) : step.status === 'in-progress' ? (
-											<span class="h-2.5 w-2.5 rounded-full border-2 border-state-current bg-state-current/20" />
+											<span class="ww-step-dot is-live" />
 										) : (
-											<span class="h-2.5 w-2.5 rounded-full border-[1.5px] border-charcoal/30" />
+											<span class="ww-step-dot is-pending" />
 										)}
 									</span>
 
-									<span class:list={['leading-snug', done ? 'text-charcoal/60' : 'text-charcoal']}>
+									<span class:list={['ww-body-lg', 'ww-step-label', done && 'is-done']}>
 										{/* The state in words, for anyone the markers are not
 										    reaching. The chip says the rest. */}
-										<span class="sr-only">{done ? 'Done: ' : 'To do: '}</span>
+										<span class="ww-sr-only">{done ? 'Done: ' : 'To do: '}</span>
 										{step.label}
+										{/* The chip is wrapped rather than given a class of its
+										    own: a scoped style does not reach inside a child
+										    component. */}
 										{(blocked || overdue) && (
-											<StateChip
-												label={overdue ? 'Overdue' : 'Blocked'}
-												variant="blocked"
-												class="ml-2 align-middle"
-											/>
+											<span class="ww-step-chip">
+												<StateChip
+													label={overdue ? 'Overdue' : 'Blocked'}
+													variant="blocked"
+												/>
+											</span>
 										)}
 									</span>
 								</span>
@@ -167,3 +164,200 @@ const steps = isCurrent ? (phase.steps ?? []) : [];
 		}
 	</div>
 </li>
+
+<style>
+	.ww-phase {
+		display: grid;
+		grid-template-columns: 1.25rem minmax(0, 1fr);
+		column-gap: var(--space-md);
+		padding-block: var(--space-md);
+		border-top: 1px solid var(--ww-hairline);
+	}
+
+	/* ---- the rail ---------------------------------------------------------- */
+	.ww-phase-rail {
+		grid-column-start: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		margin-block: calc(var(--space-md) * -1);
+	}
+
+	.ww-phase-lead,
+	.ww-phase-tail {
+		width: 1px;
+		flex-shrink: 0;
+	}
+
+	/* Down to the centre of the title's first line: the row's own padding, plus
+	   half a line of the heading role above. */
+	.ww-phase-lead {
+		height: calc(var(--space-md) + var(--text-heading) * 0.575);
+	}
+
+	.ww-phase-tail {
+		flex: 1;
+	}
+
+	.is-drawn {
+		background-color: var(--ww-hairline);
+	}
+
+	/* A fixed box, so a small marker and a large one sit on the same centre. */
+	.ww-phase-slot {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 0.875rem;
+		height: 0.875rem;
+		flex-shrink: 0;
+	}
+
+	.ww-phase-mark {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: var(--radius-pill);
+	}
+
+	.ww-phase-tick {
+		width: 0.5rem;
+		height: 0.5rem;
+		color: var(--ww-white);
+	}
+
+	/* Filled where something is settled, hollow where it has not started. The
+	   ground behind the hollow two is painted rather than left open: the rail
+	   runs behind every marker and would otherwise show through the middle. */
+	.mark-complete,
+	.mark-current {
+		width: 0.875rem;
+		height: 0.875rem;
+	}
+
+	.mark-complete {
+		background-color: var(--color-state-complete);
+	}
+
+	.mark-current {
+		background-color: var(--color-state-current);
+	}
+
+	.mark-next {
+		width: 0.75rem;
+		height: 0.75rem;
+		border: 2px solid var(--ww-muted);
+		background-color: var(--ww-white);
+	}
+
+	.mark-upcoming {
+		width: 0.625rem;
+		height: 0.625rem;
+		border: 2px solid var(--ww-hairline);
+		background-color: var(--ww-white);
+	}
+
+	/* ---- the phase --------------------------------------------------------- */
+	.ww-phase-body {
+		grid-column-start: 2;
+	}
+
+	.ww-phase-head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: var(--space-sm) var(--space-md);
+	}
+
+	.ww-phase-title {
+		display: flex;
+		align-items: baseline;
+		gap: var(--space-sm);
+	}
+
+	.ww-phase-ordinal {
+		color: var(--ww-disabled);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.ww-phase-summary {
+		max-width: 70ch;
+		margin-top: var(--space-sm);
+	}
+
+	/* ---- the live phase's checklist ---------------------------------------- */
+	.ww-steps {
+		margin: var(--space-md) 0 0;
+		padding: 0;
+		border-top: 1px solid var(--ww-hairline);
+		list-style: none;
+	}
+
+	.ww-step {
+		padding-block: var(--space-sm);
+		border-bottom: 1px solid var(--ww-hairline);
+	}
+
+	.ww-step-row {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--space-sm);
+		min-width: 0;
+	}
+
+	.ww-step-mark {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 1rem;
+		height: 1rem;
+		margin-top: 0.25rem;
+		flex-shrink: 0;
+	}
+
+	.ww-step-tick {
+		width: 1rem;
+		height: 1rem;
+		color: var(--color-state-complete);
+	}
+
+	.ww-step-dot {
+		width: 0.625rem;
+		height: 0.625rem;
+		border-radius: var(--radius-pill);
+	}
+
+	.is-blocked {
+		background-color: var(--color-state-blocked);
+	}
+
+	.is-live {
+		border: 2px solid var(--color-state-current);
+		background-color: color-mix(in srgb, var(--color-state-current) 20%, transparent);
+	}
+
+	.is-pending {
+		border: 1.5px solid var(--ww-hairline);
+	}
+
+	.ww-step-label {
+		line-height: var(--leading-heading);
+	}
+
+	.ww-step-label.is-done {
+		color: var(--ww-muted);
+	}
+
+	.ww-step-chip {
+		display: inline-block;
+		margin-left: var(--space-sm);
+		vertical-align: middle;
+	}
+
+	@media (min-width: 640px) {
+		.ww-phase {
+			grid-template-columns: 1.5rem minmax(0, 1fr);
+		}
+	}
+</style>
