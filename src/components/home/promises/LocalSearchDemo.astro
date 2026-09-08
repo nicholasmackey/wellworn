@@ -21,6 +21,7 @@
  * nothing on this screen is a real listing or a real search.
  */
 import SmartphoneFrame from '../../SmartphoneFrame.astro';
+import { withBase } from '../../../lib/paths';
 
 interface Props {
 	/**
@@ -86,7 +87,12 @@ const QUERY = 'best bakery near me';
 	<SmartphoneFrame>
 		<div class="wws-app">
 			<div class="wws-searchbar">
-				<img class="wws-mark" src="/images/brand/google-g.svg" alt="" aria-hidden="true" />
+				<img
+					class="wws-mark"
+					src={withBase('/images/brand/google-g.svg')}
+					alt=""
+					aria-hidden="true"
+				/>
 				<span class="wws-query"><span data-typed>{QUERY}</span><i class="wws-caret" aria-hidden="true"></i></span>
 
 				<span class="wws-tools" aria-hidden="true">

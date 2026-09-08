@@ -11,6 +11,7 @@
  * people look for them, not because the page needs a directory.
  */
 import { BRAND, CONTACT_HREF, CTA_LABEL, NAV, SITE } from '../config/site';
+import { withBase } from '../lib/paths';
 
 interface Props {
 	class?: string;
@@ -25,7 +26,7 @@ const year = new Date().getFullYear();
 	<div class="ww-container">
 		<div class="ww-footer-top">
 			<div class="ww-footer-brand">
-				<a href="/" aria-label={`${SITE.name}, home`}>
+				<a href={withBase('/')} aria-label={`${SITE.name}, home`}>
 					<img
 						src={BRAND.wordmarkLight}
 						alt=""

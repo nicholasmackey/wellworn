@@ -26,6 +26,7 @@
  * crop; anything with less starts crowding.
  */
 import type { ClientProject } from '../../config/project';
+import { withBase } from '../../lib/paths';
 
 interface Props {
 	project: ClientProject;
@@ -43,7 +44,7 @@ const { project }: Props = Astro.props;
 	<h1 class="ww-enter ww-masthead-art">
 		<span class="ww-media ww-masthead-frame">
 			<img
-				src="/images/projects/sweet-gems-project-header.png"
+				src={withBase('/images/projects/sweet-gems-project-header.png')}
 				alt={`Wellworn × ${project.projectName}`}
 				width="2103"
 				height="677"

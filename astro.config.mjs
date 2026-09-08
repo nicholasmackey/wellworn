@@ -4,10 +4,32 @@ import cloudflare from '@astrojs/cloudflare';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 
+const isGitHubPages = process.env.GITHUB_PAGES === 'true';
+
+/*
+ * GitHub Pages can only serve prerendered files. The production site keeps
+ * /api/questionnaire as an on-demand Cloudflare Worker route, while the Pages
+ * build prerenders that route into a harmless static response so every route
+ * can be emitted into a flat dist/ directory.
+ */
+/** @type {import('astro').AstroIntegration} */
+const githubPagesStaticRoutes = {
+	name: 'wellworn-github-pages-static-routes',
+	hooks: {
+		'astro:route:setup': ({ route }) => {
+			if (route.component.replaceAll('\\', '/').endsWith('src/pages/api/questionnaire.ts')) {
+				route.prerender = true;
+			}
+		},
+	},
+};
+
 // https://astro.build/config
 export default defineConfig({
 	// Required for the sitemap, canonical URLs, and absolute og:image hrefs.
-	site: 'https://wellworncreative.com',
+	// The preview values combine to https://nicholasmackey.github.io/wellworn/.
+	site: isGitHubPages ? 'https://nicholasmackey.github.io' : 'https://wellworncreative.com',
+	base: isGitHubPages ? '/wellworn' : '/',
 
 	// Emits /sitemap-index.xml plus the /sitemap-0.xml it points at. Status-code
 	// pages (404, 500) are excluded by the integration. public/robots.txt
@@ -19,6 +41,7 @@ export default defineConfig({
 	// sitemap would hand crawlers the URL and undo all of that. `page` is the
 	// full absolute URL, not a path.
 	integrations: [
+		...(isGitHubPages ? [githubPagesStaticRoutes] : []),
 		sitemap({
 			filter: (page) => !page.includes('/projects/'),
 		}),
@@ -51,7 +74,7 @@ export default defineConfig({
 	 */
 	session: false,
 
-	adapter: cloudflare({
+	adapter: isGitHubPages ? undefined : cloudflare({
 		/*
 		 * Images are transformed by sharp at BUILD time and passed through
 		 * untouched at runtime — which is what already happened before the

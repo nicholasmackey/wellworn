@@ -7,9 +7,15 @@
 */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { CTA_LABEL, CONTACT_HREF } from '../config/site';
+import { withBase } from '../lib/paths';
 ---
 
-<BaseLayout title="Page not found" description="This page doesn't exist." noindex>
+<BaseLayout
+	title="Page not found"
+	description="This page doesn't exist."
+	canonical={withBase('/404.html')}
+	noindex
+>
 	<section class="ww-section ww-404">
 		<div class="ww-container">
 			<h1 class="ww-display-lg">Page not found</h1>
@@ -17,7 +23,7 @@ import { CTA_LABEL, CONTACT_HREF } from '../config/site';
 			<p class="ww-body-lg ww-measure ww-muted">This page doesn't exist.</p>
 
 			<div class="ww-404-actions">
-				<a href="/" class="ww-btn ww-btn-dark">Back home</a>
+				<a href={withBase('/')} class="ww-btn ww-btn-dark">Back home</a>
 				<a href={CONTACT_HREF} class="ww-btn ww-btn-outline">{CTA_LABEL}</a>
 			</div>
 		</div>

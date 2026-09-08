@@ -34,6 +34,7 @@ import type { ImageMetadata } from 'astro';
 import underline from '../../assets/underline.svg';
 import { BRAND, CONTACT_HREF, CTA_LABEL } from '../../config/site';
 import type { Point } from '../../config/site';
+import { withBase } from '../../lib/paths';
 import WordReveal from '../WordReveal.astro';
 
 interface Props {
@@ -78,27 +79,27 @@ const lineStarts = wordCounts.map((_, index) =>
 
 const benefitIcons: Readonly<Record<string, { src: string; tint: string }>> = {
 	'Website Design + Development': {
-		src: '/isocons/responsive-layout-1.svg',
+		src: withBase('/isocons/responsive-layout-1.svg'),
 		tint: 'rgb(62 119 189 / 18%)',
 	},
 	'Hosting Included': {
-		src: '/isocons/deployed-code-0.svg',
+		src: withBase('/isocons/deployed-code-0.svg'),
 		tint: 'rgb(108 90 145 / 18%)',
 	},
 	'Unlimited Edits': {
-		src: '/isocons/amend-2.svg',
+		src: withBase('/isocons/amend-2.svg'),
 		tint: 'rgb(180 123 47 / 18%)',
 	},
 	'Direct Support': {
-		src: '/isocons/support-agent-3.svg',
+		src: withBase('/isocons/support-agent-3.svg'),
 		tint: 'rgb(61 139 92 / 18%)',
 	},
 	'Ongoing Website Maintenance': {
-		src: '/isocons/handyman-5.svg',
+		src: withBase('/isocons/handyman-5.svg'),
 		tint: 'rgb(182 79 71 / 18%)',
 	},
 	'Built for Better Results': {
-		src: '/isocons/trending-up-4.svg',
+		src: withBase('/isocons/trending-up-4.svg'),
 		tint: 'rgb(60 135 146 / 18%)',
 	},
 };

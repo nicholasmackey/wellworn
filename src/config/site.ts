@@ -3,6 +3,8 @@
  * Everything user-facing that isn't page content lives here.
  */
 
+import { DEPLOYMENT_URL, withBase } from '../lib/paths'
+
 export const SITE = {
   /**
    * Displayed brand name. "Creative" is part of the domain only, never the
@@ -12,7 +14,7 @@ export const SITE = {
    * letter. Where the name is meant to look uppercase, use the artwork.
    */
   name: 'Wellworn',
-  url: 'https://wellworncreative.com',
+  url: DEPLOYMENT_URL,
   lang: 'en',
   locale: 'en_US',
 
@@ -42,7 +44,7 @@ export const SITE = {
    * are advertised to scrapers so they can reserve layout before the file
    * downloads, so any per-page `image` override must match them.
    */
-  ogImage: '/og-image.jpg',
+  ogImage: withBase('/og-image.jpg'),
   ogImageWidth: 1200,
   ogImageHeight: 630,
   /*
@@ -58,11 +60,11 @@ export const SITE = {
  */
 export const BRAND = {
   /** Square monogram. Intrinsic 681×681. */
-  mark: '/wellworn-mark.svg',
+  mark: withBase('/wellworn-mark.svg'),
   /** Wordmark for light backgrounds (cream). Intrinsic 2476×597. */
-  wordmarkDark: '/wellworn-wordmark-dark.svg',
+  wordmarkDark: withBase('/wellworn-wordmark-dark.svg'),
   /** Wordmark for dark backgrounds (charcoal/forest). Intrinsic 2476×597. */
-  wordmarkLight: '/wellworn-wordmark-light.svg',
+  wordmarkLight: withBase('/wellworn-wordmark-light.svg'),
   /** Aspect ratio of the wordmarks, for computing width from a target height. */
   wordmarkRatio: 2476 / 597,
 } as const
@@ -98,9 +100,9 @@ export interface NavItem {
  * because it is the button beside it.
  */
 export const NAV: readonly NavItem[] = [
-  { label: 'Work', href: '/#work' },
-  { label: 'Services', href: '/#services' },
-  { label: 'Pricing', href: '/pricing' },
+  { label: 'Work', href: withBase('/#work') },
+  { label: 'Services', href: withBase('/#services') },
+  { label: 'Pricing', href: withBase('/pricing') },
 ]
 
 /** The label on the one action in the header, and on every CTA on the page. */

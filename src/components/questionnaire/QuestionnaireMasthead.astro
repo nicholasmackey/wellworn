@@ -24,6 +24,7 @@
  * questionnaire may or may not have.
  */
 import { BRAND } from '../../config/site';
+import { withBase } from '../../lib/paths';
 import type { Questionnaire } from '../../lib/questionnaire/schema';
 import type { ResolvedTheme } from '../../lib/questionnaire/theme';
 
@@ -56,7 +57,7 @@ const LOGO_HEIGHT = 44;
 					style={`aspect-ratio:${masthead.ratio ?? `${masthead.width}/${masthead.height}`}`}
 				>
 					<img
-						src={masthead.src}
+						src={withBase(masthead.src)}
 						alt={`Wellworn × ${client}`}
 						width={masthead.width}
 						height={masthead.height}
@@ -81,7 +82,7 @@ const LOGO_HEIGHT = 44;
 				{theme?.logo ? (
 					<h1 class="ww-enter ww-masthead-logo" style="--enter-i:1">
 						<img
-							src={theme.logo}
+							src={withBase(theme.logo)}
 							alt={client}
 							height={LOGO_HEIGHT}
 							fetchpriority="high"

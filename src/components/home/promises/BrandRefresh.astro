@@ -21,13 +21,14 @@
  * has nothing to gain from the image pipeline, and the old logo is shown once,
  * at one size, on one card.
  */
+import { withBase } from '../../../lib/paths';
 ---
 
 <div class="wwb" data-brand-refresh>
 	<div class="wwb-stage">
 		<img
 			class="wwb-old"
-			src="/hood-old-logo.png"
+			src={withBase('/hood-old-logo.png')}
 			alt="Hood’s previous logo."
 			width="561"
 			height="561"
@@ -37,7 +38,7 @@
 
 		<img
 			class="wwb-new"
-			src="/hood-brand.svg"
+			src={withBase('/hood-brand.svg')}
 			alt="Hood’s new wordmark."
 			width="545"
 			height="91"

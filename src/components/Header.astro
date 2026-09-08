@@ -27,6 +27,7 @@
  * over a white page is an invisible header.
  */
 import { CONTACT_HREF, CTA_LABEL, NAV, SITE } from '../config/site';
+import { withBase } from '../lib/paths';
 import Wordmark from './Wordmark.astro';
 
 interface Props {
@@ -59,7 +60,7 @@ const { class: className = '', overlay = false }: Props = Astro.props;
 		    inherits it through currentColor. The wordmark is supplied artwork and
 		    is not redrawn here; only its size and colour are this file's
 		    business. */}
-		<a href="/" class="ww-header-brand" aria-label={`${SITE.name}, home`}>
+		<a href={withBase('/')} class="ww-header-brand" aria-label={`${SITE.name}, home`}>
 			<Wordmark class="ww-header-mark" />
 		</a>
 

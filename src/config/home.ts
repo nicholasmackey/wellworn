@@ -21,6 +21,7 @@
 
 import type { Point } from './site'
 import { SERVICES } from './site'
+import { withBase } from '../lib/paths'
 
 /* Real photography. Four pictures of people and places doing actual work. */
 import bakeryImage from '../assets/bakery.jpg'
@@ -109,7 +110,7 @@ export const HERO = {
    * `-profile:v high -level:v 4.0 -refs 4`, and `ffprobe` should report
    * level=40 before it ships.
    */
-  videoSrc: '/videos/wellworn-hero-web-26.mp4',
+  videoSrc: withBase('/videos/wellworn-hero-web-26.mp4'),
 } as const
 
 /* ==========================================================================
@@ -254,7 +255,7 @@ export const TESTIMONIALS_HEADING = "Here's what folks have to say about working
 
 export const TESTIMONIALS: readonly Testimonial[] = [
   {
-    videoSrc: '/videos/testimonial-01.mp4',
+    videoSrc: withBase('/videos/testimonial-01.mp4'),
     poster: davisPoster,
     posterAlt: 'Two men outdoors under a tree on a bright day, talking to camera.',
     logoSrc: davisLogo.src,
@@ -272,7 +273,7 @@ export const TESTIMONIALS: readonly Testimonial[] = [
     rating: 5,
   },
   {
-    videoSrc: '/videos/testimonial-02.mp4',
+    videoSrc: withBase('/videos/testimonial-02.mp4'),
     poster: avioricPoster,
     posterAlt: 'A man in a cap and dark hooded sweatshirt talking to camera indoors.',
     logoSrc: avioricLogo.src,
@@ -287,7 +288,7 @@ export const TESTIMONIALS: readonly Testimonial[] = [
     rating: 5,
   },
   {
-    videoSrc: '/videos/testimonial-03.mp4',
+    videoSrc: withBase('/videos/testimonial-03.mp4'),
     poster: veilPoster,
     posterAlt: 'A woman in an olive sweater talking to camera in front of a blue wall hanging.',
     logoSrc: veilLogo.src,

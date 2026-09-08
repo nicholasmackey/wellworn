@@ -16,6 +16,7 @@
  * button.
  */
 import type { PhaseStep } from '../../config/project';
+import { withBase } from '../../lib/paths';
 import StateChip from './StateChip.astro';
 
 interface Props {
@@ -29,7 +30,7 @@ const label = step.actionLabel ?? step.label;
 
 /* A task becomes a link only when the project data supplies the destination
    and its label. A partial CTA is omitted instead of being completed here. */
-const cta = step.url && step.ctaLabel ? { href: step.url, label: step.ctaLabel } : null;
+const cta = step.url && step.ctaLabel ? { href: withBase(step.url), label: step.ctaLabel } : null;
 
 /* Red only where the data actually says so. A step that is merely waiting is
    amber; a step that has failed or gone overdue is the one that earns red. */
