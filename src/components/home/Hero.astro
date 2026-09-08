@@ -165,6 +165,38 @@ import ClientLogoCarousel from './ClientLogoCarousel.astro';
 		<div class="ww-hero-air" aria-hidden="true"></div>
 
 		{/*
+		  THE SCROLL CUE. One chevron on the bottom edge of the frame, saying the
+		  only thing that needs saying about a hero that fills the screen exactly:
+		  there is more under it.
+
+		  Decorative, and deliberately not a link. The nav above it already points
+		  at every section on the page, and a second clickable thing in a frame
+		  whose whole composition is built around one action would be competing
+		  with that action for very little. aria-hidden keeps it out of the
+		  reading order for the same reason the grain and the scrim are hidden:
+		  it is a picture of an affordance the scrollbar and the gesture already
+		  provide, and a screen reader has better ways of knowing what is below.
+
+		  Drawn to the same spec as the site's other chevron — 12x12, square
+		  caps, currentColor — see --q-chevron in tokens.css.
+		*/}
+		<div class="ww-hero-scroll" aria-hidden="true">
+			<svg
+				class="ww-hero-scroll-mark"
+				width="16"
+				height="16"
+				viewBox="0 0 12 12"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.25"
+				stroke-linecap="square"
+				focusable="false"
+			>
+				<path d="M3 4.5 6 7.5 9 4.5"></path>
+			</svg>
+		</div>
+
+		{/*
 		  The client marquee, INSIDE the hero rather than in a band below it —
 		  which is where the reference puts its merchant strip, and it is visible
 		  before anything has been scrolled. `tone="light"` drops the component's
@@ -376,6 +408,32 @@ import ClientLogoCarousel from './ClientLogoCarousel.astro';
 	}
 
 	/*
+	  THE SCROLL CUE.
+
+	  A flex item of its own between the lower air and the marquee, rather than
+	  something positioned against the bottom of the section. Absolute would put
+	  it on top of the marquee at the one viewport height where the two want the
+	  same 40px; in the column it takes its own row and the air above it gives
+	  way instead, which is what the flexible spacers are for.
+
+	  Centred at every width, including the phone, on the same axis as the copy
+	  above it. It is not part of that copy block — it is a mark about the frame,
+	  and the frame's axis is the middle of the screen.
+
+	  Opacity rather than a translucent white: the entrance below animates from
+	  0 with no `to`, so it finishes at whatever value is declared here and this
+	  line stays the only place the cue's weight is set.
+	*/
+	.ww-hero-scroll {
+		flex: none;
+		display: flex;
+		justify-content: center;
+		padding-bottom: var(--space-md);
+		color: var(--ww-white);
+		opacity: 0.55;
+	}
+
+	/*
 	  The marquee's own row. It is full-bleed by construction — the band runs
 	  off both edges of the viewport, which is what makes it read as movement
 	  rather than as a centred list — so this wrapper adds no gutter.
@@ -388,16 +446,30 @@ import ClientLogoCarousel from './ClientLogoCarousel.astro';
 	/*
 	  MOBILE — the deliberate recomposition, not a shrunk desktop.
 
-	  The copy is flush left and the two spacers are weighted so the block sits
-	  low in the frame rather than dead centre. A phone crops the footage to a
-	  narrow vertical slice of its middle, and pushing the text down leaves that
-	  slice visible above the words instead of covering it. A centred four-line
-	  ragged headline on a 390px screen also produces four different line lengths
-	  pivoting around a centre axis, which is hard to read and looks accidental;
-	  flush left it has one clean edge.
+	  The copy is centred and the two spacers are weighted so the block sits low
+	  in the frame rather than dead centre. A phone crops the footage to a narrow
+	  vertical slice of its middle, and pushing the text down leaves that slice
+	  visible above the words instead of covering it.
 	*/
 	.ww-hero-air:first-child {
 		flex-grow: 1.9;
+	}
+
+	@media (max-width: 767px) {
+		.ww-hero-body {
+			text-align: center;
+		}
+
+		.ww-hero-heading,
+		.ww-hero-lede {
+			margin-inline: auto;
+		}
+
+		.ww-hero-cta {
+			display: flex;
+			width: fit-content;
+			margin-inline: auto;
+		}
 	}
 
 	/* DESKTOP. Centred, cinematic, and the copy floats in the middle of a
@@ -493,6 +565,54 @@ import ClientLogoCarousel from './ClientLogoCarousel.astro';
 		*/
 		.ww-hero-logos {
 			animation: ww-hero-logos-in 1000ms var(--ease-out) 3000ms backwards;
+		}
+
+		/*
+		  THE CUE'S ARRIVAL, and then its one small habit.
+
+		  Two animations on two elements because they answer to different
+		  clocks. The wrapper fades in once, after the opening black has cleared
+		  and the copy has settled — 2.4s, between the CTA landing at ~0.8s and
+		  the marquee coming up at 3s, so the frame is still assembling itself
+		  rather than finished and then interrupted. `backwards` holds it
+		  invisible through the delay, and the keyframe has only a `from`, so it
+		  ends on the 0.55 declared above.
+
+		  The mark then nudges down 5px and comes back, once every 3.2s, and is
+		  still for two of those seconds. It is the smallest gesture that reads
+		  as a direction; anything faster, further, or in a loop without a rest
+		  in it turns into a blinking arrow on top of a moving picture.
+
+		  Both live inside this query rather than being collapsed by the global
+		  reduced-motion rule in base.css. That rule sets iteration-count to 1
+		  and duration to nothing, which would leave an animated element parked
+		  on its final keyframe — here, the resting state is the right one, and
+		  the way to guarantee it is to not declare the animation at all.
+		*/
+		.ww-hero-scroll {
+			animation: ww-hero-scroll-in 800ms var(--ease-out) 2400ms backwards;
+		}
+
+		.ww-hero-scroll-mark {
+			animation: ww-hero-scroll-nudge 3200ms var(--ease-out) 2400ms infinite;
+		}
+	}
+
+	@keyframes ww-hero-scroll-in {
+		from {
+			opacity: 0;
+		}
+	}
+
+	@keyframes ww-hero-scroll-nudge {
+		0%,
+		60%,
+		100% {
+			transform: translateY(0);
+		}
+
+		80% {
+			transform: translateY(5px);
 		}
 	}
 

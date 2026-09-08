@@ -582,7 +582,7 @@ export const PRICING = {
   heading: ['A better website.', 'Without the big upfront bill.'],
 
   upfront: '$0 down.',
-  monthly: '$175 a month.',
+  monthly: '$175/mo',
 
   /**
    * The lede, as two paragraphs rather than one. The first answers the money

@@ -7,7 +7,7 @@
  * right column to the price and everything it buys.
  *
  * THE ORDER IT IS MEANT TO BE READ IN, and every size below is chosen to
- * enforce it: a better website → $0 down, $175 a month → what one payment
+ * enforce it: a better website → $0 down, $175/mo → what one payment
  * covers → six things it covers → the price again, attached to all of them →
  * start a project. The figure is the loudest thing in the section, two steps
  * above its own heading, because by the time someone reaches this section the
@@ -31,7 +31,8 @@
  */
 import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
-import { CONTACT_HREF, CTA_LABEL } from '../../config/site';
+import underline from '../../assets/underline.svg';
+import { BRAND, CONTACT_HREF, CTA_LABEL } from '../../config/site';
 import type { Point } from '../../config/site';
 import WordReveal from '../WordReveal.astro';
 
@@ -74,6 +75,33 @@ const wordCounts = heading.map((line) => line.split(/\s+/).filter(Boolean).lengt
 const lineStarts = wordCounts.map((_, index) =>
 	wordCounts.slice(0, index).reduce((total, count) => total + count, 0),
 );
+
+const benefitIcons: Readonly<Record<string, { src: string; tint: string }>> = {
+	'Website Design + Development': {
+		src: '/isocons/responsive-layout-1.svg',
+		tint: 'rgb(62 119 189 / 18%)',
+	},
+	'Hosting Included': {
+		src: '/isocons/deployed-code-0.svg',
+		tint: 'rgb(108 90 145 / 18%)',
+	},
+	'Unlimited Edits': {
+		src: '/isocons/amend-2.svg',
+		tint: 'rgb(180 123 47 / 18%)',
+	},
+	'Direct Support': {
+		src: '/isocons/support-agent-3.svg',
+		tint: 'rgb(61 139 92 / 18%)',
+	},
+	'Ongoing Website Maintenance': {
+		src: '/isocons/handyman-5.svg',
+		tint: 'rgb(182 79 71 / 18%)',
+	},
+	'Built for Better Results': {
+		src: '/isocons/trending-up-4.svg',
+		tint: 'rgb(60 135 146 / 18%)',
+	},
+};
 ---
 
 <section class="ww-section ww-section-dark ww-pricing" id={id} aria-labelledby="pricing-heading">
@@ -101,21 +129,54 @@ const lineStarts = wordCounts.map((_, index) =>
 				</h2>
 
 				<p class="ww-pricing-price" data-reveal-block>
-					<span>{upfront}</span>{' '}<span>{monthly}</span>
+					<span class="ww-pricing-upfront">
+						{upfront}
+						<img
+							src={underline.src}
+							alt=""
+							class="ww-pricing-underline"
+							width={underline.width}
+							height={underline.height}
+							aria-hidden="true"
+							decoding="async"
+						/>
+					</span>{' '}
+					<span class="ww-pricing-monthly">{monthly}</span>
 				</p>
 
-				<div class="ww-pricing-body" data-reveal-block style="--wr-i:1">
+				<div class="ww-pricing-body">
 					{body.map((paragraph) => <p class="ww-body ww-muted">{paragraph}</p>)}
 				</div>
 
 				<ul class="ww-pricing-benefits">
 					{
-						features.map((feature) => (
-							<li>
-								<h3 class="ww-body ww-pricing-benefit-title">{feature.title}</h3>
-								<p class="ww-small ww-muted">{feature.body}</p>
-							</li>
-						))
+						features.map((feature) => {
+							const icon = benefitIcons[feature.title];
+
+							return (
+								<li>
+									<span
+										class="ww-pricing-benefit-badge"
+										style={`--ww-feature-tint: ${icon.tint}`}
+										aria-hidden="true"
+									>
+										<img
+											src={icon.src}
+											alt=""
+											class="ww-pricing-benefit-icon"
+											width={28}
+											height={28}
+											loading="lazy"
+											decoding="async"
+										/>
+									</span>
+									<div class="ww-pricing-benefit-copy">
+										<h3 class="ww-body ww-pricing-benefit-title">{feature.title}</h3>
+										<p class="ww-small ww-muted">{feature.body}</p>
+									</div>
+								</li>
+							);
+						})
 					}
 				</ul>
 
@@ -140,6 +201,23 @@ const lineStarts = wordCounts.map((_, index) =>
 				</div>
 
 				<figcaption class="ww-pricing-id">
+					{/* The mark sits above the name for the same reason it does on a
+					    real identification card: it says who vouches for the person
+					    before it says who the person is. Flat artwork rather than the
+					    inline Wordmark component, and sized by attribute rather than
+					    by CSS alone: the component carries no intrinsic size, so a
+					    stylesheet that has not arrived yet renders it at its 2476px
+					    artwork width and tears the card open. Width is the 2476:597
+					    ratio at the height below. */}
+					<img
+						src={BRAND.wordmarkDark}
+						alt=""
+						class="ww-pricing-mark"
+						width={75}
+						height={18}
+						loading="lazy"
+						decoding="async"
+					/>
 					<p class="ww-display-md ww-pricing-name">{ownerName}</p>
 					<p class="ww-small ww-pricing-role">{ownerRole}</p>
 				</figcaption>
@@ -153,6 +231,12 @@ const lineStarts = wordCounts.map((_, index) =>
 	   width rather than the 120px the tablet-and-up default would give it. */
 	.ww-pricing {
 		padding-block: var(--space-2xl);
+	}
+
+	.ww-pricing-offer {
+		--ww-underline-delay: 360ms;
+		--ww-underline-duration: 720ms;
+		--ww-pricing-follow-delay: calc(var(--ww-underline-delay) + var(--ww-underline-duration));
 	}
 
 	.ww-pricing-grid {
@@ -192,15 +276,100 @@ const lineStarts = wordCounts.map((_, index) =>
 		display: block;
 	}
 
+	.ww-pricing-upfront {
+		width: fit-content;
+	}
+
+	.ww-pricing-underline {
+		display: block;
+		width: 4.75em;
+		height: auto;
+		margin-top: 0.03em;
+		margin-bottom: var(--space-sm);
+	}
+
+	:global(html[data-text-reveal]) .ww-pricing-underline {
+		clip-path: inset(0 100% 0 0);
+	}
+
+	:global(html[data-text-reveal]) .ww-pricing-price.is-revealed .ww-pricing-underline {
+		clip-path: inset(0);
+		transition: clip-path var(--ww-underline-duration) cubic-bezier(0.65, 0, 0.35, 1)
+			var(--ww-underline-delay);
+	}
+
 	/* THE SECOND LINE, at half the first. "$0 down." is the thing that stops
 	   someone, so it takes the whole size; the monthly figure answers it and
-	   sits under it as the smaller of the pair. Written as an em so the two
-	   stay in a 2:1 ratio at every width rather than needing a clamp of their
-	   own, and given a little air because a 36px line tucked straight under a
-	   72px one at 0.98 leading reads as crowded. */
-	.ww-pricing-price > span + span {
-		margin-top: var(--space-xs);
+	   sits beneath the underline as the quieter of the pair. */
+	.ww-pricing-monthly {
+		margin-top: 0;
 		font-size: 0.5em;
+		opacity: 0.65;
+	}
+
+	/* The price is a three-beat reveal: claim, underline, explanation. Nothing
+	   beneath the underline starts moving until the hand-drawn mark is complete. */
+	:global(html[data-text-reveal]) .ww-pricing-monthly,
+	:global(html[data-text-reveal]) .ww-pricing-body,
+	:global(html[data-text-reveal]) .ww-pricing-benefits,
+	:global(html[data-text-reveal]) .ww-pricing-actions {
+		opacity: 0;
+		transform: translateY(var(--wr-block-lift));
+	}
+
+	:global(html[data-text-reveal]) .ww-pricing-price.is-revealed .ww-pricing-monthly,
+	:global(html[data-text-reveal]) .ww-pricing-price.is-revealed ~ .ww-pricing-body,
+	:global(html[data-text-reveal]) .ww-pricing-price.is-revealed ~ .ww-pricing-benefits,
+	:global(html[data-text-reveal]) .ww-pricing-price.is-revealed ~ .ww-pricing-actions {
+		transform: none;
+		transition:
+			opacity var(--wr-block-dur) var(--wr-ease),
+			transform var(--wr-block-dur) var(--wr-ease);
+	}
+
+	:global(html[data-text-reveal]) .ww-pricing-price.is-revealed .ww-pricing-monthly {
+		opacity: 0.65;
+		transition-delay: var(--ww-pricing-follow-delay);
+	}
+
+	:global(html[data-text-reveal]) .ww-pricing-price.is-revealed ~ .ww-pricing-body {
+		opacity: 1;
+		transition-delay: calc(var(--ww-pricing-follow-delay) + 90ms);
+	}
+
+	:global(html[data-text-reveal]) .ww-pricing-price.is-revealed ~ .ww-pricing-benefits {
+		opacity: 1;
+		transition-delay: calc(var(--ww-pricing-follow-delay) + 180ms);
+	}
+
+	:global(html[data-text-reveal]) .ww-pricing-price.is-revealed ~ .ww-pricing-actions {
+		opacity: 1;
+		transition-delay: calc(var(--ww-pricing-follow-delay) + 270ms);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		:global(html[data-text-reveal]) .ww-pricing-underline {
+			clip-path: inset(0);
+			transition: none;
+		}
+
+		:global(html[data-text-reveal]) .ww-pricing-monthly,
+		:global(html[data-text-reveal]) .ww-pricing-body,
+		:global(html[data-text-reveal]) .ww-pricing-benefits,
+		:global(html[data-text-reveal]) .ww-pricing-actions {
+			transform: none;
+			transition: none;
+		}
+
+		:global(html[data-text-reveal]) .ww-pricing-monthly {
+			opacity: 0.65;
+		}
+
+		:global(html[data-text-reveal]) .ww-pricing-body,
+		:global(html[data-text-reveal]) .ww-pricing-benefits,
+		:global(html[data-text-reveal]) .ww-pricing-actions {
+			opacity: 1;
+		}
 	}
 
 	.ww-pricing-body {
@@ -223,11 +392,37 @@ const lineStarts = wordCounts.map((_, index) =>
 	}
 
 	.ww-pricing-benefits li {
+		display: grid;
+		grid-template-columns: 44px minmax(0, 1fr);
+		align-items: start;
+		column-gap: 14px;
 		padding-block: var(--space-sm);
 	}
 
 	.ww-pricing-benefits li + li {
 		border-top: 1px solid var(--ww-hairline-dark);
+	}
+
+	/* Six hues, one silhouette. Keeping the badge geometry identical makes the
+	   isometric drawings read as one small collection instead of six pieces of
+	   unrelated artwork. */
+	.ww-pricing-benefit-badge {
+		display: grid;
+		place-items: center;
+		width: 44px;
+		height: 44px;
+		border: 0;
+		border-radius: 10px;
+		background-color: var(--ww-feature-tint);
+		box-shadow: none;
+	}
+
+	.ww-pricing-benefit-icon {
+		display: block;
+		width: 28px;
+		height: 28px;
+		object-fit: contain;
+		object-position: center;
 	}
 
 	/* A clear step above the description beside it: the section's white
@@ -280,10 +475,17 @@ const lineStarts = wordCounts.map((_, index) =>
 		right: 0;
 		bottom: var(--space-lg);
 		max-width: calc(100% - var(--space-md) * 2);
-		padding: var(--space-sm) var(--space-md);
+		padding: var(--space-md);
 		border-radius: var(--radius-input) 0 0 var(--radius-input);
 		background-color: var(--ww-white);
 		color: var(--ww-ink);
+	}
+
+	.ww-pricing-mark {
+		display: block;
+		height: 18px;
+		width: auto;
+		margin-bottom: 8px;
 	}
 
 	/* The one line of display type that is a name rather than a statement, so
@@ -306,6 +508,7 @@ const lineStarts = wordCounts.map((_, index) =>
 		   at the column gap. */
 		.ww-pricing-benefits {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
+			grid-auto-rows: minmax(0, 1fr);
 			column-gap: var(--space-lg);
 		}
 
@@ -362,6 +565,8 @@ const lineStarts = wordCounts.map((_, index) =>
 			grid-row: 1;
 			max-width: none;
 			display: flex;
+			transform: scale(0.94);
+			transform-origin: top left;
 		}
 
 		.ww-pricing-offer {
